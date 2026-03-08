@@ -64,11 +64,13 @@ public class AuthController : ControllerBase
             
             var jwt = GenerateJwt(userEmail);
             
-            return Redirect($"http://localhost:3000/auth-success?token={jwt}&email={userEmail}");
+            var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
+            return Redirect($"{frontendUrl}/auth-success?token={jwt}&email={userEmail}");
         }
         catch (Exception ex)
         {
-            return Redirect($"http://localhost:3000/auth-error?message={ex.Message}");
+            var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
+            return Redirect($"{frontendUrl}/auth-error?message={Uri.EscapeDataString(ex.Message)}");
         }
     }
 
