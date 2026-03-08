@@ -21,3 +21,7 @@ email-app/build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local secrets reference — never commit
+.env.render
+*.env.render
