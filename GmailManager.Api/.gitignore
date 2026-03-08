@@ -31,8 +31,7 @@ bld/
 **/packages/*
 !**/packages/build/
 
-# Sensitive configuration files
-appsettings.json
+# Sensitive configuration files — appsettings.json is safe (placeholders only)
 appsettings.Development.json
 appsettings.Production.json
 
