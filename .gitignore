@@ -1,7 +1,7 @@
 # Secrets — never commit these
 **/appsettings.Development.json
 **/appsettings.Production.json
-# appsettings.json is committed with placeholder values only — real secrets go in env vars
+**/appsettings.json
 !**/appsettings.Example.json
 
 # .NET build output
