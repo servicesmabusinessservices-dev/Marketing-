@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Required"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
+            "port": 4000,
+            "driver": "MySQL",
+            "name": "EmailApp-TiDB",
+            "database": "test",
+            "username": "2JUhVQwT6yu4EtL.root",
+            "askForPassword": true
+        }
+    ]
+}

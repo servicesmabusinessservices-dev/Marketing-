@@ -1,0 +1,9 @@
+**/node_modules
+**/bin
+**/obj
+**/.git
+**/.gitignore
+**/npm-debug.log
+email-app/build
+**/*.user
+**/*.suo

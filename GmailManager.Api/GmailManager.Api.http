@@ -1,0 +1,6 @@
+@GmailManager.Api_HostAddress = http://localhost:5049
+
+GET {{GmailManager.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

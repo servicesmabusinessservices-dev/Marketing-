@@ -1,0 +1,216 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  background: #07091a;
+  color: #eef2ff;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+:root {
+  --navy: #07091a;
+  --navy-2: #0c1128;
+  --navy-3: #111830;
+  --navy-4: #182040;
+  --navy-5: #202a52;
+  --amber: #f59e0b;
+  --amber-2: #fbbf24;
+  --amber-light: #fef3c7;
+  --emerald: #10b981;
+  --rose: #f43f5e;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --indigo: #6366f1;
+  --text-1: #eef2ff;
+  --text-2: #a5b4d6;
+  --text-3: #5b6a90;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-2: rgba(255, 255, 255, 0.13);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-2: rgba(255, 255, 255, 0.075);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 50px rgba(0, 0, 0, 0.65);
+  --gradient-cta: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%);
+  --gradient-cta-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #8b5cf6 100%);
+  --gradient-amber: linear-gradient(135deg, #f59e0b, #fbbf24);
+  --gradient-text: linear-gradient(135deg, #eef2ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+  --gradient-hero: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
+  --glow-indigo: 0 0 30px rgba(99, 102, 241, 0.3);
+  --glow-amber: 0 0 20px rgba(245, 158, 11, 0.35);
+  --glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+  --panel-bg: var(--navy-2);
+  --panel-border: var(--border);
+  --control-bg: var(--navy-3);
+  --control-bg-hover: var(--navy-4);
+  --control-border: var(--border);
+  --control-border-hover: var(--border-2);
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --accent-strong: var(--amber);
+  --divider: var(--border);
+  --hover-bg: var(--glass);
+  --text-primary: var(--text-1);
+  --text-secondary: var(--text-2);
+  --text-muted: var(--text-3);
+  --background-primary: var(--navy);
+  --background-card: var(--navy-2);
+  --background-secondary: var(--navy-3);
+  --border-color: var(--border);
+  --primary-color: var(--amber);
+}
+
+.light-theme,
+.dark-theme {
+  min-height: 100vh;
+  transition: background 0.35s ease, color 0.35s ease;
+  background: var(--navy);
+  color: var(--text-1);
+}
+
+.light-theme {
+  --navy: #f3f6ff;
+  --navy-2: #ffffff;
+  --navy-3: #edf1fb;
+  --navy-4: #e3e9f6;
+  --navy-5: #cdd5ee;
+  --amber: #d97706;
+  --amber-2: #f59e0b;
+  --amber-light: #fff7e6;
+  --emerald: #059669;
+  --rose: #e11d48;
+  --blue: #2563eb;
+  --purple: #7c3aed;
+  --indigo: #4f46e5;
+  --text-1: #0f172a;
+  --text-2: #374151;
+  --text-3: #94a3b8;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-2: rgba(15, 23, 42, 0.15);
+  --glass: rgba(15, 23, 42, 0.025);
+  --glass-2: rgba(15, 23, 42, 0.05);
+  --shadow: 0 4px 20px rgba(15, 23, 42, 0.09);
+  --shadow-lg: 0 10px 40px rgba(15, 23, 42, 0.16);
+  --gradient-cta: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #8b5cf6 100%);
+  --gradient-cta-hover: linear-gradient(135deg, #4338ca 0%, #6d28d9 60%, #7c3aed 100%);
+  --gradient-amber: linear-gradient(135deg, #d97706, #f59e0b);
+  --gradient-text: linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #6d28d9 100%);
+  --gradient-hero: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --glow-indigo: 0 0 24px rgba(79, 70, 229, 0.2);
+  --glow-amber: 0 0 16px rgba(217, 119, 6, 0.25);
+  --glow-purple: 0 0 16px rgba(124, 58, 237, 0.2);
+  --panel-bg: var(--navy-2);
+  --panel-border: var(--border);
+  --control-bg: var(--navy-3);
+  --control-bg-hover: var(--navy-4);
+  --control-border: var(--border);
+  --control-border-hover: var(--border-2);
+  --accent-soft: rgba(217, 119, 6, 0.12);
+  --accent-strong: var(--amber);
+  --divider: var(--border);
+  --hover-bg: var(--glass);
+  --text-primary: var(--text-1);
+  --text-secondary: var(--text-2);
+  --text-muted: var(--text-3);
+  --background-primary: var(--navy);
+  --background-card: var(--navy-2);
+  --background-secondary: var(--navy-3);
+  --border-color: var(--border);
+  --primary-color: var(--amber);
+}
+
+.dark-theme {
+  --navy: #07091a;
+  --navy-2: #0c1128;
+  --navy-3: #111830;
+  --navy-4: #182040;
+  --navy-5: #202a52;
+  --amber: #f59e0b;
+  --amber-2: #fbbf24;
+  --amber-light: #fef3c7;
+  --emerald: #10b981;
+  --rose: #f43f5e;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --indigo: #6366f1;
+  --text-1: #eef2ff;
+  --text-2: #a5b4d6;
+  --text-3: #5b6a90;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-2: rgba(255, 255, 255, 0.13);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-2: rgba(255, 255, 255, 0.075);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 50px rgba(0, 0, 0, 0.65);
+  --gradient-cta: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%);
+  --gradient-cta-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #8b5cf6 100%);
+  --gradient-amber: linear-gradient(135deg, #f59e0b, #fbbf24);
+  --gradient-text: linear-gradient(135deg, #eef2ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+  --gradient-hero: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
+  --glow-indigo: 0 0 30px rgba(99, 102, 241, 0.3);
+  --glow-amber: 0 0 20px rgba(245, 158, 11, 0.35);
+  --glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+  --panel-bg: var(--navy-2);
+  --panel-border: var(--border);
+  --control-bg: var(--navy-3);
+  --control-bg-hover: var(--navy-4);
+  --control-border: var(--border);
+  --control-border-hover: var(--border-2);
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --accent-strong: var(--amber);
+  --divider: var(--border);
+  --hover-bg: var(--glass);
+  --text-primary: var(--text-1);
+  --text-secondary: var(--text-2);
+  --text-muted: var(--text-3);
+  --background-primary: var(--navy);
+  --background-card: var(--navy-2);
+  --background-secondary: var(--navy-3);
+  --border-color: var(--border);
+  --primary-color: var(--amber);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--navy-5);
+  border-radius: 6px;
+}

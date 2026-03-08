@@ -1,0 +1,23 @@
+# Secrets — never commit these
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.json
+!**/appsettings.Example.json
+
+# .NET build output
+**/bin/
+**/obj/
+
+# Node
+**/node_modules/
+email-app/build/
+
+# VS / Rider
+.vs/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
