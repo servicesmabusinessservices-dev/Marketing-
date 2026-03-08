@@ -3,7 +3,7 @@ FROM node:20-alpine AS node-build
 WORKDIR /app
 
 COPY email-app/package.json email-app/package-lock.json ./
-RUN npm ci --silent
+RUN npm ci --prefer-offline || npm install
 
 COPY email-app/ .
 
