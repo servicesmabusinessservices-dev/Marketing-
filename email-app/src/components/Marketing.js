@@ -286,7 +286,7 @@ const Marketing = () => {
         <div className="page-grid">
           <section className="card" id="marketing-contacts">
             <div className="card-header">
-              <Icon name="users" size={14} color="var(--amber)" />
+              <Icon name="users" size={14} color="var(--accent-primary)" />
               <span className="card-title">Contacts ({contacts.length})</span>
             </div>
             <div className="card-body">

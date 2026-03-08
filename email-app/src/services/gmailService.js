@@ -69,9 +69,9 @@ export const gmailService = {
     return response.data;
   },
 
-  sendBulkEmail: async (recipients, subject, body, delayMinutes = 1) => {
+  sendBulkEmail: async (recipients, subject, body, delaySeconds = 3) => {
     const response = await axios.post(`${API_BASE_URL}/email/bulk-send`, 
-      { recipients, subject, body, delayMinutes },
+      { recipients, subject, body, delaySeconds },
       { headers: getAuthHeaders() }
     );
     return response.data;

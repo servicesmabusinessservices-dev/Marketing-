@@ -10,10 +10,11 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const { showFeedback } = useFeedback();
   const isPageMode = mode === 'page';
 
-  const [emails, setEmails] = useState('');
+  const [recipientTags, setRecipientTags] = useState([]);
+  const [emailInput, setEmailInput] = useState('');
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
-  const [delayMinutes, setDelayMinutes] = useState(1);
+  const [delaySeconds, setDelaySeconds] = useState(3);
   const [isScheduling, setIsScheduling] = useState(false);
   const [jobStatus, setJobStatus] = useState(null);
   const [processedCount, setProcessedCount] = useState(0);
@@ -23,6 +24,59 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const [suppressionSummary, setSuppressionSummary] = useState(null);
   const [tokens, setTokens] = useState([]);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
+
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactResults, setContactResults] = useState([]);
+  const [selectedContacts, setSelectedContacts] = useState(new Set());
+  const [loadingContacts, setLoadingContacts] = useState(false);
+
+  const searchContacts = async (q) => {
+    if (!q.trim()) { setContactResults([]); return; }
+    setLoadingContacts(true);
+    try {
+      const data = await gmailService.getContacts({ q, limit: 50 });
+      setContactResults(data.contacts || data.items || data || []);
+    } catch {
+      setContactResults([]);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  const toggleContact = (email) => {
+    setSelectedContacts(prev => {
+      const next = new Set(prev);
+      next.has(email) ? next.delete(email) : next.add(email);
+      return next;
+    });
+  };
+
+  const addEmailTag = (raw) => {
+    const val = raw.trim().toLowerCase();
+    if (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return;
+    setRecipientTags(prev => prev.includes(val) ? prev : [...prev, val]);
+    setEmailInput('');
+  };
+
+  const removeEmailTag = (email) => setRecipientTags(prev => prev.filter(e => e !== email));
+
+  const handleEmailInputKey = (e) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+      e.preventDefault();
+      addEmailTag(emailInput);
+    } else if (e.key === 'Backspace' && !emailInput && recipientTags.length) {
+      setRecipientTags(prev => prev.slice(0, -1));
+    }
+  };
+
+  const addSelectedToList = () => {
+    if (!selectedContacts.size) return;
+    setRecipientTags(prev => [...new Set([...prev, ...selectedContacts])]);
+    setSelectedContacts(new Set());
+    setContactResults([]);
+    setContactSearch('');
+    showFeedback(`${selectedContacts.size} contact(s) added to recipient list.`, 'success');
+  };
 
   useEffect(() => {
     const loadMetadata = async () => {
@@ -58,10 +112,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   };
 
   const handleSchedule = async () => {
-    const emailList = emails
-      .split('\n')
-      .map(email => email.trim())
-      .filter(email => email);
+    const emailList = recipientTags;
 
     if (!emailList.length || !subject || !content) {
       showFeedback('Please fill all fields and add at least one email.', 'warning');
@@ -76,7 +127,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     setTotalCount(emailList.length);
 
     try {
-      const job = await gmailService.sendBulkEmail(emailList, subject, content, delayMinutes);
+      const job = await gmailService.sendBulkEmail(emailList, subject, content, delaySeconds);
       const jobId = job.jobId;
 
       for (let attempt = 0; attempt < 600; attempt++) {
@@ -124,7 +175,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
         <div>
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="card-header">
-              <Icon name="bulk" size={14} color="var(--amber)" />
+              <Icon name="bulk" size={14} color="var(--accent-primary)" />
               <span className="card-title">Campaign Setup</span>
               {isPageMode && (
                 <span style={{ marginLeft: 'auto' }}>
@@ -136,14 +187,108 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             </div>
             <div className="card-body">
               <div className="form-group">
-                <label className="form-label">Email Addresses (one per line)</label>
-                <textarea
-                  className="form-input"
-                  value={emails}
-                  onChange={(e) => setEmails(e.target.value)}
-                  placeholder="email1@example.com\nemail2@example.com\nemail3@example.com"
-                  rows="6"
-                />
+                <label className="form-label">Pick from Contacts</label>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  <input
+                    className="form-input"
+                    type="text"
+                    value={contactSearch}
+                    onChange={(e) => { setContactSearch(e.target.value); searchContacts(e.target.value); }}
+                    placeholder="Search by name, email or company..."
+                    disabled={isScheduling}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className="send-btn"
+                    style={{ padding: '8px 14px', fontSize: 12, whiteSpace: 'nowrap' }}
+                    onClick={addSelectedToList}
+                    disabled={!selectedContacts.size || isScheduling}
+                  >
+                    Add {selectedContacts.size > 0 ? `(${selectedContacts.size})` : ''}
+                  </button>
+                </div>
+                {loadingContacts && (
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>Searching...</div>
+                )}
+                {contactResults.length > 0 && (
+                  <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 8 }}>
+                    {contactResults.map((c) => {
+                      const email = c.email || c.Email || '';
+                      const name = [c.firstName || c.FirstName, c.lastName || c.LastName].filter(Boolean).join(' ') || email;
+                      const company = c.company || c.Company || '';
+                      const checked = selectedContacts.has(email);
+                      return (
+                        <div
+                          key={email}
+                          onClick={() => toggleContact(email)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                            cursor: 'pointer', borderBottom: '1px solid var(--border)',
+                            background: checked ? 'var(--navy-3)' : 'transparent'
+                          }}
+                        >
+                          <input type="checkbox" checked={checked} onChange={() => toggleContact(email)} onClick={e => e.stopPropagation()} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: 'var(--text-1)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}{company ? ` · ${company}` : ''}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Recipients{recipientTags.length > 0 && <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}>{recipientTags.length} added</span>}</label>
+                <div
+                  style={{
+                    display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
+                    border: '1px solid var(--border)', borderRadius: 6, padding: '6px 10px',
+                    background: 'var(--navy-3)', minHeight: 48, cursor: 'text'
+                  }}
+                  onClick={() => document.getElementById('email-tag-input').focus()}
+                >
+                  {recipientTags.map(email => (
+                    <span key={email} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      background: 'var(--navy-4)', border: '1px solid var(--border)',
+                      borderRadius: 20, padding: '3px 10px 3px 10px',
+                      fontSize: 12, color: '#a5b4fc', whiteSpace: 'nowrap'
+                    }}>
+                      {email}
+                      <span
+                        onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }}
+                        style={{ cursor: 'pointer', color: 'var(--text-3)', fontWeight: 700, fontSize: 14, lineHeight: 1 }}
+                      >×</span>
+                    </span>
+                  ))}
+                  <input
+                    id="email-tag-input"
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    onKeyDown={handleEmailInputKey}
+                    onBlur={() => addEmailTag(emailInput)}
+                    placeholder={recipientTags.length ? '' : 'Type email and press Enter...'}
+                    disabled={isScheduling}
+                    style={{
+                      flex: 1, minWidth: 180, border: 'none', outline: 'none',
+                      background: 'transparent', color: 'var(--text-1)', fontSize: 13
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addEmailTag(emailInput)}
+                    disabled={!emailInput.trim() || isScheduling}
+                    style={{
+                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                      background: 'var(--gradient-cta)', color: '#fff', border: 'none', cursor: 'pointer',
+                      opacity: !emailInput.trim() ? 0.4 : 1
+                    }}
+                  >Add</button>
+                </div>
               </div>
 
               <div className="form-group">
@@ -169,13 +314,13 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Delay Between Sends (minutes)</label>
+                <label className="form-label">Delay Between Sends (seconds)</label>
                 <input
                   className="form-input"
                   type="number"
-                  value={delayMinutes}
-                  onChange={(e) => setDelayMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  min="1"
+                  value={delaySeconds}
+                  onChange={(e) => setDelaySeconds(Math.max(2, parseInt(e.target.value, 10) || 3))}
+                  min="2"
                   max="300"
                   disabled={isScheduling}
                 />
@@ -191,7 +336,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="card">
             <div className="card-header">
-              <Icon name="zap" size={14} color="var(--amber)" />
+              <Icon name="zap" size={14} color="var(--accent-primary)" />
               <span className="card-title">Send Progress</span>
             </div>
             <div className="card-body">
@@ -202,7 +347,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                       style={{
                         height: '100%',
                         width: `${progress}%`,
-                        background: 'linear-gradient(90deg, var(--amber), #f59e0b)',
+                        background: 'linear-gradient(90deg, var(--indigo), var(--violet))',
                         borderRadius: 100,
                         transition: 'width 0.2s'
                       }}
@@ -239,7 +384,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
 
           <div className="card">
             <div className="card-header">
-              <Icon name="filter" size={14} color="var(--amber)" />
+              <Icon name="filter" size={14} color="var(--accent-primary)" />
               <span className="card-title">Suppression Check</span>
             </div>
             <div className="card-body">
@@ -266,7 +411,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
 
           <div className="card">
             <div className="card-header">
-              <Icon name="tag" size={14} color="var(--amber)" />
+              <Icon name="tag" size={14} color="var(--accent-primary)" />
               <span className="card-title">Personalization Tokens</span>
             </div>
             <div className="card-body">
@@ -286,7 +431,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                       marginBottom: 6,
                       fontFamily: 'DM Mono, monospace',
                       fontSize: 12,
-                      color: 'var(--amber)'
+                      color: '#a78bfa'
                     }}
                   >
                     {token}

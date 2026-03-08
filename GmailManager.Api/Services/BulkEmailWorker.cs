@@ -1,4 +1,7 @@
 using System.Text;
+using System.Text.RegularExpressions;
+using GmailManager.Api.Data;
+using GmailManager.Api.Data.Entities;
 using GmailManager.Api.Models;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
@@ -6,6 +9,7 @@ using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmailManager.Api.Services;
 
@@ -14,21 +18,38 @@ public class BulkEmailWorker : BackgroundService
     private readonly IBulkEmailJobQueue _queue;
     private readonly IBulkEmailJobStore _jobStore;
     private readonly IUserTokenStore _userTokenStore;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly IConfiguration _config;
     private readonly ILogger<BulkEmailWorker> _logger;
+    private static readonly Regex TokenRegex = new(@"\{\{\s*(\w+)\s*\}\}", RegexOptions.Compiled);
 
     public BulkEmailWorker(
         IBulkEmailJobQueue queue,
         IBulkEmailJobStore jobStore,
         IUserTokenStore userTokenStore,
+        IDbContextFactory<AppDbContext> dbContextFactory,
         IConfiguration config,
         ILogger<BulkEmailWorker> logger)
     {
         _queue = queue;
         _jobStore = jobStore;
         _userTokenStore = userTokenStore;
+        _dbContextFactory = dbContextFactory;
         _config = config;
         _logger = logger;
+    }
+
+    private static string ApplyTokens(string template, ContactEntity? contact, string recipientEmail)
+    {
+        if (!template.Contains("{{" )) return template;
+        return TokenRegex.Replace(template, m => m.Groups[1].Value.ToLowerInvariant() switch
+        {
+            "firstname" => contact?.FirstName ?? "",
+            "lastname"  => contact?.LastName  ?? "",
+            "company"   => contact?.Company   ?? "",
+            "email"     => recipientEmail,
+            _           => m.Value
+        });
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,6 +78,7 @@ public class BulkEmailWorker : BackgroundService
             await _jobStore.UpsertAsync(job, cancellationToken);
 
             var gmailService = await BuildGmailServiceAsync(job.UserEmail, cancellationToken);
+            await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
             for (var i = 0; i < job.Recipients.Count; i++)
             {
@@ -65,12 +87,20 @@ public class BulkEmailWorker : BackgroundService
                 var recipient = job.Recipients[i];
                 try
                 {
+                    var normalizedRecipient = recipient.Trim().ToLowerInvariant();
+                    var contact = await db.Contacts.FirstOrDefaultAsync(
+                        x => x.UserEmail == job.UserEmail && x.EmailNormalized == normalizedRecipient,
+                        cancellationToken);
+
+                    var personalizedSubject = ApplyTokens(job.Subject, contact, recipient);
+                    var personalizedBody    = ApplyTokens(job.Body,    contact, recipient);
+
                     var message = new StringBuilder();
                     message.AppendLine($"To: {recipient}");
-                    message.AppendLine($"Subject: {job.Subject}");
+                    message.AppendLine($"Subject: {personalizedSubject}");
                     message.AppendLine("Content-Type: text/html; charset=utf-8");
                     message.AppendLine();
-                    message.AppendLine(job.Body);
+                    message.AppendLine(personalizedBody);
 
                     var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.ToString()))
                         .Replace('+', '-')

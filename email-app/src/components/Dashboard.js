@@ -4,6 +4,7 @@ import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
 import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import AnimatedCard from './ui/AnimatedCard';
 
 const EVENT_LABELS = {
   opened: 'Email opened',
@@ -261,7 +262,7 @@ const Dashboard = () => {
 
           <div className="stats-grid">
             {stats.map((stat) => (
-              <div key={stat.key} className={`stat-card ${stat.color}`}>
+              <AnimatedCard key={stat.key} className={`stat-card ${stat.color}`}>
                 <div className="stat-label">{stat.label}</div>
                 <div className="stat-value">{stat.value}</div>
                 <div className={`stat-change ${stat.dir || ''}`}>
@@ -272,7 +273,7 @@ const Dashboard = () => {
                 <div className="stat-icon">
                   <Icon name={stat.icon} size={28} color="currentColor" />
                 </div>
-              </div>
+              </AnimatedCard>
             ))}
           </div>
 

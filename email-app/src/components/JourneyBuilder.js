@@ -194,7 +194,7 @@ const JourneyBuilder = () => {
       {/* Steps card */}
       <div className="card">
         <div className="card-header">
-          <Icon name="journey" size={14} color="var(--amber)" />
+          <Icon name="journey" size={14} color="var(--accent-primary)" />
           <span className="card-title">Steps ({steps.length})</span>
           <span className="helper-text" style={{ marginLeft: 'auto', fontSize: 12 }}>
             Configure the sequence of actions for each enrolled contact.

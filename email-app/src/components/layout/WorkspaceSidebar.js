@@ -13,6 +13,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail }) => {
   const activeTab = searchParams.get('tab');
   const [emailSummary, setEmailSummary] = useState(null);
   const [journeySummary, setJourneySummary] = useState(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const loadSidebarMetrics = async () => {
@@ -97,7 +98,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail }) => {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sidebar-logo">
         <div className="logo-mark">
           <div className="logo-icon">MA</div>
@@ -106,6 +107,14 @@ const WorkspaceSidebar = ({ onLogout, userEmail }) => {
             <div className="logo-sub">CRM Workspace</div>
           </div>
         </div>
+        <button
+          type="button"
+          className="sidebar-collapse-btn"
+          onClick={() => setCollapsed(c => !c)}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? '›' : '‹'}
+        </button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>

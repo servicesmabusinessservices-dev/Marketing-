@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { gmailService } from '../services/gmailService';
 import { useTheme } from '../context/ThemeContext';
 import Icon from './ui/Icon';
@@ -43,7 +44,12 @@ const AccountSelection = () => {
   };
 
   return (
-    <div className="login-screen fade-in">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+    >
+    <div className="login-screen">
       <div className="login-left">
         <div className="login-bg-grid" />
         <div className="login-bg-glow" />
@@ -100,6 +106,7 @@ const AccountSelection = () => {
         </div>
       </div>
     </div>
+    </motion.div>
   );
 };
 

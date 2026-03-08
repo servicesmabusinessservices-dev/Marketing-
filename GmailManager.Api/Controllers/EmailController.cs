@@ -459,7 +459,7 @@ public class EmailController : ControllerBase
             Subject = request.Subject,
             Body = request.Body,
             Recipients = request.Recipients.Where(r => !string.IsNullOrWhiteSpace(r)).Distinct().ToList(),
-            DelaySeconds = Math.Max(1, request.DelayMinutes) * 60
+            DelaySeconds = Math.Max(2, request.DelaySeconds)
         };
 
         await _bulkEmailJobStore.UpsertAsync(job);

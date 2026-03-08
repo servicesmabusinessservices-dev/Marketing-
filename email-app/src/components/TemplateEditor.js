@@ -79,7 +79,7 @@ const TemplateEditor = () => {
 
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-header">
-          <Icon name="template" size={14} color="var(--amber)" />
+          <Icon name="template" size={14} color="var(--accent-primary)" />
           <span className="card-title">Template Details</span>
         </div>
         <div className="card-body">
@@ -110,7 +110,7 @@ const TemplateEditor = () => {
 
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-header">
-          <Icon name="mail" size={14} color="var(--amber)" />
+          <Icon name="mail" size={14} color="var(--accent-primary)" />
           <span className="card-title">Email Builder</span>
         </div>
         <div className="card-body" style={{ padding: 0 }}>

@@ -4,6 +4,7 @@ import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
 import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import AnimatedCard from './ui/AnimatedCard';
 
 const AnalyticsDashboard = () => {
   const navigate = useNavigate();
@@ -92,10 +93,10 @@ const AnalyticsDashboard = () => {
               { label: 'Click Rate', value: metricValue(engagement.clickRate, '%'), color: 'emerald' },
               { label: 'Reply Rate', value: metricValue(engagement.replyRate, '%'), color: 'rose' }
             ].map((stat) => (
-              <div key={stat.label} className={`stat-card ${stat.color}`}>
+              <AnimatedCard key={stat.label} className={`stat-card ${stat.color}`}>
                 <div className="stat-label">{stat.label}</div>
                 <div className="stat-value">{stat.value}</div>
-              </div>
+              </AnimatedCard>
             ))}
           </div>
 
