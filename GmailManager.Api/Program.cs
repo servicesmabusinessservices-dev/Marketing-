@@ -57,6 +57,22 @@ static string ResolveMySqlConnectionString(IConfiguration configuration)
         return null;
     }
 
+    // Convert mysql:// URI format to ADO.NET key=value format if needed
+    static string NormalizeConnectionString(string raw)
+    {
+        if (!raw.StartsWith("mysql://", StringComparison.OrdinalIgnoreCase))
+            return raw;
+
+        var uri = new Uri(raw);
+        var userInfo = uri.UserInfo.Split(':');
+        var user = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 3306;
+        var database = uri.AbsolutePath.TrimStart('/');
+        return $"Server={host};Port={port};Database={database};User={user};Password={password};SslMode=Required;";
+    }
+
     var directConnection = FirstNonEmpty(
         configuration["MYSQL_CONNECTION_STRING"],
         Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING"));
@@ -68,6 +84,8 @@ static string ResolveMySqlConnectionString(IConfiguration configuration)
     {
         throw new InvalidOperationException("ConnectionStrings:MySql is required.");
     }
+
+    raw = NormalizeConnectionString(raw);
 
     var builder = new MySqlConnectionStringBuilder(raw);
     var passwordOverride = FirstNonEmpty(
