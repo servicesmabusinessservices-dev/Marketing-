@@ -271,6 +271,11 @@ public class MarketingController : ControllerBase
         public string Source { get; set; } = "CSV Import";
     }
 
+    public sealed class BulkAddMembersRequest
+    {
+        public List<string> ContactIds { get; set; } = new();
+    }
+
     private static int NormalizePage(int? page)
     {
         return page.GetValueOrDefault(1) < 1 ? 1 : page.GetValueOrDefault(1);
@@ -1178,6 +1183,33 @@ public class MarketingController : ControllerBase
 
         await db.SaveChangesAsync();
         return Ok(new { added = true });
+    }
+
+    [HttpPost("lists/{listId}/members/bulk")]
+    public async Task<IActionResult> AddListMembersBulk(string listId, [FromBody] BulkAddMembersRequest request)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
+        if (request.ContactIds == null || request.ContactIds.Count == 0) return BadRequest(new { error = "ContactIds required" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var added = 0;
+        foreach (var contactId in request.ContactIds)
+        {
+            var exists = await db.ContactListMembers.AnyAsync(x =>
+                x.UserEmail == userEmail && x.ListId == listId && x.ContactId == contactId);
+            if (exists) continue;
+            db.ContactListMembers.Add(new ContactListMemberEntity
+            {
+                UserEmail = userEmail,
+                ListId = listId,
+                ContactId = contactId,
+                AddedAtUtc = DateTime.UtcNow
+            });
+            added++;
+        }
+        await db.SaveChangesAsync();
+        return Ok(new { added });
     }
 
     [HttpGet("suppressions")]

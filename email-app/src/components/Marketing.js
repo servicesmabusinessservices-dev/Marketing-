@@ -54,12 +54,16 @@ const Marketing = () => {
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [csvForm, setCsvForm] = useState({ csvContent: '', hasHeader: true, delimiter: ',', source: 'csv_import' });
   const [csvImporting, setCsvImporting] = useState(false);
+  const [selectedContactIds, setSelectedContactIds] = useState(new Set());
+  const [contactSourceFilter, setContactSourceFilter] = useState('all');
+  const [contactSearch, setContactSearch] = useState('');
+  const [addingToList, setAddingToList] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
       const [contactsData, listsData, templatesData, campaignsData, journeysData] = await Promise.all([
-        gmailService.getContacts({ limit: 100 }),
+        gmailService.getContacts({ limit: 1000 }),
         gmailService.getLists(),
         gmailService.getTemplates({ category: templateCategoryFilter }),
         gmailService.getCampaigns(),
@@ -268,6 +272,42 @@ const Marketing = () => {
     }
   };
 
+  const handleAddToList = async (listId) => {
+    if (!selectedContactIds.size || !listId) return;
+    setAddingToList(true);
+    try {
+      const result = await gmailService.addContactsToList(listId, [...selectedContactIds]);
+      const listName = lists.find(l => l.listId === listId)?.name || 'list';
+      showFeedback(`Added ${result.added} contact(s) to "${listName}".`, 'success');
+      setSelectedContactIds(new Set());
+      fetchAll();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to add contacts to list.', 'error');
+    } finally {
+      setAddingToList(false);
+    }
+  };
+
+  const uniqueSources = [...new Set(contacts.map(c => c.source || c.Source).filter(Boolean))];
+  const filteredContacts = contacts.filter(c => {
+    const src = c.source || c.Source || '';
+    const matchesSource = contactSourceFilter === 'all' || src === contactSourceFilter;
+    const matchesSearch = !contactSearch ||
+      (c.email || '').toLowerCase().includes(contactSearch.toLowerCase()) ||
+      `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase().includes(contactSearch.toLowerCase()) ||
+      (c.company || '').toLowerCase().includes(contactSearch.toLowerCase());
+    return matchesSource && matchesSearch;
+  });
+  const allFilteredSelected = filteredContacts.length > 0 && filteredContacts.every(c => selectedContactIds.has(c.contactId));
+  const toggleContact = (id) => setSelectedContactIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedContactIds(prev => { const n = new Set(prev); filteredContacts.forEach(c => n.delete(c.contactId)); return n; });
+    } else {
+      setSelectedContactIds(prev => { const n = new Set(prev); filteredContacts.forEach(c => n.add(c.contactId)); return n; });
+    }
+  };
+
   return (
     <div className="content fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
@@ -321,18 +361,96 @@ const Marketing = () => {
                 </div>
                 <button type="submit" className="topbar-btn primary">Save Contact</button>
               </form>
-              <div className="data-list" style={{ marginTop: 16 }}>
-                {contacts.slice(0, 8).map((contact) => (
-                  <div
-                    key={contact.contactId}
-                    className="data-list-item"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/marketing/contacts/${contact.contactId}`)}
+              <div style={{ display: 'flex', gap: 8, marginTop: 16, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="Search contacts..."
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                  style={{ flex: 1, minWidth: 160 }}
+                />
+                <select
+                  className="form-input"
+                  value={contactSourceFilter}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setContactSourceFilter(val);
+                    if (val !== 'all') {
+                      setSelectedContactIds(new Set(contacts.filter(c => (c.source || c.Source) === val).map(c => c.contactId)));
+                    }
+                  }}
+                  style={{ maxWidth: 164 }}
+                >
+                  <option value="all">All sources</option>
+                  {uniqueSources.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              {selectedContactIds.size > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap', padding: '8px 10px', background: 'var(--accent-soft)', borderRadius: 8 }}>
+                  <span style={{ fontSize: 12, color: 'var(--accent-primary)', fontWeight: 600 }}>
+                    {selectedContactIds.size} selected
+                  </span>
+                  <select
+                    className="form-input"
+                    style={{ maxWidth: 210 }}
+                    defaultValue=""
+                    onChange={(e) => { if (e.target.value) { handleAddToList(e.target.value); e.target.value = ''; } }}
+                    disabled={addingToList || !lists.length}
                   >
-                    <strong>{contact.firstName || contact.email}</strong>
-                    <span>{contact.email}</span>
+                    <option value="" disabled>
+                      {addingToList ? 'Adding…' : lists.length ? 'Add to list…' : 'Create a list first'}
+                    </option>
+                    {lists.map(l => <option key={l.listId} value={l.listId}>{l.name}</option>)}
+                  </select>
+                  <button type="button" className="topbar-btn" onClick={() => setSelectedContactIds(new Set())}>Clear</button>
+                </div>
+              )}
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                      <th style={{ width: 32, padding: '6px 8px', textAlign: 'center' }}>
+                        <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} />
+                      </th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Name</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Email</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Company</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Stage</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredContacts.slice(0, 200).map((contact) => (
+                      <tr
+                        key={contact.contactId}
+                        style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selectedContactIds.has(contact.contactId) ? 'var(--accent-soft)' : 'transparent' }}
+                        onClick={() => navigate(`/marketing/contacts/${contact.contactId}`)}
+                      >
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }} onClick={(e) => { e.stopPropagation(); toggleContact(contact.contactId); }}>
+                          <input type="checkbox" checked={selectedContactIds.has(contact.contactId)} onChange={() => toggleContact(contact.contactId)} onClick={(e) => e.stopPropagation()} />
+                        </td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-1)', fontWeight: 500 }}>{contact.firstName || ''} {contact.lastName || ''}</td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-2)' }}>{contact.email}</td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-2)' }}>{contact.company || '—'}</td>
+                        <td style={{ padding: '6px 8px' }}>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'var(--navy-4)', color: 'var(--text-3)' }}>{contact.leadStage || 'New'}</span>
+                        </td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-3)', fontSize: 11 }}>{contact.source || contact.Source || '—'}</td>
+                      </tr>
+                    ))}
+                    {filteredContacts.length === 0 && (
+                      <tr><td colSpan={6} style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)' }}>No contacts found</td></tr>
+                    )}
+                  </tbody>
+                </table>
+                {filteredContacts.length > 200 && (
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', padding: '8px 0' }}>
+                    Showing 200 of {filteredContacts.length} — use search or source filter to narrow down.
                   </div>
-                ))}
+                )}
               </div>
 
               <div style={{ marginTop: 12 }}>

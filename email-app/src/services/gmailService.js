@@ -452,5 +452,14 @@ export const gmailService = {
       { headers: getAuthHeaders() }
     );
     return response.data;
+  },
+
+  addContactsToList: async (listId, contactIds) => {
+    const response = await axios.post(
+      `${API_BASE_URL}/marketing/lists/${listId}/members/bulk`,
+      { contactIds },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
   }
 };
