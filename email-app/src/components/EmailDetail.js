@@ -14,6 +14,8 @@ const EmailDetail = () => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
 
   const hasHtmlContent = (value) => /<\/?[a-z][\s\S]*>/i.test(value || '');
 
@@ -90,6 +92,31 @@ const EmailDetail = () => {
     }
   };
 
+  const parseSender = (fromField) => {
+    if (!fromField) return { email: '', firstName: '', lastName: '' };
+    const match = fromField.match(/^(.+?)\s*<(.+?)>$/);
+    if (match) {
+      const parts = match[1].trim().replace(/"/g, '').split(/\s+/);
+      return { email: match[2].trim(), firstName: parts[0] || '', lastName: parts.slice(1).join(' ') };
+    }
+    return { email: fromField.trim(), firstName: '', lastName: '' };
+  };
+
+  const handleSaveSenderAsContact = async () => {
+    const { email: senderEmail, firstName, lastName } = parseSender(email?.from);
+    if (!senderEmail) return;
+    setSavingContact(true);
+    try {
+      await gmailService.upsertContact({ email: senderEmail, firstName, lastName });
+      setContactSaved(true);
+      showFeedback(`${senderEmail} saved as contact.`, 'success');
+    } catch (error) {
+      showFeedback('Failed to save contact.', 'error');
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
   const handleSendReply = async () => {
     if (!replyText.trim()) return;
     
@@ -135,6 +162,16 @@ const EmailDetail = () => {
                 <span className="meta-value">{email.to}</span>
               </div>
             )}
+            <div className="meta-item" style={{ marginTop: 8 }}>
+              <button
+                onClick={handleSaveSenderAsContact}
+                disabled={savingContact || contactSaved}
+                className="reply-btn"
+                style={{ fontSize: 13, padding: '5px 14px' }}
+              >
+                {contactSaved ? '✓ Contact saved' : savingContact ? 'Saving…' : '+ Save sender as contact'}
+              </button>
+            </div>
           </div>
         </div>
 

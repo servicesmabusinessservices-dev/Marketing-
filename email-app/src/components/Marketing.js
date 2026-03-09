@@ -58,6 +58,8 @@ const Marketing = () => {
   const [contactSourceFilter, setContactSourceFilter] = useState('all');
   const [contactSearch, setContactSearch] = useState('');
   const [addingToList, setAddingToList] = useState(false);
+  const [sendingCampaignId, setSendingCampaignId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -285,6 +287,71 @@ const Marketing = () => {
       showFeedback(error.response?.data?.error || 'Failed to add contacts to list.', 'error');
     } finally {
       setAddingToList(false);
+    }
+  };
+
+  const handleSendCampaign = async (campaign) => {
+    if (!campaign.listId && !campaign.ListId) { showFeedback('Assign a list to this campaign first.', 'warning'); return; }
+    if (!campaign.templateId && !campaign.TemplateId) { showFeedback('Assign a template to this campaign first.', 'warning'); return; }
+    const id = campaign.campaignId || campaign.CampaignId;
+    if (!window.confirm(`Send campaign "${campaign.name || campaign.Name}" now to all list members?`)) return;
+    setSendingCampaignId(id);
+    try {
+      const result = await gmailService.sendCampaign(id);
+      showFeedback(`Campaign queued! Sending to ${result.totalRecipients} recipient(s).`, 'success');
+      fetchAll();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to send campaign.', 'error');
+    } finally {
+      setSendingCampaignId(null);
+    }
+  };
+
+  const handleDeleteCampaign = async (campaign) => {
+    const id = campaign.campaignId || campaign.CampaignId;
+    const name = campaign.name || campaign.Name;
+    if (!window.confirm(`Delete campaign "${name}"?`)) return;
+    setDeletingId(id);
+    try {
+      await gmailService.deleteCampaign(id);
+      showFeedback('Campaign deleted.', 'success');
+      fetchAll();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to delete campaign.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteTemplate = async (template) => {
+    const id = template.templateId || template.TemplateId;
+    const name = template.name || template.Name;
+    if (!window.confirm(`Delete template "${name}"?`)) return;
+    setDeletingId(id);
+    try {
+      await gmailService.deleteTemplate(id);
+      showFeedback('Template deleted.', 'success');
+      fetchAll();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to delete template.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteList = async (list) => {
+    const id = list.listId || list.ListId;
+    const name = list.name || list.Name;
+    if (!window.confirm(`Delete list "${name}" and remove all its members?`)) return;
+    setDeletingId(id);
+    try {
+      await gmailService.deleteList(id);
+      showFeedback('List deleted.', 'success');
+      fetchAll();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to delete list.', 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -536,12 +603,29 @@ const Marketing = () => {
                 <button type="submit" className="topbar-btn primary">Create List</button>
               </form>
               <div className="data-list" style={{ marginTop: 16 }}>
-                {lists.slice(0, 8).map((list) => (
-                  <div key={list.listId} className="data-list-item">
-                    <strong>{list.name}</strong>
-                    <span>{list.memberCount || 0} members</span>
-                  </div>
-                ))}
+                {lists.map((list) => {
+                  const id = list.listId || list.ListId;
+                  const name = list.name || list.Name;
+                  const count = list.memberCount ?? 0;
+                  return (
+                    <div key={id} className="data-list-item" style={{ alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ color: 'var(--text-1)' }}>{name}</strong>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{count} member{count !== 1 ? 's' : ''}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="topbar-btn"
+                        style={{ color: 'var(--red, #ef4444)', marginLeft: 'auto' }}
+                        onClick={() => handleDeleteList(list)}
+                        disabled={deletingId === id}
+                      >
+                        {deletingId === id ? '…' : 'Delete'}
+                      </button>
+                    </div>
+                  );
+                })}
+                {lists.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>No lists yet. Create one above.</div>}
               </div>
             </div>
           </section>
@@ -589,12 +673,33 @@ const Marketing = () => {
               </form>
               {previewResult && <pre className="preview-box">{previewResult}</pre>}
               <div className="data-list" style={{ marginTop: 16 }}>
-                {templates.slice(0, 8).map((template) => (
-                  <div key={template.templateId} className="data-list-item">
-                    <strong>{template.name}</strong>
-                    <span>{template.category}</span>
-                  </div>
-                ))}
+                {templates.map((template) => {
+                  const id = template.templateId || template.TemplateId;
+                  const name = template.name || template.Name;
+                  const subject = template.subject || template.Subject || '';
+                  const category = template.category || template.Category;
+                  return (
+                    <div key={id} className="data-list-item" style={{ alignItems: 'flex-start', gap: 8 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <strong style={{ color: 'var(--text-1)' }}>{name}</strong>
+                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: 'var(--navy-4)', color: 'var(--text-3)' }}>{category}</span>
+                        </div>
+                        {subject && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Subject: {subject}</div>}
+                      </div>
+                      <button
+                        type="button"
+                        className="topbar-btn"
+                        style={{ color: 'var(--red, #ef4444)', flexShrink: 0 }}
+                        onClick={() => handleDeleteTemplate(template)}
+                        disabled={deletingId === id}
+                      >
+                        {deletingId === id ? '…' : 'Delete'}
+                      </button>
+                    </div>
+                  );
+                })}
+                {templates.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>No templates yet. Create one above.</div>}
               </div>
             </div>
           </section>
@@ -631,12 +736,43 @@ const Marketing = () => {
                 <button type="submit" className="topbar-btn primary">Create Campaign Draft</button>
               </form>
               <div className="data-list" style={{ marginTop: 16 }}>
-                {campaigns.slice(0, 8).map((campaign) => (
-                  <div key={campaign.campaignId} className="data-list-item">
-                    <strong>{campaign.name}</strong>
-                    <span>{campaign.status}</span>
-                  </div>
-                ))}
+                {campaigns.map((campaign) => {
+                  const id = campaign.campaignId || campaign.CampaignId;
+                  const name = campaign.name || campaign.Name;
+                  const status = campaign.status || campaign.Status || 'Draft';
+                  const linkedList = lists.find(l => (l.listId || l.ListId) === (campaign.listId || campaign.ListId));
+                  const linkedTemplate = templates.find(t => (t.templateId || t.TemplateId) === (campaign.templateId || campaign.TemplateId));
+                  const isSending = sendingCampaignId === id;
+                  const isDeleting = deletingId === id;
+                  const canSend = (campaign.listId || campaign.ListId) && (campaign.templateId || campaign.TemplateId) && status !== 'Sent';
+                  return (
+                    <div key={id} className="data-list-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <div>
+                          <strong style={{ color: 'var(--text-1)' }}>{name}</strong>
+                          <span style={{ fontSize: 10, marginLeft: 8, padding: '1px 7px', borderRadius: 20,
+                            background: status === 'Sent' ? 'rgba(34,197,94,0.12)' : 'var(--navy-4)',
+                            color: status === 'Sent' ? '#16a34a' : 'var(--text-3)' }}>{status}</span>
+                        </div>
+                        <div className="inline-actions">
+                          {canSend && (
+                            <button type="button" className="topbar-btn primary" onClick={() => handleSendCampaign(campaign)} disabled={isSending || isDeleting}>
+                              {isSending ? 'Sending…' : 'Send Now'}
+                            </button>
+                          )}
+                          <button type="button" className="topbar-btn" style={{ color: 'var(--red, #ef4444)' }} onClick={() => handleDeleteCampaign(campaign)} disabled={isSending || isDeleting}>
+                            {isDeleting ? '…' : 'Delete'}
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-3)' }}>
+                        <span>List: {linkedList ? (linkedList.name || linkedList.Name) : <em style={{ color: 'var(--orange, #f97316)' }}>None — assign one</em>}</span>
+                        <span>Template: {linkedTemplate ? (linkedTemplate.name || linkedTemplate.Name) : <em style={{ color: 'var(--orange, #f97316)' }}>None — assign one</em>}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {campaigns.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>No campaign drafts yet. Create one above.</div>}
               </div>
             </div>
           </section>

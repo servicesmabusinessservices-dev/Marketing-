@@ -29,6 +29,9 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const [contactResults, setContactResults] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState(new Set());
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [lists, setLists] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [loadingFromList, setLoadingFromList] = useState(false);
 
   const searchContacts = async (q) => {
     if (!q.trim()) { setContactResults([]); return; }
@@ -82,12 +85,16 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     const loadMetadata = async () => {
       setLoadingMetadata(true);
       try {
-        const [suppressionData, tokenData] = await Promise.all([
+        const [suppressionData, tokenData, listsData, templatesData] = await Promise.all([
           gmailService.getSuppressionSummary(),
-          gmailService.getTokens()
+          gmailService.getTokens(),
+          gmailService.getLists(),
+          gmailService.getTemplates()
         ]);
         setSuppressionSummary(suppressionData);
         setTokens(tokenData.tokens || []);
+        setLists(listsData.lists || []);
+        setTemplates(templatesData.templates || []);
       } catch (error) {
         if (error.response?.status === 401) {
           handleUnauthorized(navigate, showFeedback);
@@ -167,6 +174,30 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const suppressionBreakdown = suppressionSummary?.byReason?.length
     ? suppressionSummary.byReason.map((item) => `${item.reason}: ${item.count}`).join(' | ')
     : 'No suppressions yet.';
+
+  const loadFromList = async (listId) => {
+    if (!listId) return;
+    setLoadingFromList(true);
+    try {
+      const data = await gmailService.getListContacts(listId);
+      const emails = (data.contacts || []).map(c => (c.email || c.Email || '').toLowerCase()).filter(e => e.includes('@'));
+      if (!emails.length) { showFeedback('This list has no contacts yet.', 'warning'); return; }
+      setRecipientTags(prev => [...new Set([...prev, ...emails])]);
+      showFeedback(`Loaded ${emails.length} contacts from list.`, 'success');
+    } catch {
+      showFeedback('Failed to load contacts from list.', 'error');
+    } finally {
+      setLoadingFromList(false);
+    }
+  };
+
+  const loadTemplate = (templateId) => {
+    const tpl = templates.find(t => t.templateId === templateId);
+    if (!tpl) return;
+    if (tpl.subject) setSubject(tpl.subject);
+    if (tpl.bodyHtml) setContent(tpl.bodyHtml);
+    showFeedback(`Template "${tpl.name}" loaded.`, 'success');
+  };
   const tokenList = tokens.map((token) => `{{${token}}}`);
 
   const bulkContent = (
@@ -186,6 +217,42 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
               )}
             </div>
             <div className="card-body">
+              {(lists.length > 0 || templates.length > 0) && (
+                <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                  {lists.length > 0 && (
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <label className="form-label">Load Recipients from List</label>
+                      <select
+                        className="form-input"
+                        defaultValue=""
+                        onChange={(e) => { if (e.target.value) { loadFromList(e.target.value); e.target.value = ''; } }}
+                        disabled={isScheduling || loadingFromList}
+                      >
+                        <option value="" disabled>{loadingFromList ? 'Loading…' : 'Pick a list…'}</option>
+                        {lists.map(l => (
+                          <option key={l.listId} value={l.listId}>{l.name} ({l.memberCount ?? 0})</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {templates.length > 0 && (
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <label className="form-label">Use Template</label>
+                      <select
+                        className="form-input"
+                        defaultValue=""
+                        onChange={(e) => { if (e.target.value) { loadTemplate(e.target.value); e.target.value = ''; } }}
+                        disabled={isScheduling}
+                      >
+                        <option value="" disabled>Pick a template…</option>
+                        {templates.map(t => (
+                          <option key={t.templateId} value={t.templateId}>{t.name} ({t.category})</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="form-group">
                 <label className="form-label">Pick from Contacts</label>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>

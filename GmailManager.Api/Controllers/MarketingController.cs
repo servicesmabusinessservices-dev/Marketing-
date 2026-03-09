@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Xml.Linq;
 using GmailManager.Api.Data;
 using GmailManager.Api.Data.Entities;
+using GmailManager.Api.Models;
+using GmailManager.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +20,8 @@ namespace GmailManager.Api.Controllers;
 public class MarketingController : ControllerBase
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly IBulkEmailJobQueue _bulkEmailJobQueue;
+    private readonly IBulkEmailJobStore _bulkEmailJobStore;
     private static readonly HttpClient PlatformFeedClient = new() { Timeout = TimeSpan.FromSeconds(8) };
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 200;
@@ -51,9 +55,14 @@ public class MarketingController : ControllerBase
     };
     private static readonly Regex TokenPattern = new("{{\\s*([a-zA-Z0-9_]+)\\s*}}", RegexOptions.Compiled);
 
-    public MarketingController(IDbContextFactory<AppDbContext> dbContextFactory)
+    public MarketingController(
+        IDbContextFactory<AppDbContext> dbContextFactory,
+        IBulkEmailJobQueue bulkEmailJobQueue,
+        IBulkEmailJobStore bulkEmailJobStore)
     {
         _dbContextFactory = dbContextFactory;
+        _bulkEmailJobQueue = bulkEmailJobQueue;
+        _bulkEmailJobStore = bulkEmailJobStore;
     }
 
     private string? GetUserEmail() => User.FindFirst(ClaimTypes.Email)?.Value;
@@ -1163,12 +1172,31 @@ public class MarketingController : ControllerBase
         return Ok(new { listId = list.ListId });
     }
 
+    [HttpGet("lists/{listId}/members")]
+    public async Task<IActionResult> GetListMembers(string listId)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var memberIds = await db.ContactListMembers
+            .Where(x => x.UserEmail == userEmail && x.ListId == listId)
+            .Select(x => x.ContactId)
+            .ToListAsync();
+
+        var contacts = await db.Contacts
+            .Where(x => x.UserEmail == userEmail && memberIds.Contains(x.ContactId))
+            .Select(x => new { x.ContactId, x.Email, x.FirstName, x.LastName, x.Company })
+            .ToListAsync();
+
+        return Ok(new { contacts });
+    }
+
     [HttpPost("lists/{listId}/members/{contactId}")]
     public async Task<IActionResult> AddListMember(string listId, string contactId)
     {
         var userEmail = GetUserEmail();
         if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
-
         await using var db = await _dbContextFactory.CreateDbContextAsync();
         var exists = await db.ContactListMembers.AnyAsync(x => x.UserEmail == userEmail && x.ListId == listId && x.ContactId == contactId);
         if (exists) return Ok(new { added = false });
@@ -1186,8 +1214,7 @@ public class MarketingController : ControllerBase
     }
 
     [HttpPost("lists/{listId}/members/bulk")]
-    public async Task<IActionResult> AddListMembersBulk(string listId, [FromBody] BulkAddMembersRequest request)
-    {
+    public async Task<IActionResult> AddListMembersBulk(string listId, [FromBody] BulkAddMembersRequest request)    {
         var userEmail = GetUserEmail();
         if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
         if (request.ContactIds == null || request.ContactIds.Count == 0) return BadRequest(new { error = "ContactIds required" });
@@ -1652,6 +1679,104 @@ public class MarketingController : ControllerBase
         db.Campaigns.Add(campaign);
         await db.SaveChangesAsync();
         return Ok(new { campaignId = campaign.CampaignId });
+    }
+
+    [HttpPost("campaigns/{campaignId}/send")]
+    public async Task<IActionResult> SendCampaign(string campaignId)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+
+        var campaign = await db.Campaigns.FirstOrDefaultAsync(x => x.UserEmail == userEmail && x.CampaignId == campaignId);
+        if (campaign == null) return NotFound(new { error = "Campaign not found" });
+        if (string.IsNullOrWhiteSpace(campaign.ListId)) return BadRequest(new { error = "Campaign has no list assigned" });
+        if (string.IsNullOrWhiteSpace(campaign.TemplateId)) return BadRequest(new { error = "Campaign has no template assigned" });
+
+        var memberIds = await db.ContactListMembers
+            .Where(x => x.UserEmail == userEmail && x.ListId == campaign.ListId)
+            .Select(x => x.ContactId)
+            .ToListAsync();
+
+        if (memberIds.Count == 0) return BadRequest(new { error = "The campaign list has no members" });
+
+        var emails = await db.Contacts
+            .Where(x => x.UserEmail == userEmail && memberIds.Contains(x.ContactId) && x.Email != null)
+            .Select(x => x.Email!)
+            .Distinct()
+            .ToListAsync();
+
+        if (emails.Count == 0) return BadRequest(new { error = "No valid email addresses found in the list" });
+
+        var template = await db.CampaignTemplates.FirstOrDefaultAsync(x => x.UserEmail == userEmail && x.TemplateId == campaign.TemplateId);
+        if (template == null) return BadRequest(new { error = "Template not found" });
+
+        var job = new BulkEmailJob
+        {
+            UserEmail = userEmail,
+            Subject = template.Subject ?? campaign.Name,
+            Body = template.BodyHtml ?? string.Empty,
+            Recipients = emails,
+            DelaySeconds = 2
+        };
+
+        await _bulkEmailJobStore.UpsertAsync(job);
+        await _bulkEmailJobQueue.QueueAsync(job.JobId);
+
+        campaign.Status = "Sent";
+        campaign.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { jobId = job.JobId, totalRecipients = emails.Count });
+    }
+
+    [HttpDelete("campaigns/{campaignId}")]
+    public async Task<IActionResult> DeleteCampaign(string campaignId)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var campaign = await db.Campaigns.FirstOrDefaultAsync(x => x.UserEmail == userEmail && x.CampaignId == campaignId);
+        if (campaign == null) return NotFound(new { error = "Campaign not found" });
+
+        db.Campaigns.Remove(campaign);
+        await db.SaveChangesAsync();
+        return Ok(new { deleted = true });
+    }
+
+    [HttpDelete("templates/{templateId}")]
+    public async Task<IActionResult> DeleteTemplate(string templateId)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var template = await db.CampaignTemplates.FirstOrDefaultAsync(x => x.UserEmail == userEmail && x.TemplateId == templateId);
+        if (template == null) return NotFound(new { error = "Template not found" });
+
+        db.CampaignTemplates.Remove(template);
+        await db.SaveChangesAsync();
+        return Ok(new { deleted = true });
+    }
+
+    [HttpDelete("lists/{listId}")]
+    public async Task<IActionResult> DeleteList(string listId)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail)) return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var list = await db.ContactLists.FirstOrDefaultAsync(x => x.UserEmail == userEmail && x.ListId == listId);
+        if (list == null) return NotFound(new { error = "List not found" });
+
+        // remove members first
+        var members = db.ContactListMembers.Where(x => x.UserEmail == userEmail && x.ListId == listId);
+        db.ContactListMembers.RemoveRange(members);
+        db.ContactLists.Remove(list);
+        await db.SaveChangesAsync();
+        return Ok(new { deleted = true });
     }
 
     [HttpGet("contacts/{contactId}/lead-stage-history")]

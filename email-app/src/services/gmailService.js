@@ -367,6 +367,34 @@ export const gmailService = {
     return response.data;
   },
 
+  sendCampaign: async (campaignId) => {
+    const response = await axios.post(`${API_BASE_URL}/marketing/campaigns/${campaignId}/send`, {}, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  },
+
+  deleteCampaign: async (campaignId) => {
+    const response = await axios.delete(`${API_BASE_URL}/marketing/campaigns/${campaignId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  },
+
+  deleteTemplate: async (templateId) => {
+    const response = await axios.delete(`${API_BASE_URL}/marketing/templates/${templateId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  },
+
+  deleteList: async (listId) => {
+    const response = await axios.delete(`${API_BASE_URL}/marketing/lists/${listId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  },
+
   getJourneys: async () => {
     const response = await axios.get(`${API_BASE_URL}/marketing/journeys`, {
       headers: getAuthHeaders()
@@ -458,6 +486,14 @@ export const gmailService = {
     const response = await axios.post(
       `${API_BASE_URL}/marketing/lists/${listId}/members/bulk`,
       { contactIds },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  },
+
+  getListContacts: async (listId) => {
+    const response = await axios.get(
+      `${API_BASE_URL}/marketing/lists/${listId}/members`,
       { headers: getAuthHeaders() }
     );
     return response.data;
