@@ -417,11 +417,11 @@ const EmailList = () => {
       <div className="inbox-layout">
         <div className="inbox-sidebar">
           <div className="inbox-filters">
-            <div className="search-box" style={{ width: '100%' }}>
+            <div className="search-box search-box-full">
               <Icon name="search" size={13} color="var(--text-3)" />
               <input placeholder="Search inbox" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+            <div className="chip-wrap">
               {filterOptions.map((filter) => (
                 <div
                   key={filter.value}
@@ -432,7 +432,7 @@ const EmailList = () => {
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div className="inbox-actions">
               <button type="button" className="topbar-btn" onClick={() => setShowBulkEmail(true)}>
                 Quick Bulk
               </button>
@@ -446,11 +446,11 @@ const EmailList = () => {
           </div>
 
           {loading ? (
-            <div className="empty-state" style={{ padding: 24 }}>
+            <div className="empty-state empty-state-md">
               <p>Loading emails...</p>
             </div>
           ) : filteredEmails.length === 0 ? (
-            <div className="empty-state" style={{ padding: 24 }}>
+            <div className="empty-state empty-state-md">
               <p>No emails found</p>
               <small>Try adjusting your search keyword</small>
             </div>
@@ -466,16 +466,16 @@ const EmailList = () => {
               >
                 {!email.isRead && <div className="unread-indicator" />}
                 <div className="email-meta">
-                  <div className="email-sender" style={{ paddingLeft: !email.isRead ? 8 : 0 }}>
+                  <div className={`email-sender ${!email.isRead ? 'email-indent' : ''}`}>
                     {decodeHtmlEntities(email.from)}
                   </div>
                   <div className="email-time">{formatDate(email.date)}</div>
                 </div>
-                <div className="email-subject" style={{ paddingLeft: !email.isRead ? 8 : 0 }}>
+                <div className={`email-subject ${!email.isRead ? 'email-indent' : ''}`}>
                   {decodeHtmlEntities(email.subject || '(No Subject)')}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: !email.isRead ? 8 : 0 }}>
-                  <div className="email-snippet" style={{ flex: 1 }}>{decodeHtmlEntities(email.snippet || '')}</div>
+                <div className={`email-snippet-row ${!email.isRead ? 'email-indent' : ''}`}>
+                  <div className="email-snippet email-snippet-grow">{decodeHtmlEntities(email.snippet || '')}</div>
                   <span className={`classification-tag ${getTagClass(email.classification)}`}>{getTagLabel(email.classification)}</span>
                 </div>
               </div>
@@ -483,7 +483,7 @@ const EmailList = () => {
           )}
 
           {nextPageToken && (
-            <div style={{ padding: '12px 16px' }}>
+            <div className="inbox-load-more">
               <button type="button" className="topbar-btn" onClick={handleLoadMore} disabled={loadingMore}>
                 {loadingMore ? 'Loading...' : 'Load More'}
               </button>
@@ -491,15 +491,15 @@ const EmailList = () => {
           )}
         </div>
 
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div className="inbox-detail-pane">
           {detailLoading && (
-            <div className="empty-state" style={{ padding: 32 }}>
+            <div className="empty-state empty-state-lg">
               <p>Loading email detail...</p>
             </div>
           )}
 
           {!detailLoading && detailError && (
-            <div className="empty-state" style={{ padding: 32 }}>
+            <div className="empty-state empty-state-lg">
               <p>{detailError}</p>
             </div>
           )}
@@ -547,7 +547,7 @@ const EmailList = () => {
                     <Icon name="users" size={13} /> {addingContact ? 'Adding...' : 'Add to CRM'}
                   </div>
                 </div>
-                <div style={{ marginTop: 16, maxWidth: 240 }}>
+                <div className="classification-wrap">
                   <label className="form-label">Classification</label>
                   <select
                     className="form-input"
@@ -563,7 +563,7 @@ const EmailList = () => {
               </div>
 
               {detailData && hasHtmlContent(detailData.body) ? (
-                <div className="email-body" style={{ padding: 10 }}>
+                <div className="email-body email-body-frame-wrap">
                   <iframe
                     className="email-body-frame"
                     title="email-body"
@@ -578,7 +578,7 @@ const EmailList = () => {
               )}
 
               {showReply && (
-                <div style={{ marginTop: 16 }}>
+                <div className="composer-wrap">
                   <label className="form-label">Reply</label>
                   <textarea
                     className="form-input"
@@ -587,7 +587,7 @@ const EmailList = () => {
                     onChange={(event) => setReplyText(event.target.value)}
                     placeholder="Type your reply"
                   />
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <div className="composer-actions">
                     <button type="button" className="action-btn primary" onClick={handleSendReply} disabled={sending}>
                       {sending ? 'Sending...' : 'Send Reply'}
                     </button>
@@ -599,7 +599,7 @@ const EmailList = () => {
               )}
 
               {showForward && (
-                <div style={{ marginTop: 16 }}>
+                <div className="composer-wrap">
                   <label className="form-label">Forward to</label>
                   <input
                     className="form-input"
@@ -607,7 +607,7 @@ const EmailList = () => {
                     onChange={(event) => setForwardTo(event.target.value)}
                     placeholder="Add recipient emails"
                   />
-                  <label className="form-label" style={{ marginTop: 12 }}>Note (optional)</label>
+                  <label className="form-label form-label-offset">Note (optional)</label>
                   <textarea
                     className="form-input"
                     rows="4"
@@ -615,7 +615,7 @@ const EmailList = () => {
                     onChange={(event) => setForwardNote(event.target.value)}
                     placeholder="Add a short note"
                   />
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <div className="composer-actions">
                     <button type="button" className="action-btn primary" onClick={handleSendForward} disabled={forwarding}>
                       {forwarding ? 'Forwarding...' : 'Send Forward'}
                     </button>

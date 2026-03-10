@@ -204,12 +204,12 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     <div className={isPageMode ? 'content fade-in' : 'fade-in'}>
       <div className="bulk-layout">
         <div>
-          <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card card-stack">
             <div className="card-header">
               <Icon name="bulk" size={14} color="var(--accent-primary)" />
               <span className="card-title">Campaign Setup</span>
               {isPageMode && (
-                <span style={{ marginLeft: 'auto' }}>
+                <span className="ml-auto">
                   <button type="button" className="close-btn" onClick={handleClose}>
                     Back to Inbox
                   </button>
@@ -218,9 +218,9 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             </div>
             <div className="card-body">
               {(lists.length > 0 || templates.length > 0) && (
-                <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                <div className="bulk-source-row">
                   {lists.length > 0 && (
-                    <div style={{ flex: 1, minWidth: 200 }}>
+                    <div className="bulk-source-col">
                       <label className="form-label">Load Recipients from List</label>
                       <select
                         className="form-input"
@@ -236,7 +236,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                     </div>
                   )}
                   {templates.length > 0 && (
-                    <div style={{ flex: 1, minWidth: 200 }}>
+                    <div className="bulk-source-col">
                       <label className="form-label">Use Template</label>
                       <select
                         className="form-input"
@@ -255,7 +255,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
               )}
               <div className="form-group">
                 <label className="form-label">Pick from Contacts</label>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <div className="bulk-contact-search-row">
                   <input
                     className="form-input"
                     type="text"
@@ -267,8 +267,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                   />
                   <button
                     type="button"
-                    className="send-btn"
-                    style={{ padding: '8px 14px', fontSize: 12, whiteSpace: 'nowrap' }}
+                    className="send-btn bulk-add-selected-btn"
                     onClick={addSelectedToList}
                     disabled={!selectedContacts.size || isScheduling}
                   >
@@ -276,10 +275,10 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                   </button>
                 </div>
                 {loadingContacts && (
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>Searching...</div>
+                  <div className="bulk-inline-note">Searching...</div>
                 )}
                 {contactResults.length > 0 && (
-                  <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 8 }}>
+                  <div className="bulk-contact-results">
                     {contactResults.map((c) => {
                       const email = c.email || c.Email || '';
                       const name = [c.firstName || c.FirstName, c.lastName || c.LastName].filter(Boolean).join(' ') || email;
@@ -289,16 +288,13 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                         <div
                           key={email}
                           onClick={() => toggleContact(email)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                            cursor: 'pointer', borderBottom: '1px solid var(--border)',
-                            background: checked ? 'var(--navy-3)' : 'transparent'
-                          }}
+                          className="bulk-contact-result-row"
+                          style={{ background: checked ? 'var(--navy-3)' : 'transparent' }}
                         >
                           <input type="checkbox" checked={checked} onChange={() => toggleContact(email)} onClick={e => e.stopPropagation()} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, color: 'var(--text-1)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}{company ? ` · ${company}` : ''}</div>
+                          <div className="bulk-contact-result-info">
+                            <div className="bulk-contact-result-name">{name}</div>
+                            <div className="bulk-contact-result-meta">{email}{company ? ` · ${company}` : ''}</div>
                           </div>
                         </div>
                       );
@@ -308,12 +304,9 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Recipients{recipientTags.length > 0 && <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}>{recipientTags.length} added</span>}</label>
+                <label className="form-label">Recipients{recipientTags.length > 0 && <span className="recipient-count">{recipientTags.length} added</span>}</label>
                 <div
-                  style={{
-                    border: '1px solid var(--border)', borderRadius: 6,
-                    background: 'var(--navy-3)', minHeight: 48, cursor: 'text'
-                  }}
+                  className="recipient-editor"
                   onClick={() => document.getElementById('email-tag-input').focus()}
                 >
                   {recipientTags.length > 20 ? (
@@ -438,7 +431,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="bulk-side-stack">
           <div className="card">
             <div className="card-header">
               <Icon name="zap" size={14} color="var(--accent-primary)" />
@@ -447,7 +440,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             <div className="card-body">
               {jobStatus ? (
                 <>
-                  <div style={{ background: 'var(--navy-4)', borderRadius: 100, height: 6, marginBottom: 16, overflow: 'hidden' }}>
+                  <div className="bulk-progress-track">
                     <div
                       style={{
                         height: '100%',
@@ -458,15 +451,15 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                       }}
                     />
                   </div>
-                  <div style={{ fontSize: 32, fontFamily: 'Syne', fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', marginBottom: 4 }}>
+                  <div className="bulk-progress-value">
                     {progressLabel}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', marginBottom: 20 }}>
+                  <div className="bulk-progress-status">
                     {jobStatus === 'Completed' ? 'Complete' : 'Sending'}
                   </div>
                 </>
               ) : (
-                <div className="empty-state" style={{ padding: 24 }}>
+                <div className="empty-state empty-state-md">
                   <div className="icon">Progress</div>
                   <p>Progress will appear here</p>
                   <small>after you send</small>
@@ -494,20 +487,20 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             </div>
             <div className="card-body">
               {loadingMetadata ? (
-                <div className="empty-state" style={{ padding: 20 }}>
+                <div className="empty-state empty-state-md">
                   <p>Loading suppression data...</p>
                 </div>
               ) : suppressionSummary ? (
                 <>
-                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, lineHeight: 1.6 }}>
-                    <span style={{ color: 'var(--emerald)', fontWeight: 600 }}>{suppressionTotal} emails suppressed</span> - automatically excluded from this send.
+                  <div className="bulk-suppression-summary">
+                    <span className="bulk-suppression-highlight">{suppressionTotal} emails suppressed</span> - automatically excluded from this send.
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>
+                  <div className="bulk-suppression-breakdown">
                     {suppressionBreakdown}
                   </div>
                 </>
               ) : (
-                <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                <div className="bulk-inline-note">
                   Suppression data unavailable.
                 </div>
               )}
@@ -521,29 +514,20 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             </div>
             <div className="card-body">
               {loadingMetadata ? (
-                <div className="empty-state" style={{ padding: 20 }}>
+                <div className="empty-state empty-state-md">
                   <p>Loading tokens...</p>
                 </div>
               ) : tokenList.length ? (
                 tokenList.map((token) => (
                   <div
                     key={token}
-                    style={{
-                      background: 'var(--navy-3)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 6,
-                      padding: '6px 10px',
-                      marginBottom: 6,
-                      fontFamily: 'DM Mono, monospace',
-                      fontSize: 12,
-                      color: '#a78bfa'
-                    }}
+                    className="bulk-token-item"
                   >
                     {token}
                   </div>
                 ))
               ) : (
-                <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                <div className="bulk-inline-note">
                   No tokens available yet.
                 </div>
               )}
@@ -565,7 +549,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
           <h2>Bulk Email Scheduler</h2>
           <button className="close-btn" onClick={handleClose}>Close</button>
         </div>
-        <div style={{ padding: 20 }}>{bulkContent}</div>
+        <div className="bulk-modal-content">{bulkContent}</div>
       </div>
     </div>
   );

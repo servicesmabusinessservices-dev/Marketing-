@@ -12,6 +12,10 @@
   min-width: 0;
 }
 
+.jb-back-btn {
+  flex-shrink: 0;
+}
+
 .jb-name {
   font-weight: 700;
   font-size: 20px;

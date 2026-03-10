@@ -1,10 +1,14 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../ui/Icon';
 
 const getTitle = (location) => {
   const params = new URLSearchParams(location.search);
   const tab = params.get('tab');
+
+  if (location.pathname === '/' || location.pathname === '/auth-success' || location.pathname === '/auth-error') {
+    return { crumb: 'Welcome', title: 'Sign In' };
+  }
 
   if (location.pathname === '/dashboard') {
     return { crumb: 'Home', title: 'Dashboard' };
@@ -57,12 +61,13 @@ const getTitle = (location) => {
   return { crumb: 'Home', title: 'Workspace' };
 };
 
-const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle }) => {
+const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, isAuthenticated = true }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const meta = getTitle(location);
 
-  const showInboxAction = location.pathname === '/emails' || location.pathname.startsWith('/email/');
-  const showDashboardAction = location.pathname === '/dashboard';
+  const showInboxAction = isAuthenticated && (location.pathname === '/emails' || location.pathname.startsWith('/email/'));
+  const showDashboardAction = isAuthenticated && location.pathname === '/dashboard';
 
   return (
     <header className="topbar">
@@ -81,13 +86,27 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle }) => {
         <span className="current">{meta.title}</span>
       </div>
       <div className="topbar-right">
-        <div className="search-box">
-          <Icon name="search" size={13} color="var(--text-3)" />
-          <input placeholder="Search contacts, emails" />
-        </div>
-        <div className="topbar-btn">
-          <Icon name="bell" size={14} />
-        </div>
+        {isAuthenticated && (
+          <div className="search-box">
+            <Icon name="search" size={13} color="var(--text-3)" />
+            <input placeholder="Search contacts, emails" />
+          </div>
+        )}
+        {isAuthenticated && (
+          <div className="topbar-btn">
+            <Icon name="bell" size={14} />
+          </div>
+        )}
+        {!isAuthenticated && (
+          <button
+            type="button"
+            className="topbar-btn primary"
+            onClick={() => navigate('/')}
+          >
+            <Icon name="mail" size={13} />
+            Sign In
+          </button>
+        )}
         {showInboxAction && (
           <div className="topbar-btn primary">
             <Icon name="bulk" size={13} />

@@ -146,7 +146,7 @@ const ContactProfile = () => {
   if (isLoading) {
     return (
       <div className="content fade-in">
-        <div className="empty-state" style={{ paddingTop: 60 }}>
+        <div className="empty-state empty-state-top">
           <p>Loading contact...</p>
         </div>
       </div>
@@ -156,7 +156,7 @@ const ContactProfile = () => {
   if (!contact) {
     return (
       <div className="content fade-in">
-        <div className="empty-state" style={{ paddingTop: 60 }}>
+        <div className="empty-state empty-state-top">
           <p>Contact not found.</p>
         </div>
       </div>
@@ -173,7 +173,7 @@ const ContactProfile = () => {
   return (
     <div className="content fade-in">
       {/* Back */}
-      <div style={{ marginBottom: 16 }}>
+      <div className="cp-back-row">
         <button className="topbar-btn" onClick={() => navigate('/marketing?tab=contacts')}>
           ← Back to Contacts
         </button>
@@ -281,7 +281,7 @@ const ContactProfile = () => {
             <div className="card">
               <div className="card-body">
                 {events.length === 0 ? (
-                  <div className="empty-state" style={{ padding: 16 }}>
+                  <div className="empty-state empty-state-sm">
                     <p>No activity yet</p>
                     <small>Events appear once tracked via the Marketing module</small>
                   </div>
@@ -326,7 +326,7 @@ const ContactProfile = () => {
                 </form>
                 <div className="cp-notes-list">
                   {notes.length === 0 ? (
-                    <div className="empty-state" style={{ padding: 12 }}>
+                    <div className="empty-state empty-state-sm">
                       <p>No notes yet</p>
                     </div>
                   ) : (
@@ -355,8 +355,7 @@ const ContactProfile = () => {
                   />
                   <div className="cp-task-row">
                     <select
-                      className="form-input"
-                      style={{ flex: '0 0 auto' }}
+                      className="form-input cp-task-priority"
                       value={taskForm.priority}
                       onChange={e => setTaskForm(f => ({ ...f, priority: e.target.value }))}
                     >
@@ -366,8 +365,7 @@ const ContactProfile = () => {
                     </select>
                     <input
                       type="date"
-                      className="form-input"
-                      style={{ flex: '1 1 auto' }}
+                      className="form-input cp-task-date"
                       value={taskForm.dueDate}
                       onChange={e => setTaskForm(f => ({ ...f, dueDate: e.target.value }))}
                     />
@@ -382,7 +380,7 @@ const ContactProfile = () => {
                 </form>
                 <div>
                   {tasks.length === 0 ? (
-                    <div className="empty-state" style={{ padding: 12 }}>
+                    <div className="empty-state empty-state-sm">
                       <p>No tasks yet</p>
                     </div>
                   ) : (
@@ -400,8 +398,7 @@ const ContactProfile = () => {
                           <div className="task-info">
                             <div className={`task-name ${done ? 'done' : ''}`}>{task.title}</div>
                             <div
-                              className="task-meta"
-                              style={{ color: overdue ? 'var(--rose)' : 'var(--text-3)' }}
+                              className={`task-meta ${overdue ? 'overdue' : ''}`}
                             >
                               {task.dueAtUtc
                                 ? `Due ${formatDate(task.dueAtUtc)}${overdue ? ' · Overdue' : ''}`
@@ -425,7 +422,7 @@ const ContactProfile = () => {
             <div className="card">
               <div className="card-body">
                 {stageHistory.length === 0 ? (
-                  <div className="empty-state" style={{ padding: 16 }}>
+                  <div className="empty-state empty-state-sm">
                     <p>No stage history yet</p>
                     <small>Stage changes will appear here</small>
                   </div>

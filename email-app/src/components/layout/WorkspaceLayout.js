@@ -8,24 +8,31 @@ import WorkspaceSidebar from './WorkspaceSidebar';
 import WorkspaceTopbar from './WorkspaceTopbar';
 import PageTransition from '../ui/PageTransition';
 
-const WorkspaceLayout = () => {
+const WorkspaceLayout = ({ isAuthenticated = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
   const { showFeedback } = useFeedback();
-  const currentUserEmail = localStorage.getItem('user_email') || 'Signed in user';
+  const currentUserEmail = isAuthenticated
+    ? (localStorage.getItem('user_email') || 'Signed in user')
+    : 'Guest user';
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const closeMobileSidebar = useCallback(() => setMobileOpen(false), []);
 
   const handleLogout = () => {
+    if (!isAuthenticated) {
+      navigate('/', { replace: true });
+      return;
+    }
+
     clearSession();
     showFeedback('Signed out successfully.', 'info');
     navigate('/', { replace: true });
   };
 
   return (
-    <div className="app">
+    <div className={`app${isAuthenticated ? '' : ' app-public'}`}>
       {/* Mobile backdrop — closes sidebar when tapped */}
       {mobileOpen && (
         <div
@@ -39,12 +46,14 @@ const WorkspaceLayout = () => {
         userEmail={currentUserEmail}
         mobileOpen={mobileOpen}
         onMobileClose={closeMobileSidebar}
+        isAuthenticated={isAuthenticated}
       />
       <div className="main">
         <WorkspaceTopbar
           isDark={isDark}
           toggleTheme={toggleTheme}
           onMenuToggle={() => setMobileOpen(v => !v)}
+          isAuthenticated={isAuthenticated}
         />
         <div className="page-scroll-area">
           <AnimatePresence mode="wait">

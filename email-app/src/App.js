@@ -36,13 +36,19 @@ const queryClient = new QueryClient({
 });
 
 // ── Protected workspace guard ─────────────────────────────────────────────────
+const PublicWorkspace = () => (
+  <Suspense fallback={<PageSkeleton />}>
+    <WorkspaceLayout isAuthenticated={false} />
+  </Suspense>
+);
+
 const ProtectedWorkspace = () => {
   if (!hasSession()) {
     return <Navigate to="/" replace />;
   }
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <WorkspaceLayout />
+      <WorkspaceLayout isAuthenticated />
     </Suspense>
   );
 };
@@ -56,30 +62,32 @@ function App() {
             <BrowserRouter>
               <ErrorBoundary>
                 <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <Suspense fallback={<PageSkeleton />}>
-                        <AccountSelection />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="/auth-success"
-                    element={
-                      <Suspense fallback={<PageSkeleton />}>
-                        <AccountSelection />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="/auth-error"
-                    element={
-                      <Suspense fallback={<PageSkeleton />}>
-                        <AccountSelection />
-                      </Suspense>
-                    }
-                  />
+                  <Route element={<PublicWorkspace />}>
+                    <Route
+                      path="/"
+                      element={
+                        <Suspense fallback={<PageSkeleton />}>
+                          <AccountSelection />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/auth-success"
+                      element={
+                        <Suspense fallback={<PageSkeleton />}>
+                          <AccountSelection />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/auth-error"
+                      element={
+                        <Suspense fallback={<PageSkeleton />}>
+                          <AccountSelection />
+                        </Suspense>
+                      }
+                    />
+                  </Route>
 
                   <Route element={<ProtectedWorkspace />}>
                     <Route

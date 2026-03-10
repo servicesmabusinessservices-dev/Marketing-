@@ -131,7 +131,7 @@ const JourneyBuilder = () => {
   if (loading) {
     return (
       <div className="content fade-in">
-        <div className="empty-state" style={{ paddingTop: 60 }}><p>Loading journey…</p></div>
+        <div className="empty-state empty-state-top"><p>Loading journey…</p></div>
       </div>
     );
   }
@@ -139,9 +139,9 @@ const JourneyBuilder = () => {
   if (!journey) {
     return (
       <div className="content fade-in">
-        <div className="empty-state" style={{ paddingTop: 60 }}>
+        <div className="empty-state empty-state-top">
           <p>Journey not found.</p>
-          <button className="topbar-btn" style={{ marginTop: 16 }} onClick={() => navigate('/marketing?tab=journeys')}>
+          <button className="topbar-btn topbar-btn-spaced" onClick={() => navigate('/marketing?tab=journeys')}>
             ← Back to Journeys
           </button>
         </div>
@@ -153,7 +153,7 @@ const JourneyBuilder = () => {
     <div className="content fade-in">
       {/* Header */}
       <div className="jb-header">
-        <button className="topbar-btn" onClick={() => navigate('/marketing?tab=journeys')} style={{ flexShrink: 0 }}>
+        <button className="topbar-btn jb-back-btn" onClick={() => navigate('/marketing?tab=journeys')}>
           ← Journeys
         </button>
         <div className="jb-title-group">
@@ -184,7 +184,7 @@ const JourneyBuilder = () => {
         <div className="card-header">
           <Icon name="journey" size={14} color="var(--accent-primary)" />
           <span className="card-title">Steps ({steps.length})</span>
-          <span className="helper-text" style={{ marginLeft: 'auto', fontSize: 12 }}>
+          <span className="helper-text card-header-meta">
             Configure the sequence of actions for each enrolled contact.
           </span>
         </div>

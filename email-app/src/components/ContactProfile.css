@@ -82,6 +82,10 @@
   align-items: flex-end;
 }
 
+.cp-back-row {
+  margin-bottom: 16px;
+}
+
 .cp-stage-form {
   display: flex;
   flex-direction: column;
@@ -195,6 +199,14 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.cp-task-priority {
+  flex: 0 0 auto;
+}
+
+.cp-task-date {
+  flex: 1 1 auto;
 }
 
 /* Stage history */

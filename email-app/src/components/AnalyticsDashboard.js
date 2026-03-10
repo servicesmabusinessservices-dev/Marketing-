@@ -42,26 +42,25 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="content fade-in">
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="analytics-toolbar-row">
         {[7, 30, 90, 180].map((value) => (
           <div key={value} className={`filter-chip ${days === value ? 'active' : ''}`} onClick={() => setDays(value)}>
             Last {value} days
           </div>
         ))}
         <input
-          className="form-input"
-          style={{ maxWidth: 240 }}
+          className="form-input analytics-owner-input"
           value={ownerEmail}
           onChange={(event) => setOwnerEmail(event.target.value)}
           placeholder="Filter by owner email"
         />
-        <div style={{ marginLeft: 'auto' }}>
+        <div className="ml-auto">
           <button className="topbar-btn" onClick={refetch}>Refresh</button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="empty-state" style={{ paddingTop: 60 }}>
+        <div className="empty-state empty-state-top">
           <p>Loading analytics...</p>
         </div>
       ) : (
@@ -136,23 +135,23 @@ const AnalyticsDashboard = () => {
                   { label: 'Failed', value: journeyPerformance.failed || 0 },
                   { label: 'Paused', value: journeyPerformance.paused || 0 }
                 ].map((row) => (
-                  <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12.5, color: 'var(--text-1)', fontWeight: 500 }}>{row.label}</div>
+                  <div key={row.label} className="analytics-kv-row">
+                    <div className="analytics-kv-label-wrap">
+                      <div className="analytics-kv-label">{row.label}</div>
                     </div>
-                    <div style={{ fontFamily: 'DM Mono', fontSize: 13, color: 'var(--text-1)' }}>{row.value}</div>
+                    <div className="analytics-kv-value">{row.value}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card card-stack">
             <div className="card-header">
               <Icon name="users" size={14} color="var(--indigo)" />
               <span className="card-title">Owner Workload</span>
             </div>
-            <div className="card-body" style={{ padding: 0 }}>
+            <div className="card-body card-body-flush">
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -169,7 +168,7 @@ const AnalyticsDashboard = () => {
                         <td className="bold">{owner.ownerEmail}</td>
                         <td>{owner.contacts}</td>
                         <td>{owner.openTasks}</td>
-                        <td style={{ color: owner.overdueTasks > 0 ? 'var(--rose)' : 'var(--text-2)' }}>{owner.overdueTasks}</td>
+                        <td className={owner.overdueTasks > 0 ? 'table-overdue' : ''}>{owner.overdueTasks}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -183,7 +182,7 @@ const AnalyticsDashboard = () => {
               <Icon name="bar" size={14} color="var(--indigo)" />
               <span className="card-title">Stage Transitions</span>
             </div>
-            <div className="card-body" style={{ padding: 0 }}>
+            <div className="card-body card-body-flush">
               <div className="table-wrap">
                 <table>
                   <thead>

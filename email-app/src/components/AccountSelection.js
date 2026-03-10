@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { gmailService } from '../services/gmailService';
-import { useTheme } from '../context/ThemeContext';
 import Icon from './ui/Icon';
 
 const AccountSelection = () => {
   const navigate = useNavigate();
-  const { isDark, toggleTheme } = useTheme();
   const [searchParams] = useSearchParams();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -79,9 +77,6 @@ const AccountSelection = () => {
             <span>No password stored</span>
           </div>
         </div>
-        <button type="button" className="topbar-btn" style={{ position: 'absolute', top: 20, right: 20 }} onClick={toggleTheme}>
-          {isDark ? 'Light' : 'Dark'} Mode
-        </button>
       </div>
       <div className="login-right">
         <div className="login-right-glow" />
@@ -94,7 +89,7 @@ const AccountSelection = () => {
             { icon: 'bar', title: 'Full Analytics', desc: 'Open rates, click rates, ROI attribution, and conversion funnels.' }
           ].map((feature) => (
             <div key={feature.title} className="feature-item">
-              <div className="feature-icon-wrap" style={{ background: 'var(--gradient-cta)', border: 'none', boxShadow: 'var(--glow-indigo)' }}>
+              <div className="feature-icon-wrap feature-icon-wrap-cta">
                 <Icon name={feature.icon} size={18} color="#fff" />
               </div>
               <div className="feature-text">

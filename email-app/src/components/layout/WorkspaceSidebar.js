@@ -1,11 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { gmailService } from '../../services/gmailService';
 import { useFeedback } from '../../context/FeedbackContext';
 import { handleUnauthorized } from '../../utils/session';
 import Icon from '../ui/Icon';
 
-const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) => {
+const PUBLIC_NAV_ITEMS = [
+  { id: 'welcome', icon: 'home', label: 'Welcome', to: '/' },
+  { id: 'signin', icon: 'mail', label: 'Sign In', to: '/' },
+  { divider: true },
+  { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard', requiresAuth: true },
+  { id: 'inbox', icon: 'inbox', label: 'Inbox', to: '/emails', requiresAuth: true },
+  { id: 'bulk', icon: 'bulk', label: 'Bulk Email', to: '/emails/bulk', requiresAuth: true },
+  { divider: true },
+  { id: 'contacts', icon: 'users', label: 'Contacts', to: '/marketing?tab=contacts', requiresAuth: true },
+  { id: 'journeys', icon: 'journey', label: 'Journeys', to: '/marketing?tab=journeys', requiresAuth: true },
+  { id: 'analytics', icon: 'bar', label: 'Analytics', to: '/marketing/analytics', requiresAuth: true }
+];
+
+const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAuthenticated = true }) => {
   const navigate = useNavigate();
   const { showFeedback } = useFeedback();
   const location = useLocation();
@@ -16,15 +29,32 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) =>
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setEmailSummary(null);
+      setJourneySummary(null);
+      return undefined;
+    }
+
+    let isMounted = true;
+
     const loadSidebarMetrics = async () => {
       try {
         const [emailData, journeyData] = await Promise.all([
           gmailService.getEmailSummary(),
           gmailService.getJourneySummary()
         ]);
+
+        if (!isMounted) {
+          return;
+        }
+
         setEmailSummary(emailData);
         setJourneySummary(journeyData);
       } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
         if (error.response?.status === 401) {
           handleUnauthorized(navigate, showFeedback);
           return;
@@ -34,7 +64,11 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) =>
     };
 
     loadSidebarMetrics();
-  }, [navigate, showFeedback]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, navigate, showFeedback]);
 
   const unreadCount = emailSummary?.unreadCount;
   const inboxBadge = unreadCount !== undefined && unreadCount !== null ? String(unreadCount) : null;
@@ -44,22 +78,48 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) =>
   );
   const journeysBadge = journeySummary ? String(activeEnrollments) : null;
 
-  const navItems = [
-    { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard' },
-    { id: 'inbox', icon: 'inbox', label: 'Inbox', to: '/emails', badge: inboxBadge },
-    { id: 'bulk', icon: 'bulk', label: 'Bulk Email', to: '/emails/bulk' },
-    { divider: true },
-    { id: 'contacts', icon: 'users', label: 'Contacts', to: '/marketing?tab=contacts' },
-    { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', to: '/marketing/pipeline' },
-    { id: 'campaigns', icon: 'campaign', label: 'Campaigns', to: '/marketing?tab=campaigns' },
-    { id: 'templates', icon: 'template', label: 'Templates', to: '/marketing/template-editor' },
-    { id: 'journeys', icon: 'journey', label: 'Journeys', to: '/marketing?tab=journeys', badge: journeysBadge, badgeColor: activeEnrollments > 0 ? 'green' : '' },
-    { divider: true },
-    { id: 'analytics', icon: 'bar', label: 'Analytics', to: '/marketing/analytics' },
-    { id: 'suppression', icon: 'shield', label: 'Suppression', to: '/marketing/suppression' }
-  ];
+  const navItems = useMemo(() => {
+    if (!isAuthenticated) {
+      return PUBLIC_NAV_ITEMS;
+    }
+
+    return [
+      { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard' },
+      { id: 'inbox', icon: 'inbox', label: 'Inbox', to: '/emails', badge: inboxBadge },
+      { id: 'bulk', icon: 'bulk', label: 'Bulk Email', to: '/emails/bulk' },
+      { divider: true },
+      { id: 'contacts', icon: 'users', label: 'Contacts', to: '/marketing?tab=contacts' },
+      { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', to: '/marketing/pipeline' },
+      { id: 'campaigns', icon: 'campaign', label: 'Campaigns', to: '/marketing?tab=campaigns' },
+      { id: 'templates', icon: 'template', label: 'Templates', to: '/marketing/template-editor' },
+      { id: 'journeys', icon: 'journey', label: 'Journeys', to: '/marketing?tab=journeys', badge: journeysBadge, badgeColor: activeEnrollments > 0 ? 'green' : '' },
+      { divider: true },
+      { id: 'analytics', icon: 'bar', label: 'Analytics', to: '/marketing/analytics' },
+      { id: 'suppression', icon: 'shield', label: 'Suppression', to: '/marketing/suppression' }
+    ];
+  }, [activeEnrollments, inboxBadge, isAuthenticated, journeysBadge]);
+
+  const handleNavClick = (item) => {
+    if (item.requiresAuth && !isAuthenticated) {
+      showFeedback('Please sign in to open workspace pages.', 'info');
+      navigate('/');
+      onMobileClose?.();
+      return;
+    }
+
+    navigate(item.to);
+    onMobileClose?.();
+  };
 
   const isActive = (item) => {
+    if (item.id === 'welcome' || item.id === 'signin') {
+      return location.pathname === '/' || location.pathname === '/auth-success' || location.pathname === '/auth-error';
+    }
+
+    if (item.requiresAuth && !isAuthenticated) {
+      return false;
+    }
+
     if (item.id === 'bulk') {
       return location.pathname.startsWith('/emails/bulk');
     }
@@ -117,17 +177,17 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) =>
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+      <div className="sidebar-nav">
         {navItems.map((item, index) => {
           if (item.divider) {
             return <div key={`divider-${index}`} className="sidebar-divider" />;
           }
 
           return (
-            <div key={item.id} style={{ padding: '0 10px' }}>
+            <div key={item.id} className="sidebar-nav-row">
               <div
-                className={`nav-item ${isActive(item) ? 'active' : ''}`}
-                onClick={() => { navigate(item.to); onMobileClose?.(); }}
+                className={`nav-item ${isActive(item) ? 'active' : ''}${item.requiresAuth && !isAuthenticated ? ' disabled' : ''}`}
+                onClick={() => handleNavClick(item)}
               >
                 <span className="nav-icon">
                   <Icon name={item.icon} size={15} />
@@ -144,18 +204,27 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) =>
         <div className="user-row">
           <div className="avatar">{(userEmail || 'A')[0]?.toUpperCase()}</div>
           <div className="user-info">
-            <div className="user-name">Admin User</div>
-            <div className="user-email">{userEmail || 'signed-in-user'}</div>
+            <div className="user-name">{isAuthenticated ? 'Admin User' : 'Guest Mode'}</div>
+            <div className="user-email">{isAuthenticated ? (userEmail || 'signed-in-user') : 'Sign in to unlock all pages'}</div>
           </div>
-          <div className="status-dot" />
+          <div className={`status-dot${isAuthenticated ? '' : ' muted'}`} />
         </div>
-        <div style={{ marginTop: 8, padding: '0 2px' }}>
-          <div className="nav-item" onClick={() => { onLogout(); onMobileClose?.(); }}>
-            <span className="nav-icon">
-              <Icon name="logout" size={14} />
-            </span>
-            Sign out
-          </div>
+        <div className="sidebar-footer-action">
+          {isAuthenticated ? (
+            <div className="nav-item" onClick={() => { onLogout(); onMobileClose?.(); }}>
+              <span className="nav-icon">
+                <Icon name="logout" size={14} />
+              </span>
+              Sign out
+            </div>
+          ) : (
+            <div className="nav-item" onClick={() => { navigate('/'); onMobileClose?.(); }}>
+              <span className="nav-icon">
+                <Icon name="mail" size={14} />
+              </span>
+              Continue with Google
+            </div>
+          )}
         </div>
       </div>
     </aside>

@@ -201,10 +201,10 @@ const Dashboard = () => {
       ) : (
         <>
           <div className="page-header">
-            <div className="syne" style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-1)' }}>
+            <div className="syne page-title-greeting">
               {greeting} — <span className="gradient-text">let’s make moves today.</span>
             </div>
-            <div className="helper-text" style={{ marginTop: 4 }}>{today}</div>
+            <div className="helper-text helper-text-top">{today}</div>
           </div>
 
           <div className="stats-grid">
@@ -230,11 +230,11 @@ const Dashboard = () => {
                 <div className="card-header">
                 <Icon name="zap" size={14} color="var(--purple)" />
                   <span className="card-title">Recent Activity</span>
-                  <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>{windowLabel}</span>
+                  <span className="card-header-meta">{windowLabel}</span>
                 </div>
                 <div className="card-body">
                   {activities.length === 0 ? (
-                    <div className="empty-state" style={{ padding: 16 }}>
+                    <div className="empty-state empty-state-sm">
                       <p>No activity yet</p>
                       <small>Events will appear once tracked</small>
                     </div>
@@ -266,7 +266,7 @@ const Dashboard = () => {
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                  <div className="card-footer-note">
                     Live view from analytics window
                   </div>
                 </div>
@@ -278,16 +278,16 @@ const Dashboard = () => {
                 <div className="card-header">
                 <Icon name="check" size={14} color="var(--emerald)" />
                   <span className="card-title">Task Focus</span>
-                  <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>{formatNumber(taskTotal)} open</span>
+                  <span className="card-header-meta">{formatNumber(taskTotal)} open</span>
                 </div>
                 <div className="card-body">
                   {tasks.length === 0 ? (
-                    <div className="empty-state" style={{ padding: 12 }}>
+                    <div className="empty-state empty-state-sm">
                       <p>No open tasks</p>
                       <small>Create a task from pipeline contacts</small>
                     </div>
                   ) : (
-                    <div style={{ maxHeight: 320, overflowY: 'auto', paddingRight: 6 }}>
+                    <div className="task-scroll-wrap">
                       {tasks.map((task) => {
                         const done = String(task.status || '').toLowerCase() === 'completed';
                         const overdue = isTaskOverdue(task);
@@ -299,7 +299,7 @@ const Dashboard = () => {
                             </div>
                             <div className="task-info">
                               <div className={`task-name ${done ? 'done' : ''}`}>{task.title}</div>
-                              <div className="task-meta" style={{ color: overdue ? 'var(--rose)' : 'var(--text-3)' }}>
+                              <div className={`task-meta ${overdue ? 'overdue' : ''}`}>
                                 {formatTaskDue(task)} · {formatTaskContact(task)}
                               </div>
                             </div>
@@ -319,13 +319,13 @@ const Dashboard = () => {
                 </div>
                 <div className="card-body">
                   {journeys.length === 0 ? (
-                    <div className="empty-state" style={{ padding: 12 }}>
+                    <div className="empty-state empty-state-sm">
                       <p>No published journeys</p>
                       <small>Create and publish a journey to see it here</small>
                     </div>
                   ) : (
                     journeys.map((journey) => (
-                      <div key={journey.journeyId} className="journey-card" style={{ padding: '10px 12px', marginBottom: 6 }}>
+                      <div key={journey.journeyId} className="journey-card journey-card-compact">
                         <div className={`journey-status ${String(journey.status || '').toLowerCase()}`} />
                         <div className="journey-info">
                           <div className="journey-name">{journey.name}</div>
