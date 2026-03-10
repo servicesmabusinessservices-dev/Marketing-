@@ -141,8 +141,8 @@ const PipelineBoard = () => {
 
   return (
     <div className="content fade-in">
-      <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'center' }}>
-        <div className="search-box" style={{ width: 220 }}>
+      <div className="pipeline-filter-bar">
+        <div className="search-box pipeline-search-box">
           <Icon name="search" size={13} color="var(--text-3)" />
           <input
             placeholder="Search contacts"
@@ -159,20 +159,20 @@ const PipelineBoard = () => {
             {stage}
           </div>
         ))}
-        <select className="form-input" style={{ maxWidth: 220 }} value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}>
+        <select className="form-input pipeline-owner-filter" value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}>
           <option value="">All owners</option>
           {ownerOptions.map((owner) => (
             <option key={owner} value={owner}>{owner}</option>
           ))}
         </select>
         <button className="topbar-btn" onClick={() => pipelineQuery.refetch()}>Apply Filters</button>
-        <div style={{ marginLeft: 'auto' }}>
+        <div className="ml-auto">
           <button className="topbar-btn primary" type="button">Add Contact</button>
         </div>
       </div>
 
       {loading ? (
-        <div className="empty-state" style={{ paddingTop: 60 }}>
+        <div className="empty-state empty-state-top">
           <p>Loading pipeline...</p>
         </div>
       ) : (
@@ -204,8 +204,8 @@ const PipelineBoard = () => {
                         </div>
                       </div>
                     ))}
-                    <div style={{ padding: '8px 4px' }}>
-                      <div style={{ fontSize: 12, color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div className="pipeline-add-row">
+                      <div className="pipeline-add-action">
                         <Icon name="plus" size={12} color="var(--text-3)" /> Add
                       </div>
                     </div>
@@ -217,28 +217,28 @@ const PipelineBoard = () => {
 
           {selectedContact && (
             <div className="pipeline-shell-sidepanel">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                <div className="avatar" style={{ width: 40, height: 40, fontSize: 15 }}>{(selectedContact.firstName || selectedContact.email || 'A')[0]}</div>
-                <div>
-                  <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--text-1)' }}>
+              <div className="pipeline-contact-header">
+                <div className="avatar pipeline-contact-avatar">{(selectedContact.firstName || selectedContact.email || 'A')[0]}</div>
+                <div className="pipeline-contact-meta">
+                  <div className="pipeline-contact-name">
                     {selectedContact.firstName || selectedContact.email}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{selectedContact.company || 'No company'}</div>
+                  <div className="pipeline-contact-company">{selectedContact.company || 'No company'}</div>
                 </div>
-                <div style={{ marginLeft: 'auto', cursor: 'pointer', color: 'var(--text-3)', fontSize: 18 }} onClick={() => setSelectedContact(null)}>x</div>
+                <button type="button" className="pipeline-close-btn ml-auto" onClick={() => setSelectedContact(null)}>x</button>
               </div>
-              <div style={{ background: 'var(--navy-3)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
-                  <span style={{ color: 'var(--text-3)' }}>Deal Value</span>
-                  <span style={{ color: 'var(--emerald)', fontFamily: 'DM Mono', fontWeight: 600 }}>{formatDealValue(selectedContact)}</span>
+              <div className="pipeline-summary-card">
+                <div className="pipeline-summary-row pipeline-summary-row-gap">
+                  <span className="pipeline-summary-label">Deal Value</span>
+                  <span className="pipeline-summary-value pipeline-summary-value-positive">{formatDealValue(selectedContact)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-3)' }}>Open Tasks</span>
-                  <span style={{ color: 'var(--text-1)', fontFamily: 'DM Mono' }}>{getTaskCount(selectedContact)}</span>
+                <div className="pipeline-summary-row">
+                  <span className="pipeline-summary-label">Open Tasks</span>
+                  <span className="pipeline-summary-value">{getTaskCount(selectedContact)}</span>
                 </div>
               </div>
 
-              <div style={{ marginBottom: 16 }}>
+              <div className="pipeline-section-gap">
                 <label className="form-label">Stage</label>
                 <select
                   className="form-input"
@@ -249,8 +249,8 @@ const PipelineBoard = () => {
                     <option key={stage} value={stage}>{stage}</option>
                   ))}
                 </select>
-                <label className="form-label" style={{ marginTop: 12 }}>Owner</label>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <label className="form-label form-label-offset">Owner</label>
+                <div className="inline-actions">
                   <input
                     className="form-input"
                     value={ownerDrafts[selectedContact.contactId] ?? selectedContact.ownerEmail ?? ''}
@@ -261,15 +261,15 @@ const PipelineBoard = () => {
                 </div>
               </div>
 
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Notes</div>
+              <div className="pipeline-section-title">Notes</div>
               <textarea
                 className="form-input"
                 placeholder="Add a note"
-                style={{ height: 72, marginBottom: 8 }}
+                rows={3}
                 value={newNote}
                 onChange={(event) => setNewNote(event.target.value)}
               />
-              <button className="topbar-btn" style={{ justifyContent: 'center', width: '100%', marginBottom: 16 }} onClick={handleAddNote}>Add Note</button>
+              <button className="topbar-btn pipeline-full-btn pipeline-btn-gap-bottom" onClick={handleAddNote}>Add Note</button>
               <div className="data-list">
                 {notes.map((note) => (
                   <div key={note.noteId} className="data-list-item">
@@ -278,7 +278,7 @@ const PipelineBoard = () => {
                 ))}
               </div>
 
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '16px 0 10px' }}>Tasks</div>
+              <div className="pipeline-section-title pipeline-section-title-gap">Tasks</div>
               <input
                 className="form-input"
                 value={newTask.title}
@@ -287,7 +287,6 @@ const PipelineBoard = () => {
               />
               <select
                 className="form-input"
-                style={{ marginTop: 8 }}
                 value={newTask.priority}
                 onChange={(event) => setNewTask((prev) => ({ ...prev, priority: event.target.value }))}
               >
@@ -296,24 +295,22 @@ const PipelineBoard = () => {
                 <option value="High">High</option>
               </select>
               <input
-                className="form-input"
-                style={{ marginTop: 8 }}
+                className="form-input pipeline-input-gap"
                 type="datetime-local"
                 value={newTask.dueAtUtc}
                 onChange={(event) => setNewTask((prev) => ({ ...prev, dueAtUtc: event.target.value }))}
               />
               <input
-                className="form-input"
-                style={{ marginTop: 8 }}
+                className="form-input pipeline-input-gap"
                 value={newTask.ownerEmail}
                 onChange={(event) => setNewTask((prev) => ({ ...prev, ownerEmail: event.target.value }))}
                 placeholder="Task owner email"
               />
-              <button className="topbar-btn" style={{ justifyContent: 'center', width: '100%', marginTop: 10 }} onClick={handleAddTask}>Add Task</button>
+              <button className="topbar-btn pipeline-full-btn pipeline-input-gap" onClick={handleAddTask}>Add Task</button>
 
-              <div className="data-list" style={{ marginTop: 10 }}>
+              <div className="data-list pipeline-input-gap">
                 {tasks.map((task) => (
-                  <div key={task.taskId} className="data-list-item" style={{ alignItems: 'center' }}>
+                  <div key={task.taskId} className="data-list-item pipeline-task-item">
                     <div>
                       <strong>{task.title}</strong>
                       <div className="helper-text">{task.priority} | {task.status}</div>

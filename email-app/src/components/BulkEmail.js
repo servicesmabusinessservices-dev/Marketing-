@@ -257,13 +257,12 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                 <label className="form-label">Pick from Contacts</label>
                 <div className="bulk-contact-search-row">
                   <input
-                    className="form-input"
+                    className="form-input bulk-contact-search-input"
                     type="text"
                     value={contactSearch}
                     onChange={(e) => { setContactSearch(e.target.value); searchContacts(e.target.value); }}
                     placeholder="Search by name, email or company..."
                     disabled={isScheduling}
-                    style={{ flex: 1 }}
                   />
                   <button
                     type="button"
@@ -288,8 +287,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                         <div
                           key={email}
                           onClick={() => toggleContact(email)}
-                          className="bulk-contact-result-row"
-                          style={{ background: checked ? 'var(--navy-3)' : 'transparent' }}
+                          className={`bulk-contact-result-row${checked ? ' selected' : ''}`}
                         >
                           <input type="checkbox" checked={checked} onChange={() => toggleContact(email)} onClick={e => e.stopPropagation()} />
                           <div className="bulk-contact-result-info">
@@ -310,28 +308,20 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                   onClick={() => document.getElementById('email-tag-input').focus()}
                 >
                   {recipientTags.length > 20 ? (
-                    <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.35)',
-                        borderRadius: 20, padding: '4px 14px', fontSize: 12.5, color: '#a5b4fc', fontWeight: 600
-                      }}>
+                    <div className="recipient-summary-wrap">
+                      <span className="recipient-summary-pill">
                         ✉ {recipientTags.length} recipients loaded
                       </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, flex: 1 }}>
+                      <div className="recipient-summary-preview">
                         {recipientTags.slice(0, 5).map(email => (
-                          <span key={email} style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            background: 'var(--navy-4)', border: '1px solid var(--border)',
-                            borderRadius: 20, padding: '2px 8px', fontSize: 11, color: 'var(--text-2)', whiteSpace: 'nowrap'
-                          }}>
+                          <span key={email} className="recipient-summary-chip">
                             {email}
                             <span onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }}
-                              style={{ cursor: 'pointer', color: 'var(--text-3)', fontWeight: 700, fontSize: 13, lineHeight: 1 }}>×</span>
+                              className="recipient-chip-remove">×</span>
                           </span>
                         ))}
                         {recipientTags.length > 5 && (
-                          <span style={{ fontSize: 11, color: 'var(--text-3)', padding: '2px 4px', alignSelf: 'center' }}>
+                          <span className="recipient-summary-more">
                             +{recipientTags.length - 5} more
                           </span>
                         )}
@@ -339,28 +329,23 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setRecipientTags([]); }}
-                        style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'var(--navy-5)', color: 'var(--rose)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                        className="recipient-clear-btn"
                       >Clear all</button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', padding: '6px 10px' }}>
+                    <div className="recipient-tags-wrap">
                       {recipientTags.map(email => (
-                        <span key={email} style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 5,
-                          background: 'var(--navy-4)', border: '1px solid var(--border)',
-                          borderRadius: 20, padding: '3px 10px 3px 10px',
-                          fontSize: 12, color: '#a5b4fc', whiteSpace: 'nowrap'
-                        }}>
+                        <span key={email} className="recipient-tag-chip">
                           {email}
                           <span
                             onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }}
-                            style={{ cursor: 'pointer', color: 'var(--text-3)', fontWeight: 700, fontSize: 14, lineHeight: 1 }}
+                            className="recipient-chip-remove"
                           >×</span>
                         </span>
                       ))}
                     </div>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px 6px', borderTop: recipientTags.length > 0 ? '1px solid var(--border)' : 'none' }}>
+                  <div className={`recipient-input-row${recipientTags.length > 0 ? ' has-border' : ''}`}>
                     <input
                       id="email-tag-input"
                       type="email"
@@ -370,20 +355,13 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                       onBlur={() => addEmailTag(emailInput)}
                       placeholder={recipientTags.length ? 'Add another email…' : 'Type email and press Enter...'}
                       disabled={isScheduling}
-                      style={{
-                        flex: 1, minWidth: 180, border: 'none', outline: 'none',
-                        background: 'transparent', color: 'var(--text-1)', fontSize: 13
-                      }}
+                      className="recipient-input-field"
                     />
                     <button
                       type="button"
                       onClick={() => addEmailTag(emailInput)}
                       disabled={!emailInput.trim() || isScheduling}
-                      style={{
-                        padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                        background: 'var(--gradient-cta)', color: '#fff', border: 'none', cursor: 'pointer',
-                        opacity: !emailInput.trim() ? 0.4 : 1
-                      }}
+                      className="recipient-add-btn"
                     >Add</button>
                   </div>
                 </div>
@@ -442,13 +420,8 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                 <>
                   <div className="bulk-progress-track">
                     <div
-                      style={{
-                        height: '100%',
-                        width: `${progress}%`,
-                        background: 'linear-gradient(90deg, var(--indigo), var(--violet))',
-                        borderRadius: 100,
-                        transition: 'width 0.2s'
-                      }}
+                      className="bulk-progress-fill"
+                      style={{ width: `${progress}%` }}
                     />
                   </div>
                   <div className="bulk-progress-value">

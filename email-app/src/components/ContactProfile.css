@@ -173,6 +173,15 @@
   border-bottom: 1px solid var(--border);
 }
 
+.cp-activity-list,
+.cp-notes-list,
+.cp-task-list,
+.cp-history {
+  max-height: min(48vh, 420px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .cp-notes-list { display: flex; flex-direction: column; gap: 8px; }
 
 .cp-note {
@@ -258,4 +267,10 @@
   .cp-stage-form { min-width: 0; width: 100%; }
   .cp-stage-form-row { flex-direction: column; }
   .cp-task-row { flex-direction: column; }
+  .cp-activity-list,
+  .cp-notes-list,
+  .cp-task-list,
+  .cp-history {
+    max-height: 52vh;
+  }
 }

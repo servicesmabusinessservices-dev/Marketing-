@@ -239,15 +239,17 @@ const Dashboard = () => {
                       <small>Events will appear once tracked</small>
                     </div>
                   ) : (
-                    activities.map((activity) => (
-                      <div key={activity.id} className="activity-item">
-                        <div className={`activity-dot ${activity.color}`} />
-                        <div>
-                          <div className="activity-text">{activity.text}</div>
-                          <div className="activity-time">{activity.time}</div>
+                    <div className="dashboard-activity-list">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="activity-item">
+                          <div className={`activity-dot ${activity.color}`} />
+                          <div>
+                            <div className="activity-text">{activity.text}</div>
+                            <div className="activity-time">{activity.time}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
@@ -324,19 +326,21 @@ const Dashboard = () => {
                       <small>Create and publish a journey to see it here</small>
                     </div>
                   ) : (
-                    journeys.map((journey) => (
-                      <div key={journey.journeyId} className="journey-card journey-card-compact">
-                        <div className={`journey-status ${String(journey.status || '').toLowerCase()}`} />
-                        <div className="journey-info">
-                          <div className="journey-name">{journey.name}</div>
-                          <div className="journey-trigger">{formatTrigger(journey.triggerType)}</div>
+                    <div className="dashboard-journey-list">
+                      {journeys.map((journey) => (
+                        <div key={journey.journeyId} className="journey-card journey-card-compact">
+                          <div className={`journey-status ${String(journey.status || '').toLowerCase()}`} />
+                          <div className="journey-info">
+                            <div className="journey-name">{journey.name}</div>
+                            <div className="journey-trigger">{formatTrigger(journey.triggerType)}</div>
+                          </div>
+                          <div className="journey-stats">
+                            <div className="journey-enrolled">{journey.activeEnrollments || 0}</div>
+                            <div className="journey-lbl">active</div>
+                          </div>
                         </div>
-                        <div className="journey-stats">
-                          <div className="journey-enrolled">{journey.activeEnrollments || 0}</div>
-                          <div className="journey-lbl">active</div>
-                        </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

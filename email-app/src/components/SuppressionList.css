@@ -2,7 +2,8 @@
 .sl-table {
   width: 100%;
   border-radius: 8px;
-  overflow: hidden;
+  max-height: min(58vh, 520px);
+  overflow: auto;
   border: 1px solid var(--border);
 }
 
@@ -32,6 +33,9 @@
   letter-spacing: 0.05em;
   color: var(--text-3);
   background: var(--glass-2);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .sl-email {
@@ -84,6 +88,10 @@
 }
 
 @media (max-width: 768px) {
+  .sl-table {
+    max-height: 54vh;
+  }
+
   .sl-row {
     grid-template-columns: 1fr 90px 80px;
   }

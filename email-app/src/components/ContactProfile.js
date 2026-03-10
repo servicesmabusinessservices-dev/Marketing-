@@ -286,19 +286,21 @@ const ContactProfile = () => {
                     <small>Events appear once tracked via the Marketing module</small>
                   </div>
                 ) : (
-                  events.map(ev => {
-                    const color = EVENT_COLORS[ev.eventType] || 'blue';
-                    const label = EVENT_LABELS[ev.eventType] || ev.eventType;
-                    return (
-                      <div key={ev.eventId} className="activity-item">
-                        <div className={`activity-dot ${color}`} />
-                        <div>
-                          <div className="activity-text">{label}</div>
-                          <div className="activity-time">{formatRelativeTime(ev.occurredAtUtc || ev.createdAtUtc)}</div>
+                  <div className="cp-activity-list">
+                    {events.map(ev => {
+                      const color = EVENT_COLORS[ev.eventType] || 'blue';
+                      const label = EVENT_LABELS[ev.eventType] || ev.eventType;
+                      return (
+                        <div key={ev.eventId} className="activity-item">
+                          <div className={`activity-dot ${color}`} />
+                          <div>
+                            <div className="activity-text">{label}</div>
+                            <div className="activity-time">{formatRelativeTime(ev.occurredAtUtc || ev.createdAtUtc)}</div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
@@ -378,7 +380,7 @@ const ContactProfile = () => {
                     </button>
                   </div>
                 </form>
-                <div>
+                <div className="cp-task-list">
                   {tasks.length === 0 ? (
                     <div className="empty-state empty-state-sm">
                       <p>No tasks yet</p>

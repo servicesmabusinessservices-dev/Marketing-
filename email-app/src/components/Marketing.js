@@ -365,16 +365,16 @@ const Marketing = () => {
 
   return (
     <div className="content fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+      <div className="marketing-header-row">
         <div>
-          <div className="syne" style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-1)' }}>Marketing Workspace</div>
+          <div className="syne marketing-header-title">Marketing Workspace</div>
           <div className="helper-text">Templates, campaigns, and automation journeys.</div>
         </div>
         <button className="topbar-btn" onClick={refreshAll}>Refresh Data</button>
       </div>
 
       {loading ? (
-        <div className="empty-state" style={{ paddingTop: 60 }}>
+        <div className="empty-state empty-state-top">
           <p>Loading marketing data...</p>
         </div>
       ) : (
@@ -416,17 +416,16 @@ const Marketing = () => {
                 </div>
                 <button type="submit" className="topbar-btn primary">Save Contact</button>
               </form>
-              <div style={{ display: 'flex', gap: 8, marginTop: 16, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div className="marketing-filter-row">
                 <input
-                  className="form-input"
+                  className="form-input marketing-filter-input"
                   type="text"
                   placeholder="Search contacts..."
                   value={contactSearch}
                   onChange={(e) => setContactSearch(e.target.value)}
-                  style={{ flex: 1, minWidth: 160 }}
                 />
                 <select
-                  className="form-input"
+                  className="form-input marketing-filter-source"
                   value={contactSourceFilter}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -435,7 +434,6 @@ const Marketing = () => {
                       setSelectedContactIds(new Set(contacts.filter(c => (c.source || c.Source) === val).map(c => c.contactId)));
                     }
                   }}
-                  style={{ maxWidth: 164 }}
                 >
                   <option value="all">All sources</option>
                   {uniqueSources.map(s => <option key={s} value={s}>{s}</option>)}
@@ -443,13 +441,12 @@ const Marketing = () => {
               </div>
 
               {selectedContactIds.size > 0 && (
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap', padding: '8px 10px', background: 'var(--accent-soft)', borderRadius: 8 }}>
-                  <span style={{ fontSize: 12, color: 'var(--accent-primary)', fontWeight: 600 }}>
+                <div className="marketing-selection-strip">
+                  <span className="marketing-selection-count">
                     {selectedContactIds.size} selected
                   </span>
                   <select
-                    className="form-input"
-                    style={{ maxWidth: 210 }}
+                    className="form-input marketing-selection-action"
                     defaultValue=""
                     onChange={(e) => { if (e.target.value) { handleAddToList(e.target.value); e.target.value = ''; } }}
                     disabled={addingToList || !lists.length}
@@ -464,51 +461,51 @@ const Marketing = () => {
               )}
 
               <div className="table-wrap">
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <table className="marketing-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                      <th style={{ width: 32, padding: '6px 8px', textAlign: 'center' }}>
+                    <tr>
+                      <th className="marketing-th-check">
                         <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} />
                       </th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Name</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Email</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Company</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Stage</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600 }}>Source</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Company</th>
+                      <th>Stage</th>
+                      <th>Source</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredContacts.slice(0, 200).map((contact) => (
                       <tr
                         key={contact.contactId}
-                        style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selectedContactIds.has(contact.contactId) ? 'var(--accent-soft)' : 'transparent' }}
+                        className={`marketing-row${selectedContactIds.has(contact.contactId) ? ' selected' : ''}`}
                         onClick={() => navigate(`/marketing/contacts/${contact.contactId}`)}
                       >
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }} onClick={(e) => { e.stopPropagation(); toggleContact(contact.contactId); }}>
+                        <td className="marketing-td-check" onClick={(e) => { e.stopPropagation(); toggleContact(contact.contactId); }}>
                           <input type="checkbox" checked={selectedContactIds.has(contact.contactId)} onChange={() => toggleContact(contact.contactId)} onClick={(e) => e.stopPropagation()} />
                         </td>
-                        <td style={{ padding: '6px 8px', color: 'var(--text-1)', fontWeight: 500 }}>{contact.firstName || ''} {contact.lastName || ''}</td>
-                        <td style={{ padding: '6px 8px', color: 'var(--text-2)' }}>{contact.email}</td>
-                        <td style={{ padding: '6px 8px', color: 'var(--text-2)' }}>{contact.company || '—'}</td>
-                        <td style={{ padding: '6px 8px' }}>
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'var(--navy-4)', color: 'var(--text-3)' }}>{contact.leadStage || 'New'}</span>
+                        <td className="marketing-td-strong">{contact.firstName || ''} {contact.lastName || ''}</td>
+                        <td className="marketing-td-muted">{contact.email}</td>
+                        <td className="marketing-td-muted">{contact.company || '—'}</td>
+                        <td>
+                          <span className="marketing-stage-pill">{contact.leadStage || 'New'}</span>
                         </td>
-                        <td style={{ padding: '6px 8px', color: 'var(--text-3)', fontSize: 11 }}>{contact.source || contact.Source || '—'}</td>
+                        <td className="marketing-td-dim">{contact.source || contact.Source || '—'}</td>
                       </tr>
                     ))}
                     {filteredContacts.length === 0 && (
-                      <tr><td colSpan={6} style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)' }}>No contacts found</td></tr>
+                      <tr><td colSpan={6} className="marketing-table-empty">No contacts found</td></tr>
                     )}
                   </tbody>
                 </table>
                 {filteredContacts.length > 200 && (
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', padding: '8px 0' }}>
+                  <div className="marketing-table-note">
                     Showing 200 of {filteredContacts.length} — use search or source filter to narrow down.
                   </div>
                 )}
               </div>
 
-              <div style={{ marginTop: 12 }}>
+              <div className="marketing-csv-area">
                 <button
                   type="button"
                   className="topbar-btn"
@@ -519,7 +516,7 @@ const Marketing = () => {
                 {showCsvImport && (
                   <form
                     onSubmit={handleCsvImport}
-                    style={{ marginTop: 10, padding: 14, background: 'var(--glass-2)', borderRadius: 8, border: '1px solid var(--border)' }}
+                    className="marketing-csv-form"
                   >
                     <div className="form-group">
                       <label className="form-label">CSV Content</label>
@@ -553,8 +550,8 @@ const Marketing = () => {
                         />
                       </div>
                     </div>
-                    <div className="inline-actions" style={{ marginTop: 8 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: 'var(--text-2)' }}>
+                    <div className="inline-actions marketing-csv-actions">
+                      <label className="marketing-checkbox-inline">
                         <input
                           type="checkbox"
                           checked={csvForm.hasHeader}
@@ -590,21 +587,20 @@ const Marketing = () => {
                 </div>
                 <button type="submit" className="topbar-btn primary">Create List</button>
               </form>
-              <div className="data-list" style={{ marginTop: 16 }}>
+              <div className="data-list marketing-list-gap">
                 {lists.map((list) => {
                   const id = list.listId || list.ListId;
                   const name = list.name || list.Name;
                   const count = list.memberCount ?? 0;
                   return (
-                    <div key={id} className="data-list-item" style={{ alignItems: 'center' }}>
+                    <div key={id} className="data-list-item marketing-item-center">
                       <div>
-                        <strong style={{ color: 'var(--text-1)' }}>{name}</strong>
-                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{count} member{count !== 1 ? 's' : ''}</div>
+                        <strong>{name}</strong>
+                        <div className="marketing-item-subtext">{count} member{count !== 1 ? 's' : ''}</div>
                       </div>
                       <button
                         type="button"
-                        className="topbar-btn"
-                        style={{ color: 'var(--red, #ef4444)', marginLeft: 'auto' }}
+                        className="topbar-btn topbar-btn-danger ml-auto"
                         onClick={() => handleDeleteList(list)}
                         disabled={deletingId === id}
                       >
@@ -613,7 +609,7 @@ const Marketing = () => {
                     </div>
                   );
                 })}
-                {lists.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>No lists yet. Create one above.</div>}
+                {lists.length === 0 && <div className="marketing-empty-row">No lists yet. Create one above.</div>}
               </div>
             </div>
           </section>
@@ -622,7 +618,7 @@ const Marketing = () => {
             <div className="card-header">
               <Icon name="template" size={14} color="var(--purple)" />
               <span className="card-title">Templates ({templates.length})</span>
-              <select className="form-input" style={{ marginLeft: 'auto', maxWidth: 160 }} value={templateCategoryFilter} onChange={(e) => setTemplateCategoryFilter(e.target.value)}>
+              <select className="form-input ml-auto marketing-template-filter" value={templateCategoryFilter} onChange={(e) => setTemplateCategoryFilter(e.target.value)}>
                 <option value="all">All</option>
                 <option value="welcome">Welcome</option>
                 <option value="follow-up">Follow-up</option>
@@ -660,25 +656,24 @@ const Marketing = () => {
                 </div>
               </form>
               {previewResult && <pre className="preview-box">{previewResult}</pre>}
-              <div className="data-list" style={{ marginTop: 16 }}>
+              <div className="data-list marketing-list-gap">
                 {templates.map((template) => {
                   const id = template.templateId || template.TemplateId;
                   const name = template.name || template.Name;
                   const subject = template.subject || template.Subject || '';
                   const category = template.category || template.Category;
                   return (
-                    <div key={id} className="data-list-item" style={{ alignItems: 'flex-start', gap: 8 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <strong style={{ color: 'var(--text-1)' }}>{name}</strong>
-                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: 'var(--navy-4)', color: 'var(--text-3)' }}>{category}</span>
+                    <div key={id} className="data-list-item marketing-item-start">
+                      <div className="marketing-flex-main">
+                        <div className="marketing-item-meta-row">
+                          <strong>{name}</strong>
+                          <span className="marketing-meta-pill">{category}</span>
                         </div>
-                        {subject && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Subject: {subject}</div>}
+                        {subject && <div className="marketing-subject-line">Subject: {subject}</div>}
                       </div>
                       <button
                         type="button"
-                        className="topbar-btn"
-                        style={{ color: 'var(--red, #ef4444)', flexShrink: 0 }}
+                        className="topbar-btn topbar-btn-danger marketing-no-shrink"
                         onClick={() => handleDeleteTemplate(template)}
                         disabled={deletingId === id}
                       >
@@ -687,7 +682,7 @@ const Marketing = () => {
                     </div>
                   );
                 })}
-                {templates.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>No templates yet. Create one above.</div>}
+                {templates.length === 0 && <div className="marketing-empty-row">No templates yet. Create one above.</div>}
               </div>
             </div>
           </section>
@@ -723,7 +718,7 @@ const Marketing = () => {
                 </div>
                 <button type="submit" className="topbar-btn primary">Create Campaign Draft</button>
               </form>
-              <div className="data-list" style={{ marginTop: 16 }}>
+              <div className="data-list marketing-list-gap">
                 {campaigns.map((campaign) => {
                   const id = campaign.campaignId || campaign.CampaignId;
                   const name = campaign.name || campaign.Name;
@@ -734,13 +729,11 @@ const Marketing = () => {
                   const isDeleting = deletingId === id;
                   const canSend = (campaign.listId || campaign.ListId) && (campaign.templateId || campaign.TemplateId) && status !== 'Sent';
                   return (
-                    <div key={id} className="data-list-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <div key={id} className="data-list-item marketing-item-column">
+                      <div className="marketing-campaign-head">
                         <div>
-                          <strong style={{ color: 'var(--text-1)' }}>{name}</strong>
-                          <span style={{ fontSize: 10, marginLeft: 8, padding: '1px 7px', borderRadius: 20,
-                            background: status === 'Sent' ? 'rgba(34,197,94,0.12)' : 'var(--navy-4)',
-                            color: status === 'Sent' ? '#16a34a' : 'var(--text-3)' }}>{status}</span>
+                          <strong>{name}</strong>
+                          <span className={`marketing-status-pill${status === 'Sent' ? ' sent' : ''}`}>{status}</span>
                         </div>
                         <div className="inline-actions">
                           {canSend && (
@@ -748,19 +741,19 @@ const Marketing = () => {
                               {isSending ? 'Sending…' : 'Send Now'}
                             </button>
                           )}
-                          <button type="button" className="topbar-btn" style={{ color: 'var(--red, #ef4444)' }} onClick={() => handleDeleteCampaign(campaign)} disabled={isSending || isDeleting}>
+                          <button type="button" className="topbar-btn topbar-btn-danger" onClick={() => handleDeleteCampaign(campaign)} disabled={isSending || isDeleting}>
                             {isDeleting ? '…' : 'Delete'}
                           </button>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-3)' }}>
-                        <span>List: {linkedList ? (linkedList.name || linkedList.Name) : <em style={{ color: 'var(--orange, #f97316)' }}>None — assign one</em>}</span>
-                        <span>Template: {linkedTemplate ? (linkedTemplate.name || linkedTemplate.Name) : <em style={{ color: 'var(--orange, #f97316)' }}>None — assign one</em>}</span>
+                      <div className="marketing-campaign-links">
+                        <span>List: {linkedList ? (linkedList.name || linkedList.Name) : <em className="marketing-link-missing">None — assign one</em>}</span>
+                        <span>Template: {linkedTemplate ? (linkedTemplate.name || linkedTemplate.Name) : <em className="marketing-link-missing">None — assign one</em>}</span>
                       </div>
                     </div>
                   );
                 })}
-                {campaigns.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>No campaign drafts yet. Create one above.</div>}
+                {campaigns.length === 0 && <div className="marketing-empty-row">No campaign drafts yet. Create one above.</div>}
               </div>
             </div>
           </section>
@@ -799,9 +792,9 @@ const Marketing = () => {
                 <button type="submit" className="topbar-btn primary">Create Journey</button>
               </form>
 
-              <div className="data-list" style={{ marginTop: 16 }}>
+              <div className="data-list marketing-list-gap">
                 {journeys.map((journey) => (
-                  <div key={journey.journeyId} className="data-list-item" style={{ alignItems: 'center' }}>
+                  <div key={journey.journeyId} className="data-list-item marketing-item-center">
                     <strong>{journey.name}</strong>
                     <div className="inline-actions">
                       <span className="helper-text">{journey.status}</span>
@@ -813,8 +806,8 @@ const Marketing = () => {
                 ))}
               </div>
 
-              <div style={{ height: 1, background: 'var(--border)', margin: '16px 0' }} />
-              <div className="syne" style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Behavior Event Tester</div>
+              <div className="marketing-divider" />
+              <div className="syne marketing-mini-title">Behavior Event Tester</div>
               <div className="inline-actions">
                 <select className="form-input" value={selectedEventContactId} onChange={(e) => setSelectedEventContactId(e.target.value)}>
                   <option value="">Select contact</option>
