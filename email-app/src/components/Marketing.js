@@ -463,7 +463,7 @@ const Marketing = () => {
                 </div>
               )}
 
-              <div style={{ overflowX: 'auto', maxHeight: 440, overflowY: 'auto' }}>
+              <div className="table-wrap">
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>

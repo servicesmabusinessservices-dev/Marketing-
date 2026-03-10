@@ -176,8 +176,8 @@ const PipelineBoard = () => {
           <p>Loading pipeline...</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', overflow: 'hidden', gap: 0, marginTop: 12 }}>
-          <div style={{ flex: 1, padding: 16, overflow: 'hidden' }}>
+        <div className="pipeline-shell">
+          <div className="pipeline-shell-main">
             <div className="pipeline-board">
               {(columns || []).map((column) => (
                 <div key={column.stage} className="pipeline-col">
@@ -216,7 +216,7 @@ const PipelineBoard = () => {
           </div>
 
           {selectedContact && (
-            <div style={{ width: 300, borderLeft: '1px solid var(--border)', background: 'var(--navy-2)', overflow: 'auto', padding: 20, flexShrink: 0 }}>
+            <div className="pipeline-shell-sidepanel">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
                 <div className="avatar" style={{ width: 40, height: 40, fontSize: 15 }}>{(selectedContact.firstName || selectedContact.email || 'A')[0]}</div>
                 <div>

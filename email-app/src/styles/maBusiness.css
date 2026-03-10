@@ -342,7 +342,7 @@ body {
 
 /* Full-height container for the inbox (email list + detail pane) */
 .inbox-container {
-  min-height: calc(100vh - 56px);
+  min-height: 0;
   display: flex;
   overflow: visible;
 }
@@ -596,8 +596,8 @@ body {
 }
 
 .task-scroll-wrap {
-  max-height: 320px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
   padding-right: 6px;
 }
 
@@ -870,7 +870,7 @@ body {
 }
 
 /* Pipeline */
-.pipeline-board { display: flex; gap: 14px; overflow-x: auto; height: 100%; padding-bottom: 16px; }
+.pipeline-board { display: flex; gap: 14px; overflow-x: auto; height: auto; padding-bottom: 16px; }
 
 .pipeline-col {
   min-width: 240px;
@@ -906,7 +906,7 @@ body {
 
 .pipeline-col-body {
   padding: 10px;
-  overflow-y: auto;
+  overflow: visible;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1006,7 +1006,7 @@ body {
   color: var(--rose);
 }
 
-.table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+.table-wrap { overflow-x: auto; max-height: none; overflow-y: visible; }
 
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
@@ -1032,7 +1032,7 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 
 /* Login */
 .login-screen {
-  min-height: calc(100vh - 56px);
+  min-height: 0;
   display: flex;
   overflow: visible;
   background: var(--navy);
@@ -1040,7 +1040,7 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 
 .sidebar-nav {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible;
   padding: 8px 0;
 }
 
@@ -1286,8 +1286,8 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 }
 
 .bulk-contact-results {
-  max-height: 200px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
   border: 1px solid var(--border);
   border-radius: 6px;
   margin-bottom: 8px;
@@ -1622,7 +1622,7 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 
 .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-.data-list { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; }
+.data-list { display: flex; flex-direction: column; gap: 8px; max-height: none; overflow: visible; }
 
 .data-list-item {
   display: flex;
@@ -1641,8 +1641,8 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 
 .preview-box {
   white-space: pre-wrap;
-  max-height: 180px;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   margin: 12px 0 0;
   padding: 12px;
   border: 1px dashed var(--border);
@@ -1674,6 +1674,26 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border);
+}
+
+.pipeline-shell {
+  display: flex;
+  gap: 0;
+  margin-top: 12px;
+  align-items: flex-start;
+}
+
+.pipeline-shell-main {
+  flex: 1;
+  padding: 16px;
+}
+
+.pipeline-shell-sidepanel {
+  width: 300px;
+  border-left: 1px solid var(--border);
+  background: var(--navy-2);
+  padding: 20px;
+  flex-shrink: 0;
 }
 
 .modal-header {
@@ -1709,6 +1729,12 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   .page-grid { grid-template-columns: 1fr; }
   .page-grid-wide { grid-column: span 1; }
   .card-form-grid { grid-template-columns: 1fr; }
+  .pipeline-shell { flex-direction: column; }
+  .pipeline-shell-sidepanel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
 }
 
 /* ── Tablet: auto-collapse sidebar to icon-only ───── */
@@ -1782,7 +1808,7 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 
   /* Inbox: stack list + detail */
   .inbox-layout { grid-template-columns: 1fr; }
-  .inbox-container { height: auto; min-height: calc(100dvh - 52px); overflow: visible; }
+  .inbox-container { height: auto; min-height: 0; overflow: visible; }
   .email-detail { padding: 14px; }
 
   /* Login */

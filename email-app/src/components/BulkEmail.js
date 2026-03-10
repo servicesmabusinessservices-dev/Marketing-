@@ -343,7 +343,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                       >Clear all</button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', padding: '6px 10px', maxHeight: 120, overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', padding: '6px 10px' }}>
                       {recipientTags.map(email => (
                         <span key={email} style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
