@@ -1,42 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { gmailService } from '../services/gmailService';
+import React, { useState } from 'react';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
 import AnimatedCard from './ui/AnimatedCard';
+import { useAnalytics } from '../hooks/useApi';
 
 const AnalyticsDashboard = () => {
-  const navigate = useNavigate();
   const { showFeedback } = useFeedback();
-  const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
   const [ownerEmail, setOwnerEmail] = useState('');
-  const [data, setData] = useState(null);
 
-  const fetchAnalytics = async () => {
-    setLoading(true);
-    try {
-      const result = await gmailService.getAnalytics({
-        days,
-        ownerEmail: ownerEmail || null
-      });
-      setData(result);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
-      showFeedback(error.response?.data?.error || 'Failed to load analytics.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading, isError, refetch } = useAnalytics({
+    days,
+    ownerEmail: ownerEmail || undefined
+  });
 
-  useEffect(() => {
-    fetchAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  React.useEffect(() => {
+    if (isError) showFeedback('Failed to load analytics.', 'error');
+  }, [isError, showFeedback]);
 
   const stageFunnel = data?.stageFunnel || {};
   const conversionRates = data?.conversionRates || {};
@@ -76,11 +56,11 @@ const AnalyticsDashboard = () => {
           placeholder="Filter by owner email"
         />
         <div style={{ marginLeft: 'auto' }}>
-          <button className="topbar-btn" onClick={fetchAnalytics}>Refresh</button>
+          <button className="topbar-btn" onClick={refetch}>Refresh</button>
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="empty-state" style={{ paddingTop: 60 }}>
           <p>Loading analytics...</p>
         </div>

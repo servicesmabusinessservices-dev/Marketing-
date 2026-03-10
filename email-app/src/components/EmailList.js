@@ -413,7 +413,7 @@ const EmailList = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }} className="fade-in">
+    <div className="inbox-container fade-in">
       <div className="inbox-layout">
         <div className="inbox-sidebar">
           <div className="inbox-filters">

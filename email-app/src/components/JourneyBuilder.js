@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import { useJourneyById, useTemplates } from '../hooks/useApi';
 import './JourneyBuilder.css';
 
 const STEP_TYPES = [
@@ -34,45 +34,33 @@ const JourneyBuilder = () => {
   const navigate = useNavigate();
   const { showFeedback } = useFeedback();
 
-  const [journey, setJourney]     = useState(null);
-  const [steps, setSteps]         = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [saving, setSaving]       = useState(false);
-  const [acting, setActing]       = useState(false);
+  const journeyQuery   = useJourneyById(journeyId);
+  const templatesQuery = useTemplates();
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [journeyData, templatesData] = await Promise.all([
-        gmailService.getJourneyById(journeyId),
-        gmailService.getTemplates()
-      ]);
-      setJourney(journeyData.journey);
-      const loaded = (journeyData.steps || []).map((s) => ({
-        _id: ++_uid,
-        stepOrder:           s.stepOrder,
-        stepType:            s.stepType,
-        delayMinutes:        s.delayMinutes ?? 0,
-        templateId:          s.templateId || '',
-        conditionEventType:  s.conditionEventType || '',
-        conditionWindowHours: s.conditionWindowHours != null ? String(s.conditionWindowHours) : '',
-        toLeadStage:         s.toLeadStage || ''
-      }));
-      setSteps(loaded.length > 0 ? loaded : [makeStep(1)]);
-      setTemplates(templatesData.templates || []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
-      showFeedback(error.response?.data?.error || 'Failed to load journey.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [journeyId, navigate, showFeedback]);
+  const templates = templatesQuery.data?.templates || [];
+  const loading   = journeyQuery.isLoading;
 
-  useEffect(() => { loadData(); }, [loadData]);
+  const [journey, setJourney] = useState(null);
+  const [steps,   setSteps]   = useState([]);
+  const [saving,  setSaving]  = useState(false);
+  const [acting,  setActing]  = useState(false);
+
+  // Initialise steps from query data whenever the journey loads
+  useEffect(() => {
+    if (!journeyQuery.data) return;
+    setJourney(journeyQuery.data.journey);
+    const loaded = (journeyQuery.data.steps || []).map((s) => ({
+      _id:                  ++_uid,
+      stepOrder:            s.stepOrder,
+      stepType:             s.stepType,
+      delayMinutes:         s.delayMinutes ?? 0,
+      templateId:           s.templateId || '',
+      conditionEventType:   s.conditionEventType || '',
+      conditionWindowHours: s.conditionWindowHours != null ? String(s.conditionWindowHours) : '',
+      toLeadStage:          s.toLeadStage || ''
+    }));
+    setSteps(loaded.length > 0 ? loaded : [makeStep(1)]);
+  }, [journeyQuery.data]);
 
   const updateStep = (id, field, value) =>
     setSteps((prev) => prev.map((s) => (s._id === id ? { ...s, [field]: value } : s)));
@@ -103,7 +91,7 @@ const JourneyBuilder = () => {
       }));
       await gmailService.upsertJourneySteps(journeyId, payload);
       showFeedback('Steps saved.', 'success');
-      loadData();
+      journeyQuery.refetch();
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to save steps.', 'error');
     } finally {
@@ -116,7 +104,7 @@ const JourneyBuilder = () => {
     try {
       await gmailService.publishJourney(journeyId);
       showFeedback('Journey published.', 'success');
-      loadData();
+      journeyQuery.refetch();
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to publish journey.', 'error');
     } finally {
@@ -129,7 +117,7 @@ const JourneyBuilder = () => {
     try {
       await gmailService.pauseJourney(journeyId);
       showFeedback('Journey paused.', 'success');
-      loadData();
+      journeyQuery.refetch();
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to pause journey.', 'error');
     } finally {

@@ -94,7 +94,7 @@ public class AuthController : ControllerBase
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: new[] { new Claim(ClaimTypes.Email, email) },
-            expires: DateTime.Now.AddHours(8),
+            expires: DateTime.UtcNow.AddHours(8),
             signingCredentials: creds
         );
         

@@ -80,14 +80,31 @@ public class BulkEmailWorker : BackgroundService
             var gmailService = await BuildGmailServiceAsync(job.UserEmail, cancellationToken);
             await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
+            // Load suppression list once per job — avoids N+1 queries per recipient.
+            var suppressedEmails = await db.Suppressions
+                .Where(s => s.UserEmail == job.UserEmail)
+                .Select(s => s.EmailNormalized)
+                .ToHashSetAsync(cancellationToken);
+
             for (var i = 0; i < job.Recipients.Count; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var recipient = job.Recipients[i];
+                var normalizedRecipient = recipient.Trim().ToLowerInvariant();
+
+                // Skip suppressed addresses — count as neither success nor failure.
+                if (suppressedEmails.Contains(normalizedRecipient))
+                {
+                    _logger.LogInformation(
+                        "Bulk job {JobId}: skipping suppressed recipient {Recipient}", job.JobId, normalizedRecipient);
+                    job.ProcessedCount++;
+                    await _jobStore.UpsertAsync(job, cancellationToken);
+                    continue;
+                }
+
                 try
                 {
-                    var normalizedRecipient = recipient.Trim().ToLowerInvariant();
                     var contact = await db.Contacts.FirstOrDefaultAsync(
                         x => x.UserEmail == job.UserEmail && x.EmailNormalized == normalizedRecipient,
                         cancellationToken);

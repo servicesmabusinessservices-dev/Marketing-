@@ -184,3 +184,13 @@
     align-items: flex-start;
   }
 }
+
+@media (max-width: 640px) {
+  .marketing-header h1 { font-size: 1.4rem; }
+  .marketing-header-actions { flex-direction: column; width: 100%; }
+  .marketing-header-actions .marketing-btn { width: 100%; }
+  .marketing-inline-actions { flex-direction: column; }
+  .marketing-inline-actions .marketing-btn { width: 100%; }
+  .marketing-list-item { flex-direction: column; align-items: flex-start; }
+  .marketing-list-item span { text-align: left; }
+}

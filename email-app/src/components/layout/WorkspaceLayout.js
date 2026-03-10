@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,6 +14,9 @@ const WorkspaceLayout = () => {
   const { isDark, toggleTheme } = useTheme();
   const { showFeedback } = useFeedback();
   const currentUserEmail = localStorage.getItem('user_email') || 'Signed in user';
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const closeMobileSidebar = useCallback(() => setMobileOpen(false), []);
 
   const handleLogout = () => {
     clearSession();
@@ -23,10 +26,27 @@ const WorkspaceLayout = () => {
 
   return (
     <div className="app">
-      <WorkspaceSidebar onLogout={handleLogout} userEmail={currentUserEmail} />
+      {/* Mobile backdrop — closes sidebar when tapped */}
+      {mobileOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={closeMobileSidebar}
+          aria-hidden="true"
+        />
+      )}
+      <WorkspaceSidebar
+        onLogout={handleLogout}
+        userEmail={currentUserEmail}
+        mobileOpen={mobileOpen}
+        onMobileClose={closeMobileSidebar}
+      />
       <div className="main">
-        <WorkspaceTopbar isDark={isDark} toggleTheme={toggleTheme} />
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <WorkspaceTopbar
+          isDark={isDark}
+          toggleTheme={toggleTheme}
+          onMenuToggle={() => setMobileOpen(v => !v)}
+        />
+        <div className="page-scroll-area">
           <AnimatePresence mode="wait">
             <PageTransition key={location.pathname + location.search}>
               <Outlet />

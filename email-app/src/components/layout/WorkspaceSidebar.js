@@ -5,7 +5,7 @@ import { useFeedback } from '../../context/FeedbackContext';
 import { handleUnauthorized } from '../../utils/session';
 import Icon from '../ui/Icon';
 
-const WorkspaceSidebar = ({ onLogout, userEmail }) => {
+const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose }) => {
   const navigate = useNavigate();
   const { showFeedback } = useFeedback();
   const location = useLocation();
@@ -98,7 +98,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail }) => {
   };
 
   return (
-    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
+    <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}>
       <div className="sidebar-logo">
         <div className="logo-mark">
           <div className="logo-icon">MA</div>
@@ -127,7 +127,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail }) => {
             <div key={item.id} style={{ padding: '0 10px' }}>
               <div
                 className={`nav-item ${isActive(item) ? 'active' : ''}`}
-                onClick={() => navigate(item.to)}
+                onClick={() => { navigate(item.to); onMobileClose?.(); }}
               >
                 <span className="nav-icon">
                   <Icon name={item.icon} size={15} />
@@ -150,7 +150,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail }) => {
           <div className="status-dot" />
         </div>
         <div style={{ marginTop: 8, padding: '0 2px' }}>
-          <div className="nav-item" onClick={onLogout}>
+          <div className="nav-item" onClick={() => { onLogout(); onMobileClose?.(); }}>
             <span className="nav-icon">
               <Icon name="logout" size={14} />
             </span>

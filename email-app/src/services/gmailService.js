@@ -1,10 +1,9 @@
-import axios from 'axios';
-import { API_BASE_URL, getAuthHeaders } from '../config/authConfig';
+import apiClient from './apiClient';
 
 export const gmailService = {
   login: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/auth/login`);
+      const response = await apiClient.get('/auth/login');
       window.location.href = response.data.authUrl;
     } catch (error) {
       if (!error.response) {
@@ -28,474 +27,311 @@ export const gmailService = {
     query.append('maxResults', String(maxResults));
     query.append('sortBy', sortBy);
     query.append('sortDir', sortDir);
+    if (pageToken) query.append('pageToken', pageToken);
+    if (classification && classification !== 'All') query.append('classification', classification);
+    if (q) query.append('q', q);
 
-    if (pageToken) {
-      query.append('pageToken', pageToken);
-    }
-
-    if (classification && classification !== 'All') {
-      query.append('classification', classification);
-    }
-
-    if (q) {
-      query.append('q', q);
-    }
-
-    const url = `${API_BASE_URL}/email/list?${query.toString()}`;
-    
-    const response = await axios.get(url, { headers: getAuthHeaders() });
+    const response = await apiClient.get(`/email/list?${query.toString()}`);
     return response.data;
   },
 
   getEmailById: async (emailId) => {
-    const response = await axios.get(`${API_BASE_URL}/email/${emailId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/email/${emailId}`);
     return response.data;
   },
 
   sendEmail: async (to, subject, body) => {
-    await axios.post(`${API_BASE_URL}/email/send`, 
-      { to, subject, body },
-      { headers: getAuthHeaders() }
-    );
+    await apiClient.post('/email/send', { to, subject, body });
   },
 
   forwardEmail: async ({ messageId, to, note = '' }) => {
-    const response = await axios.post(`${API_BASE_URL}/email/forward`,
-      { messageId, to, note },
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.post('/email/forward', { messageId, to, note });
     return response.data;
   },
 
   sendBulkEmail: async (recipients, subject, body, delaySeconds = 3) => {
-    const response = await axios.post(`${API_BASE_URL}/email/bulk-send`, 
-      { recipients, subject, body, delaySeconds },
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.post('/email/bulk-send', { recipients, subject, body, delaySeconds });
     return response.data;
   },
 
   getBulkEmailStatus: async (jobId) => {
-    const response = await axios.get(`${API_BASE_URL}/email/bulk-send/${jobId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/email/bulk-send/${jobId}`);
     return response.data;
   },
 
   updateEmailClassification: async (emailId, classification) => {
-    const response = await axios.post(`${API_BASE_URL}/email/${emailId}/classification`,
-      { classification },
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.post(`/email/${emailId}/classification`, { classification });
     return response.data;
   },
 
   getClassificationSummary: async () => {
-    const response = await axios.get(`${API_BASE_URL}/email/classification-summary`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/email/classification-summary');
     return response.data;
   },
 
   getEmailSummary: async () => {
-    const response = await axios.get(`${API_BASE_URL}/email/summary`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/email/summary');
     return response.data;
   },
 
   getContacts: async ({ q = null, leadStage = null, limit = 50 } = {}) => {
     const query = new URLSearchParams();
     query.append('limit', String(limit));
-    if (q) {
-      query.append('search', q);
-    }
-    if (leadStage) {
-      query.append('leadStage', leadStage);
-    }
+    if (q) query.append('search', q);
+    if (leadStage) query.append('leadStage', leadStage);
 
-    const response = await axios.get(`${API_BASE_URL}/marketing/contacts?${query.toString()}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/contacts?${query.toString()}`);
     return response.data;
   },
 
   upsertContact: async (contact) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/contacts`, contact, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/contacts', contact);
     return response.data;
   },
 
   updateContactLeadStage: async (contactId, toLeadStage, reason = 'Manual update') => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/contacts/${contactId}/lead-stage`, {
-      toLeadStage,
-      reason
-    }, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/contacts/${contactId}/lead-stage`, { toLeadStage, reason });
     return response.data;
   },
 
   getLeadStageHistory: async (contactId) => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/contacts/${contactId}/lead-stage-history`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/contacts/${contactId}/lead-stage-history`);
     return response.data;
   },
 
   assignContactOwner: async (contactId, ownerEmail) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/contacts/${contactId}/owner`, {
-      ownerEmail
-    }, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/contacts/${contactId}/owner`, { ownerEmail });
     return response.data;
   },
 
   getContactNotes: async (contactId) => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/contacts/${contactId}/notes`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/contacts/${contactId}/notes`);
     return response.data;
   },
 
   addContactNote: async (contactId, body) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/contacts/${contactId}/notes`, {
-      body
-    }, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/contacts/${contactId}/notes`, { body });
     return response.data;
   },
 
   getContactTasks: async (contactId, { status = null, onlyOverdue = false } = {}) => {
     const query = new URLSearchParams();
-    if (status) {
-      query.append('status', status);
-    }
-    if (onlyOverdue) {
-      query.append('onlyOverdue', 'true');
-    }
+    if (status) query.append('status', status);
+    if (onlyOverdue) query.append('onlyOverdue', 'true');
 
     const suffix = query.toString() ? `?${query.toString()}` : '';
-    const response = await axios.get(`${API_BASE_URL}/marketing/contacts/${contactId}/tasks${suffix}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/contacts/${contactId}/tasks${suffix}`);
     return response.data;
   },
 
   getTasks: async ({ ownerEmail = null, status = null, due = null, limit = null, page = null, pageSize = null } = {}) => {
     const query = new URLSearchParams();
-    if (ownerEmail) {
-      query.append('ownerEmail', ownerEmail);
-    }
-    if (status) {
-      query.append('status', status);
-    }
-    if (due) {
-      query.append('due', due);
-    }
-    if (limit) {
-      query.append('limit', String(limit));
-    }
-    if (page) {
-      query.append('page', String(page));
-    }
-    if (pageSize) {
-      query.append('pageSize', String(pageSize));
-    }
+    if (ownerEmail) query.append('ownerEmail', ownerEmail);
+    if (status) query.append('status', status);
+    if (due) query.append('due', due);
+    if (limit) query.append('limit', String(limit));
+    if (page) query.append('page', String(page));
+    if (pageSize) query.append('pageSize', String(pageSize));
 
     const suffix = query.toString() ? `?${query.toString()}` : '';
-    const response = await axios.get(`${API_BASE_URL}/marketing/tasks${suffix}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/tasks${suffix}`);
     return response.data;
   },
 
   createContactTask: async (contactId, task) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/contacts/${contactId}/tasks`, task, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/contacts/${contactId}/tasks`, task);
     return response.data;
   },
 
   updateContactTask: async (contactId, taskId, patch) => {
-    const response = await axios.patch(`${API_BASE_URL}/marketing/contacts/${contactId}/tasks/${taskId}`, patch, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.patch(`/marketing/contacts/${contactId}/tasks/${taskId}`, patch);
     return response.data;
   },
 
   getPipeline: async ({ ownerEmail = null, search = null, stage = null, pageSize = 20 } = {}) => {
     const query = new URLSearchParams();
     query.append('pageSize', String(pageSize));
-    if (ownerEmail) {
-      query.append('ownerEmail', ownerEmail);
-    }
-    if (search) {
-      query.append('search', search);
-    }
-    if (stage) {
-      query.append('stage', stage);
-    }
+    if (ownerEmail) query.append('ownerEmail', ownerEmail);
+    if (search) query.append('search', search);
+    if (stage) query.append('stage', stage);
 
-    const response = await axios.get(`${API_BASE_URL}/marketing/pipeline?${query.toString()}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/pipeline?${query.toString()}`);
     return response.data;
   },
 
   getAnalytics: async ({ days = 30, ownerEmail = null } = {}) => {
     const query = new URLSearchParams();
     query.append('days', String(days));
-    if (ownerEmail) {
-      query.append('ownerEmail', ownerEmail);
-    }
+    if (ownerEmail) query.append('ownerEmail', ownerEmail);
 
-    const response = await axios.get(`${API_BASE_URL}/marketing/analytics?${query.toString()}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/analytics?${query.toString()}`);
     return response.data;
   },
 
   getLists: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/lists`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/lists');
     return response.data;
   },
 
   getSuppressionSummary: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/suppressions/summary`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/suppressions/summary');
     return response.data;
   },
 
   createList: async ({ name, description }) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/lists`, { name, description }, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/lists', { name, description });
     return response.data;
   },
 
   getTemplates: async ({ category = null } = {}) => {
     const query = new URLSearchParams();
-    if (category && category !== 'all') {
-      query.append('category', category);
-    }
+    if (category && category !== 'all') query.append('category', category);
 
     const suffix = query.toString() ? `?${query.toString()}` : '';
-    const response = await axios.get(`${API_BASE_URL}/marketing/templates${suffix}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/templates${suffix}`);
     return response.data;
   },
 
   getTokens: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/tokens`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/tokens');
     return response.data;
   },
 
   getTemplateById: async (templateId) => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/templates/${templateId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/templates/${templateId}`);
     return response.data;
   },
 
   createTemplate: async (template) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/templates`, template, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/templates', template);
     return response.data;
   },
 
   updateTemplate: async (templateId, template) => {
-    const response = await axios.put(`${API_BASE_URL}/marketing/templates/${templateId}`, template, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.put(`/marketing/templates/${templateId}`, template);
     return response.data;
   },
 
   previewTemplate: async (payload) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/templates/preview`, payload, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/templates/preview', payload);
     return response.data;
   },
 
   getCampaigns: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/campaigns`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/campaigns');
     return response.data;
   },
 
   getEvents: async ({ contactId = null, eventType = null, limit = 100 } = {}) => {
     const query = new URLSearchParams();
     query.append('limit', String(limit));
-    if (contactId) {
-      query.append('contactId', contactId);
-    }
-    if (eventType) {
-      query.append('eventType', eventType);
-    }
+    if (contactId) query.append('contactId', contactId);
+    if (eventType) query.append('eventType', eventType);
 
-    const response = await axios.get(`${API_BASE_URL}/marketing/events?${query.toString()}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/events?${query.toString()}`);
     return response.data;
   },
 
   createEvent: async (payload) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/events`, payload, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/events', payload);
     return response.data;
   },
 
   createCampaignDraft: async (campaign) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/campaigns`, campaign, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/campaigns', campaign);
     return response.data;
   },
 
   sendCampaign: async (campaignId) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/campaigns/${campaignId}/send`, {}, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/campaigns/${campaignId}/send`, {});
     return response.data;
   },
 
   deleteCampaign: async (campaignId) => {
-    const response = await axios.delete(`${API_BASE_URL}/marketing/campaigns/${campaignId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.delete(`/marketing/campaigns/${campaignId}`);
     return response.data;
   },
 
   deleteTemplate: async (templateId) => {
-    const response = await axios.delete(`${API_BASE_URL}/marketing/templates/${templateId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.delete(`/marketing/templates/${templateId}`);
     return response.data;
   },
 
   deleteList: async (listId) => {
-    const response = await axios.delete(`${API_BASE_URL}/marketing/lists/${listId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.delete(`/marketing/lists/${listId}`);
     return response.data;
   },
 
   getJourneys: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/journeys`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/journeys');
     return response.data;
   },
 
   getJourneySummary: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/journeys/summary`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/journeys/summary');
     return response.data;
   },
 
   createJourney: async (journey) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/journeys`, journey, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post('/marketing/journeys', journey);
     return response.data;
   },
 
   getJourneyById: async (journeyId) => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/journeys/${journeyId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/journeys/${journeyId}`);
     return response.data;
   },
 
   upsertJourneySteps: async (journeyId, steps) => {
-    const response = await axios.put(`${API_BASE_URL}/marketing/journeys/${journeyId}/steps`, steps, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.put(`/marketing/journeys/${journeyId}/steps`, steps);
     return response.data;
   },
 
   publishJourney: async (journeyId) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/journeys/${journeyId}/publish`, {}, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/journeys/${journeyId}/publish`, {});
     return response.data;
   },
 
   pauseJourney: async (journeyId) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/journeys/${journeyId}/pause`, {}, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.post(`/marketing/journeys/${journeyId}/pause`, {});
     return response.data;
   },
 
   getContactById: async (contactId) => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/contacts/${contactId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get(`/marketing/contacts/${contactId}`);
     return response.data;
   },
 
   getSuppressions: async () => {
-    const response = await axios.get(`${API_BASE_URL}/marketing/suppressions`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.get('/marketing/suppressions');
     return response.data;
   },
 
   addSuppression: async ({ email, reason = 'Unsubscribed', notes = '' }) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/suppressions`,
-      { email, reason, notes },
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.post('/marketing/suppressions', { email, reason, notes });
     return response.data;
   },
 
   removeSuppression: async (email) => {
     const encoded = encodeURIComponent(email);
-    const response = await axios.delete(`${API_BASE_URL}/marketing/suppressions/${encoded}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await apiClient.delete(`/marketing/suppressions/${encoded}`);
     return response.data;
   },
 
   importContactsCsv: async ({ csvContent, hasHeader = true, delimiter = ',', source = 'csv_import' }) => {
-    const response = await axios.post(`${API_BASE_URL}/marketing/contacts/import-csv`,
-      { csvContent, hasHeader, delimiter, source },
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.post('/marketing/contacts/import-csv', {
+      csvContent, hasHeader, delimiter, source
+    });
     return response.data;
   },
 
   addContactsToList: async (listId, contactIds) => {
-    const response = await axios.post(
-      `${API_BASE_URL}/marketing/lists/${listId}/members/bulk`,
-      { contactIds },
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.post(`/marketing/lists/${listId}/members/bulk`, { contactIds });
     return response.data;
   },
 
   getListContacts: async (listId) => {
-    const response = await axios.get(
-      `${API_BASE_URL}/marketing/lists/${listId}/members`,
-      { headers: getAuthHeaders() }
-    );
+    const response = await apiClient.get(`/marketing/lists/${listId}/members`);
     return response.data;
   }
 };

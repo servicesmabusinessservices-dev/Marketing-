@@ -1,40 +1,21 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { gmailService } from '../services/gmailService';
+import React, { useState } from 'react';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import { useSuppressions, useAddSuppression, useRemoveSuppression } from '../hooks/useApi';
 import './SuppressionList.css';
 
 const REASONS = ['Unsubscribed', 'Bounced', 'Complained', 'Manual', 'Other'];
 
 const SuppressionList = () => {
-  const navigate = useNavigate();
   const { showFeedback } = useFeedback();
 
-  const [suppressions, setSuppressions] = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [form, setForm]                 = useState({ email: '', reason: 'Unsubscribed', notes: '' });
-  const [submitting, setSubmitting]     = useState(false);
-  const [searchQuery, setSearchQuery]   = useState('');
+  const { data, isLoading, refetch } = useSuppressions();
+  const addMutation    = useAddSuppression();
+  const removeMutation = useRemoveSuppression();
+  const suppressions   = data?.suppressions || [];
 
-  const loadSuppressions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await gmailService.getSuppressions();
-      setSuppressions(data.suppressions || []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
-      showFeedback(error.response?.data?.error || 'Failed to load suppressions.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate, showFeedback]);
-
-  useEffect(() => { loadSuppressions(); }, [loadSuppressions]);
+  const [form, setForm]               = useState({ email: '', reason: 'Unsubscribed', notes: '' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAdd = async (event) => {
     event.preventDefault();
@@ -42,23 +23,18 @@ const SuppressionList = () => {
       showFeedback('Email is required.', 'warning');
       return;
     }
-    setSubmitting(true);
     try {
-      await gmailService.addSuppression(form);
+      await addMutation.mutateAsync(form);
       setForm({ email: '', reason: 'Unsubscribed', notes: '' });
-      loadSuppressions();
       showFeedback('Email added to suppression list.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to suppress email.', 'error');
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const handleRemove = async (email) => {
     try {
-      await gmailService.removeSuppression(email);
-      loadSuppressions();
+      await removeMutation.mutateAsync(email);
       showFeedback('Suppression removed.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to remove suppression.', 'error');
@@ -76,7 +52,7 @@ const SuppressionList = () => {
           <div className="syne" style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-1)' }}>Suppression List</div>
           <div className="helper-text">Manage opted-out and bounced email addresses.</div>
         </div>
-        <button className="topbar-btn" onClick={loadSuppressions}>Refresh</button>
+        <button className="topbar-btn" onClick={refetch}>Refresh</button>
       </div>
 
       <div className="page-grid">
@@ -117,8 +93,8 @@ const SuppressionList = () => {
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
-              <button type="submit" className="topbar-btn primary" disabled={submitting}>
-                {submitting ? 'Adding…' : 'Add to Suppression List'}
+              <button type="submit" className="topbar-btn primary" disabled={addMutation.isPending}>
+                {addMutation.isPending ? 'Adding…' : 'Add to Suppression List'}
               </button>
             </form>
           </div>
@@ -138,7 +114,7 @@ const SuppressionList = () => {
             />
           </div>
           <div className="card-body">
-            {loading ? (
+            {isLoading ? (
               <div className="empty-state"><p>Loading…</p></div>
             ) : filtered.length === 0 ? (
               <div className="empty-state">

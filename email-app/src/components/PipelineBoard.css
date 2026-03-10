@@ -214,3 +214,12 @@
     align-items: flex-start;
   }
 }
+
+@media (max-width: 640px) {
+  .pipeline-column { min-height: 200px; }
+  .pipeline-actions { flex-direction: column; width: 100%; }
+  .pipeline-btn { width: 100%; justify-content: center; }
+  .pipeline-inline { flex-direction: column; }
+  .pipeline-inline input,
+  .pipeline-inline select { width: 100%; }
+}

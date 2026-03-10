@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { gmailService } from '../services/gmailService';
-import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
+import React, { useMemo } from 'react';
 import Icon from './ui/Icon';
 import AnimatedCard from './ui/AnimatedCard';
+import {
+  useAnalytics,
+  useContacts,
+  useEmailSummary,
+  useTasks,
+  useJourneySummary,
+  useEvents
+} from '../hooks/useApi';
 
 const EVENT_LABELS = {
   opened: 'Email opened',
@@ -59,6 +63,15 @@ const formatTrigger = (value) => {
   return `Trigger: ${value.replace(/_/g, ' ')}`;
 };
 
+const buildContactMap = (contacts) => {
+  const map = new Map();
+  contacts.forEach((contact) => {
+    const name = [contact.firstName, contact.lastName].filter(Boolean).join(' ').trim();
+    map.set(contact.contactId, { label: name || contact.email || 'Contact' });
+  });
+  return map;
+};
+
 const getTaskPriorityClass = (value) => {
   const normalized = (value || '').toLowerCase();
   if (normalized.includes('high')) return 'high';
@@ -88,157 +101,91 @@ const formatTaskContact = (task) => {
 };
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const { showFeedback } = useFeedback();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [pipelineStages, setPipelineStages] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [taskTotal, setTaskTotal] = useState(0);
-  const [journeys, setJourneys] = useState([]);
-  const [windowLabel, setWindowLabel] = useState('Last 30 days');
+  const analyticsQuery      = useAnalytics({ days: 30 });
+  const contactsQuery       = useContacts({ limit: 200 });
+  const emailSummaryQuery   = useEmailSummary();
+  const tasksQuery          = useTasks({ status: 'Open', limit: 50 });
+  const journeySummaryQuery = useJourneySummary();
+  const eventsQuery         = useEvents({ limit: 6 });
 
-  const buildContactMap = (contacts) => {
-    const map = new Map();
-    contacts.forEach((contact) => {
-      const name = [contact.firstName, contact.lastName].filter(Boolean).join(' ').trim();
-      map.set(contact.contactId, {
-        label: name || contact.email || 'Contact'
-      });
+  const loading = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
+    .some((q) => q.isLoading);
+
+  const analytics      = analyticsQuery.data;
+  const contactsData   = contactsQuery.data;
+  const emailSummary   = emailSummaryQuery.data;
+  const tasksData      = tasksQuery.data;
+  const journeySummary = journeySummaryQuery.data;
+  const eventsData     = eventsQuery.data;
+
+  const windowLabel = useMemo(() => `Last ${analytics?.windowDays ?? 30} days`, [analytics]);
+
+  const contactMap = useMemo(() => buildContactMap(contactsData?.contacts || []), [contactsData]);
+
+  const stats = useMemo(() => {
+    const deliverability = analytics?.deliverability || {};
+    const windowDays     = analytics?.windowDays || 30;
+    const totalContacts  = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
+    const totalEmails    = emailSummary?.totalCount || 0;
+    const unreadEmails   = emailSummary?.unreadCount || 0;
+    return [
+      { key: 'contacts',   label: 'Total Contacts', value: formatNumber(totalContacts),            change: 'All time',            dir: 'neutral', color: 'amber',   icon: 'users' },
+      { key: 'totalEmails',label: 'Total Emails',   value: formatNumber(totalEmails),              change: 'Gmail total',         dir: 'neutral', color: 'blue',    icon: 'mail'  },
+      { key: 'unread',     label: 'Unread Emails',  value: formatNumber(unreadEmails),             change: 'Live',                dir: 'neutral', color: 'rose',    icon: 'inbox' },
+      { key: 'openRate',   label: 'Avg Open Rate',  value: formatPercent(deliverability.openRate), change: `Last ${windowDays} days`, dir: 'neutral', color: 'emerald', icon: 'bar'   }
+    ];
+  }, [analytics, contactsData, emailSummary]);
+
+  const pipelineStages = useMemo(() => {
+    const stageFunnel = analytics?.stageFunnel || {};
+    return [
+      ['New',       stageFunnel.New       || 0],
+      ['Qualified', stageFunnel.Qualified || 0],
+      ['Proposal',  stageFunnel.Proposal  || 0],
+      ['Won',       stageFunnel.Won       || 0],
+      ['Lost',      stageFunnel.Lost      || 0]
+    ];
+  }, [analytics]);
+
+  const activities = useMemo(() => {
+    const events = eventsData?.events || [];
+    return events.map((event) => {
+      const eventType    = (event.eventType || '').toLowerCase();
+      const contact      = contactMap.get(event.contactId);
+      const label        = EVENT_LABELS[eventType] || 'Activity logged';
+      const contactLabel = contact?.label || `Contact ${String(event.contactId || '').slice(0, 6)}`;
+      return {
+        id:    event.eventId || `${eventType}-${event.contactId}-${event.occurredAtUtc}`,
+        color: EVENT_COLORS[eventType] || 'blue',
+        text:  `${label} · ${contactLabel}`,
+        time:  formatRelativeTime(event.occurredAtUtc || event.createdAtUtc)
+      };
     });
-    return map;
-  };
+  }, [eventsData, contactMap]);
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      setLoading(true);
-      try {
-        const [analytics, contactsData, emailSummary, tasksData, journeySummary, eventsData] = await Promise.all([
-          gmailService.getAnalytics({ days: 30 }),
-          gmailService.getContacts({ limit: 200 }),
-          gmailService.getEmailSummary(),
-          gmailService.getTasks({ status: 'Open', limit: 50 }),
-          gmailService.getJourneySummary(),
-          gmailService.getEvents({ limit: 6 })
-        ]);
+  const { tasks, taskTotal } = useMemo(() => {
+    const taskRows = tasksData?.tasks || [];
+    const now      = Date.now();
+    const sorted   = [...taskRows].sort((a, b) => {
+      const aOverdue = a.dueAtUtc && new Date(a.dueAtUtc).getTime() < now;
+      const bOverdue = b.dueAtUtc && new Date(b.dueAtUtc).getTime() < now;
+      if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+      const aDue = a.dueAtUtc ? new Date(a.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
+      const bDue = b.dueAtUtc ? new Date(b.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
+      if (aDue !== bDue) return aDue - bDue;
+      return new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime();
+    });
+    return { tasks: sorted.slice(0, 12), taskTotal: tasksData?.totalCount || taskRows.length };
+  }, [tasksData]);
 
-        const totalContacts = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
-        const contactMap = buildContactMap(contactsData?.contacts || []);
-        const deliverability = analytics?.deliverability || {};
-        const stageFunnel = analytics?.stageFunnel || {};
-        const windowDays = analytics?.windowDays || 30;
-        const totalEmails = emailSummary?.totalCount || 0;
-        const unreadEmails = emailSummary?.unreadCount || 0;
-
-        setWindowLabel(`Last ${windowDays} days`);
-
-        setStats([
-          {
-            key: 'contacts',
-            label: 'Total Contacts',
-            value: formatNumber(totalContacts),
-            change: 'All time',
-            dir: 'neutral',
-            color: 'amber',
-            icon: 'users'
-          },
-          {
-            key: 'totalEmails',
-            label: 'Total Emails',
-            value: formatNumber(totalEmails),
-            change: 'Gmail total',
-            dir: 'neutral',
-            color: 'blue',
-            icon: 'mail'
-          },
-          {
-            key: 'unread',
-            label: 'Unread Emails',
-            value: formatNumber(unreadEmails),
-            change: 'Live',
-            dir: 'neutral',
-            color: 'rose',
-            icon: 'inbox'
-          },
-          {
-            key: 'openRate',
-            label: 'Avg Open Rate',
-            value: formatPercent(deliverability.openRate),
-            change: `Last ${windowDays} days`,
-            dir: 'neutral',
-            color: 'emerald',
-            icon: 'bar'
-          }
-        ]);
-
-        setPipelineStages([
-          ['New', stageFunnel.New || 0],
-          ['Qualified', stageFunnel.Qualified || 0],
-          ['Proposal', stageFunnel.Proposal || 0],
-          ['Won', stageFunnel.Won || 0],
-          ['Lost', stageFunnel.Lost || 0]
-        ]);
-
-        const events = eventsData?.events || [];
-        setActivities(
-          events.map((event) => {
-            const eventType = (event.eventType || '').toLowerCase();
-            const contact = contactMap.get(event.contactId);
-            const label = EVENT_LABELS[eventType] || 'Activity logged';
-            const contactLabel = contact?.label || `Contact ${String(event.contactId || '').slice(0, 6)}`;
-            return {
-              id: event.eventId || `${eventType}-${event.contactId}-${event.occurredAtUtc}`,
-              color: EVENT_COLORS[eventType] || 'blue',
-              text: `${label} · ${contactLabel}`,
-              time: formatRelativeTime(event.occurredAtUtc || event.createdAtUtc)
-            };
-          })
-        );
-
-        const taskRows = tasksData?.tasks || [];
-        setTaskTotal(tasksData?.totalCount || taskRows.length);
-
-        const now = Date.now();
-        const sortedTasks = [...taskRows].sort((a, b) => {
-          const aOverdue = a.dueAtUtc && new Date(a.dueAtUtc).getTime() < now;
-          const bOverdue = b.dueAtUtc && new Date(b.dueAtUtc).getTime() < now;
-          if (aOverdue !== bOverdue) {
-            return aOverdue ? -1 : 1;
-          }
-
-          const aDue = a.dueAtUtc ? new Date(a.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
-          const bDue = b.dueAtUtc ? new Date(b.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
-          if (aDue !== bDue) {
-            return aDue - bDue;
-          }
-
-          return new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime();
-        });
-
-        setTasks(sortedTasks.slice(0, 12));
-
-        const publishedJourneys = (journeySummary?.journeys || []).filter(
-          (journey) => String(journey.status || '').toLowerCase() === 'published'
-        );
-        const sortedJourneys = [...publishedJourneys].sort(
-          (a, b) => (b.activeEnrollments || 0) - (a.activeEnrollments || 0)
-        );
-        setJourneys(sortedJourneys.slice(0, 4));
-      } catch (error) {
-        if (error.response?.status === 401) {
-          handleUnauthorized(navigate, showFeedback);
-          return;
-        }
-        showFeedback(error.response?.data?.error || 'Failed to load dashboard data.', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const journeys = useMemo(() => {
+    const published = (journeySummary?.journeys || []).filter(
+      (j) => String(j.status || '').toLowerCase() === 'published'
+    );
+    return [...published]
+      .sort((a, b) => (b.activeEnrollments || 0) - (a.activeEnrollments || 0))
+      .slice(0, 4);
+  }, [journeySummary]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';

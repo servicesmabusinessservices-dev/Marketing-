@@ -1,73 +1,45 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import { usePipeline, useContactNotes, useContactTasks } from '../hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
 
 const STAGES = ['New', 'Qualified', 'Proposal', 'Won', 'Lost'];
 
 const PipelineBoard = () => {
-  const navigate = useNavigate();
   const { showFeedback } = useFeedback();
-  const [loading, setLoading] = useState(true);
-  const [columns, setColumns] = useState([]);
-  const [ownerOptions, setOwnerOptions] = useState([]);
-  const [search, setSearch] = useState('');
+  const queryClient = useQueryClient();
+
+  const [search, setSearch]           = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');
   const [stageFilter, setStageFilter] = useState('');
   const [selectedContact, setSelectedContact] = useState(null);
-  const [notes, setNotes] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [newNote, setNewNote] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
+  const [newNote, setNewNote]         = useState('');
+  const [newTask, setNewTask]         = useState({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
   const [ownerDrafts, setOwnerDrafts] = useState({});
 
-  const fetchPipeline = async () => {
-    setLoading(true);
-    try {
-      const data = await gmailService.getPipeline({
-        ownerEmail: ownerFilter || null,
-        search: search || null,
-        stage: stageFilter || null,
-        pageSize: 120
-      });
-      setColumns(data.columns || []);
-      setOwnerOptions(data.ownerOptions || []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
-      showFeedback(error.response?.data?.error || 'Failed to load pipeline.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const pipelineQuery = usePipeline({
+    ownerEmail: ownerFilter || null,
+    search:     search     || null,
+    stage:      stageFilter|| null,
+    pageSize:   120
+  });
+  const notesQuery = useContactNotes(selectedContact?.contactId);
+  const tasksQuery = useContactTasks(selectedContact?.contactId);
 
-  const fetchContactDetails = async (contact) => {
-    setSelectedContact(contact);
-    try {
-      const [notesData, tasksData] = await Promise.all([
-        gmailService.getContactNotes(contact.contactId),
-        gmailService.getContactTasks(contact.contactId)
-      ]);
-      setNotes(notesData.notes || []);
-      setTasks(tasksData.tasks || []);
-    } catch (error) {
-      showFeedback(error.response?.data?.error || 'Failed to load contact details.', 'error');
-    }
-  };
+  const columns      = pipelineQuery.data?.columns      || [];
+  const ownerOptions = pipelineQuery.data?.ownerOptions || [];
+  const loading      = pipelineQuery.isLoading;
+  const notes        = notesQuery.data?.notes || [];
+  const tasks        = tasksQuery.data?.tasks || [];
 
-  useEffect(() => {
-    fetchPipeline();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const invalidatePipeline = () => queryClient.invalidateQueries({ queryKey: ['pipeline'] });
 
   const handleStageMove = async (contactId, toStage) => {
     try {
       await gmailService.updateContactLeadStage(contactId, toStage, 'Pipeline board move');
-      await fetchPipeline();
+      invalidatePipeline();
       showFeedback('Contact stage updated.', 'success');
       if (selectedContact?.contactId === contactId) {
         setSelectedContact({ ...selectedContact, leadStage: toStage });
@@ -86,7 +58,7 @@ const PipelineBoard = () => {
 
     try {
       await gmailService.assignContactOwner(contact.contactId, ownerEmail.trim());
-      await fetchPipeline();
+      invalidatePipeline();
       showFeedback('Owner assigned.', 'success');
       if (selectedContact?.contactId === contact.contactId) {
         setSelectedContact({ ...selectedContact, ownerEmail: ownerEmail.trim() });
@@ -104,8 +76,7 @@ const PipelineBoard = () => {
     try {
       await gmailService.addContactNote(selectedContact.contactId, newNote.trim());
       setNewNote('');
-      const data = await gmailService.getContactNotes(selectedContact.contactId);
-      setNotes(data.notes || []);
+      queryClient.invalidateQueries({ queryKey: ['contactNotes', selectedContact.contactId] });
       showFeedback('Note added.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to add note.', 'error');
@@ -126,8 +97,7 @@ const PipelineBoard = () => {
         ownerEmail: newTask.ownerEmail || selectedContact.ownerEmail || null
       });
       setNewTask({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
-      const data = await gmailService.getContactTasks(selectedContact.contactId);
-      setTasks(data.tasks || []);
+      queryClient.invalidateQueries({ queryKey: ['contactTasks', selectedContact.contactId] });
       showFeedback('Task added.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to add task.', 'error');
@@ -141,8 +111,7 @@ const PipelineBoard = () => {
 
     try {
       await gmailService.updateContactTask(selectedContact.contactId, task.taskId, { status: 'Completed' });
-      const data = await gmailService.getContactTasks(selectedContact.contactId);
-      setTasks(data.tasks || []);
+      queryClient.invalidateQueries({ queryKey: ['contactTasks', selectedContact.contactId] });
       showFeedback('Task marked as completed.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update task.', 'error');
@@ -196,7 +165,7 @@ const PipelineBoard = () => {
             <option key={owner} value={owner}>{owner}</option>
           ))}
         </select>
-        <button className="topbar-btn" onClick={fetchPipeline}>Apply Filters</button>
+        <button className="topbar-btn" onClick={() => pipelineQuery.refetch()}>Apply Filters</button>
         <div style={{ marginLeft: 'auto' }}>
           <button className="topbar-btn primary" type="button">Add Contact</button>
         </div>
@@ -222,7 +191,7 @@ const PipelineBoard = () => {
                       <div
                         key={contact.contactId}
                         className={`contact-card ${selectedContact?.contactId === contact.contactId ? 'selected' : ''}`}
-                        onClick={() => fetchContactDetails(contact)}
+                        onClick={() => setSelectedContact(contact)}
                       >
                         <div className="contact-name">{contact.firstName || contact.email}</div>
                         <div className="contact-company">{contact.company || 'No company'}</div>

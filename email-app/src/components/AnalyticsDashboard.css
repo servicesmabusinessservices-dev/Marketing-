@@ -140,3 +140,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .analytics-btn { width: 100%; justify-content: center; }
+  .analytics-actions { flex-direction: column; width: 100%; }
+  .analytics-actions .analytics-btn { width: 100%; }
+}

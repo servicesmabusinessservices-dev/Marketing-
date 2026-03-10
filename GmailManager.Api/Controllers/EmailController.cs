@@ -39,15 +39,18 @@ public class EmailController : ControllerBase
     private readonly IBulkEmailJobQueue _bulkEmailJobQueue;
     private readonly IBulkEmailJobStore _bulkEmailJobStore;
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly ILogger<EmailController> _logger;
 
     public EmailController(
         IConfiguration config,
         IUserTokenStore userTokenStore,
         IBulkEmailJobQueue bulkEmailJobQueue,
         IBulkEmailJobStore bulkEmailJobStore,
-        IDbContextFactory<AppDbContext> dbContextFactory)
+        IDbContextFactory<AppDbContext> dbContextFactory,
+        ILogger<EmailController> logger)
     {
         _config = config;
+        _logger = logger;
         _userTokenStore = userTokenStore;
         _bulkEmailJobQueue = bulkEmailJobQueue;
         _bulkEmailJobStore = bulkEmailJobStore;
@@ -315,25 +318,6 @@ public class EmailController : ControllerBase
         });
     }
 
-    [HttpPost("test-send")]
-    public async Task<IActionResult> TestSend()
-    {
-        try
-        {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return Ok(new { message = "User email not found", hasToken = false });
-            }
-
-            var token = await _userTokenStore.GetAsync(email);
-            return Ok(new { message = $"User email: {email}", hasToken = token != null });
-        }
-        catch (Exception ex)
-        {
-            return Ok(new { error = ex.Message });
-        }
-    }
     [HttpPost("send")]
     public async Task<IActionResult> SendEmail([FromBody] SendEmailRequest request)
     {
@@ -358,9 +342,8 @@ public class EmailController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Send email error: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            return StatusCode(500, new { error = ex.Message });
+            _logger.LogError(ex, "Failed to send email");
+            return StatusCode(500, new { error = "Failed to send email." });
         }
     }
 
@@ -433,9 +416,8 @@ public class EmailController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Forward email error: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            return StatusCode(500, new { error = ex.Message });
+            _logger.LogError(ex, "Failed to forward email {MessageId}", Request.RouteValues["messageId"]);
+            return StatusCode(500, new { error = "Failed to forward email." });
         }
     }
 
@@ -477,8 +459,20 @@ public class EmailController : ControllerBase
     [HttpGet("bulk-send/{jobId}")]
     public async Task<IActionResult> GetBulkSendStatus(string jobId)
     {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            return Unauthorized(new { error = "User email not found in token" });
+        }
+
         var job = await _bulkEmailJobStore.GetAsync(jobId);
         if (job == null)
+        {
+            return NotFound(new { error = "Bulk job not found" });
+        }
+
+        // IDOR protection — only the owning user may view their job status
+        if (!string.Equals(job.UserEmail, userEmail, StringComparison.OrdinalIgnoreCase))
         {
             return NotFound(new { error = "Bulk job not found" });
         }
@@ -533,7 +527,7 @@ public class EmailController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"GetGmailService error: {ex.Message}");
+            _logger.LogError(ex, "Failed to initialise GmailService");
             throw;
         }
     }

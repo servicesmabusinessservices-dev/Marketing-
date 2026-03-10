@@ -311,50 +311,88 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
                 <label className="form-label">Recipients{recipientTags.length > 0 && <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}>{recipientTags.length} added</span>}</label>
                 <div
                   style={{
-                    display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
-                    border: '1px solid var(--border)', borderRadius: 6, padding: '6px 10px',
+                    border: '1px solid var(--border)', borderRadius: 6,
                     background: 'var(--navy-3)', minHeight: 48, cursor: 'text'
                   }}
                   onClick={() => document.getElementById('email-tag-input').focus()}
                 >
-                  {recipientTags.map(email => (
-                    <span key={email} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      background: 'var(--navy-4)', border: '1px solid var(--border)',
-                      borderRadius: 20, padding: '3px 10px 3px 10px',
-                      fontSize: 12, color: '#a5b4fc', whiteSpace: 'nowrap'
-                    }}>
-                      {email}
-                      <span
-                        onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }}
-                        style={{ cursor: 'pointer', color: 'var(--text-3)', fontWeight: 700, fontSize: 14, lineHeight: 1 }}
-                      >×</span>
-                    </span>
-                  ))}
-                  <input
-                    id="email-tag-input"
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    onKeyDown={handleEmailInputKey}
-                    onBlur={() => addEmailTag(emailInput)}
-                    placeholder={recipientTags.length ? '' : 'Type email and press Enter...'}
-                    disabled={isScheduling}
-                    style={{
-                      flex: 1, minWidth: 180, border: 'none', outline: 'none',
-                      background: 'transparent', color: 'var(--text-1)', fontSize: 13
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => addEmailTag(emailInput)}
-                    disabled={!emailInput.trim() || isScheduling}
-                    style={{
-                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                      background: 'var(--gradient-cta)', color: '#fff', border: 'none', cursor: 'pointer',
-                      opacity: !emailInput.trim() ? 0.4 : 1
-                    }}
-                  >Add</button>
+                  {recipientTags.length > 20 ? (
+                    <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.35)',
+                        borderRadius: 20, padding: '4px 14px', fontSize: 12.5, color: '#a5b4fc', fontWeight: 600
+                      }}>
+                        ✉ {recipientTags.length} recipients loaded
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, flex: 1 }}>
+                        {recipientTags.slice(0, 5).map(email => (
+                          <span key={email} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            background: 'var(--navy-4)', border: '1px solid var(--border)',
+                            borderRadius: 20, padding: '2px 8px', fontSize: 11, color: 'var(--text-2)', whiteSpace: 'nowrap'
+                          }}>
+                            {email}
+                            <span onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }}
+                              style={{ cursor: 'pointer', color: 'var(--text-3)', fontWeight: 700, fontSize: 13, lineHeight: 1 }}>×</span>
+                          </span>
+                        ))}
+                        {recipientTags.length > 5 && (
+                          <span style={{ fontSize: 11, color: 'var(--text-3)', padding: '2px 4px', alignSelf: 'center' }}>
+                            +{recipientTags.length - 5} more
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setRecipientTags([]); }}
+                        style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'var(--navy-5)', color: 'var(--rose)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                      >Clear all</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', padding: '6px 10px', maxHeight: 120, overflowY: 'auto' }}>
+                      {recipientTags.map(email => (
+                        <span key={email} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          background: 'var(--navy-4)', border: '1px solid var(--border)',
+                          borderRadius: 20, padding: '3px 10px 3px 10px',
+                          fontSize: 12, color: '#a5b4fc', whiteSpace: 'nowrap'
+                        }}>
+                          {email}
+                          <span
+                            onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }}
+                            style={{ cursor: 'pointer', color: 'var(--text-3)', fontWeight: 700, fontSize: 14, lineHeight: 1 }}
+                          >×</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px 6px', borderTop: recipientTags.length > 0 ? '1px solid var(--border)' : 'none' }}>
+                    <input
+                      id="email-tag-input"
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyDown={handleEmailInputKey}
+                      onBlur={() => addEmailTag(emailInput)}
+                      placeholder={recipientTags.length ? 'Add another email…' : 'Type email and press Enter...'}
+                      disabled={isScheduling}
+                      style={{
+                        flex: 1, minWidth: 180, border: 'none', outline: 'none',
+                        background: 'transparent', color: 'var(--text-1)', fontSize: 13
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addEmailTag(emailInput)}
+                      disabled={!emailInput.trim() || isScheduling}
+                      style={{
+                        padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                        background: 'var(--gradient-cta)', color: '#fff', border: 'none', cursor: 'pointer',
+                        opacity: !emailInput.trim() ? 0.4 : 1
+                      }}
+                    >Add</button>
+                  </div>
                 </div>
               </div>
 

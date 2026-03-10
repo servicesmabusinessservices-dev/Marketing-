@@ -57,7 +57,7 @@ const getTitle = (location) => {
   return { crumb: 'Home', title: 'Workspace' };
 };
 
-const WorkspaceTopbar = ({ isDark, toggleTheme }) => {
+const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle }) => {
   const location = useLocation();
   const meta = getTitle(location);
 
@@ -66,6 +66,15 @@ const WorkspaceTopbar = ({ isDark, toggleTheme }) => {
 
   return (
     <header className="topbar">
+      {/* Hamburger — visible only on mobile (CSS controls display) */}
+      <button
+        type="button"
+        className="topbar-hamburger"
+        onClick={onMenuToggle}
+        aria-label="Toggle navigation"
+      >
+        <Icon name="menu" size={18} />
+      </button>
       <div className="topbar-breadcrumb">
         <span>{meta.crumb}</span>
         <span>/</span>

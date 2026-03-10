@@ -2,21 +2,42 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import {
+  useContacts, useLists, useTemplates, useCampaigns, useJourneys
+} from '../hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Marketing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { showFeedback } = useFeedback();
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(true);
-  const [contacts, setContacts] = useState([]);
-  const [lists, setLists] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-  const [journeys, setJourneys] = useState([]);
+  // This state must come before the query that consumes it
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState('all');
+
+  const contactsQuery  = useContacts({ limit: 1000 });
+  const listsQuery     = useLists();
+  const templatesQuery = useTemplates({ category: templateCategoryFilter });
+  const campaignsQuery = useCampaigns();
+  const journeysQuery  = useJourneys();
+
+  const contacts  = contactsQuery.data?.contacts  || [];
+  const lists     = listsQuery.data?.lists         || [];
+  const templates = templatesQuery.data?.templates || [];
+  const campaigns = campaignsQuery.data?.campaigns || [];
+  const journeys  = journeysQuery.data?.journeys   || [];
+  const loading   = [contactsQuery, listsQuery, templatesQuery, campaignsQuery, journeysQuery].some((q) => q.isLoading);
+
+  const refreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    queryClient.invalidateQueries({ queryKey: ['lists'] });
+    queryClient.invalidateQueries({ queryKey: ['templates'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    queryClient.invalidateQueries({ queryKey: ['journeys'] });
+  };
+
   const [previewResult, setPreviewResult] = useState('');
 
   const [contactForm, setContactForm] = useState({
@@ -61,38 +82,6 @@ const Marketing = () => {
   const [sendingCampaignId, setSendingCampaignId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchAll = async () => {
-    setLoading(true);
-    try {
-      const [contactsData, listsData, templatesData, campaignsData, journeysData] = await Promise.all([
-        gmailService.getContacts({ limit: 1000 }),
-        gmailService.getLists(),
-        gmailService.getTemplates({ category: templateCategoryFilter }),
-        gmailService.getCampaigns(),
-        gmailService.getJourneys()
-      ]);
-
-      setContacts(contactsData.contacts || []);
-      setLists(listsData.lists || []);
-      setTemplates(templatesData.templates || []);
-      setCampaigns(campaignsData.campaigns || []);
-      setJourneys(journeysData.journeys || []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
-      showFeedback(error.response?.data?.error || 'Failed to load marketing data.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateCategoryFilter]);
-
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (!tab || loading) {
@@ -115,7 +104,7 @@ const Marketing = () => {
     try {
       await gmailService.upsertContact(contactForm);
       setContactForm({ email: '', firstName: '', lastName: '', company: '', leadStage: 'New' });
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
       showFeedback('Contact saved.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to save contact.', 'error');
@@ -132,7 +121,7 @@ const Marketing = () => {
     try {
       await gmailService.createList(listForm);
       setListForm({ name: '', description: '' });
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
       showFeedback('List created.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to create list.', 'error');
@@ -159,7 +148,7 @@ const Marketing = () => {
         subject: '',
         bodyHtml: '<p>Hi {{firstName}},</p><p>Quick update for {{company}}.</p>'
       });
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
       showFeedback('Template created.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to create template.', 'error');
@@ -198,7 +187,7 @@ const Marketing = () => {
     try {
       await gmailService.createCampaignDraft(campaignForm);
       setCampaignForm({ name: '', description: '', listId: '', templateId: '' });
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       showFeedback('Campaign draft created.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to create campaign draft.', 'error');
@@ -215,7 +204,7 @@ const Marketing = () => {
     try {
       await gmailService.createJourney(journeyForm);
       setJourneyForm({ name: '', triggerType: 'new_lead', triggerRefId: '' });
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['journeys'] });
       showFeedback('Journey created.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to create journey.', 'error');
@@ -234,7 +223,6 @@ const Marketing = () => {
         contactId: selectedEventContactId
       });
       showFeedback('Event logged.', 'success');
-      fetchAll();
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to log event.', 'error');
     }
@@ -251,7 +239,7 @@ const Marketing = () => {
       const result = await gmailService.importContactsCsv(csvForm);
       setCsvForm({ csvContent: '', hasHeader: true, delimiter: ',', source: 'csv_import' });
       setShowCsvImport(false);
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
       showFeedback(`Imported ${result.imported ?? 0} contacts.`, 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Import failed.', 'error');
@@ -267,7 +255,7 @@ const Marketing = () => {
       } else {
         await gmailService.pauseJourney(journey.journeyId);
       }
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['journeys'] });
       showFeedback(action === 'publish' ? 'Journey published.' : 'Journey paused.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update journey status.', 'error');
@@ -282,7 +270,7 @@ const Marketing = () => {
       const listName = lists.find(l => l.listId === listId)?.name || 'list';
       showFeedback(`Added ${result.added} contact(s) to "${listName}".`, 'success');
       setSelectedContactIds(new Set());
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to add contacts to list.', 'error');
     } finally {
@@ -299,7 +287,7 @@ const Marketing = () => {
     try {
       const result = await gmailService.sendCampaign(id);
       showFeedback(`Campaign queued! Sending to ${result.totalRecipients} recipient(s).`, 'success');
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to send campaign.', 'error');
     } finally {
@@ -315,7 +303,7 @@ const Marketing = () => {
     try {
       await gmailService.deleteCampaign(id);
       showFeedback('Campaign deleted.', 'success');
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to delete campaign.', 'error');
     } finally {
@@ -331,7 +319,7 @@ const Marketing = () => {
     try {
       await gmailService.deleteTemplate(id);
       showFeedback('Template deleted.', 'success');
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to delete template.', 'error');
     } finally {
@@ -347,7 +335,7 @@ const Marketing = () => {
     try {
       await gmailService.deleteList(id);
       showFeedback('List deleted.', 'success');
-      fetchAll();
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to delete list.', 'error');
     } finally {
@@ -382,7 +370,7 @@ const Marketing = () => {
           <div className="syne" style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-1)' }}>Marketing Workspace</div>
           <div className="helper-text">Templates, campaigns, and automation journeys.</div>
         </div>
-        <button className="topbar-btn" onClick={fetchAll}>Refresh Data</button>
+        <button className="topbar-btn" onClick={refreshAll}>Refresh Data</button>
       </div>
 
       {loading ? (
@@ -475,7 +463,7 @@ const Marketing = () => {
                 </div>
               )}
 
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', maxHeight: 440, overflowY: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>

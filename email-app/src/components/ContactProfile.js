@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import {
+  useContactById, useContactNotes, useContactTasks, useEvents, useLeadStageHistory,
+  useAddContactNote, useCreateContactTask, useUpdateContactTask, useUpdateContactLeadStage
+} from '../hooks/useApi';
 import './ContactProfile.css';
 
 const STAGE_COLORS = {
@@ -58,62 +60,39 @@ const ContactProfile = () => {
   const navigate = useNavigate();
   const { showFeedback } = useFeedback();
 
-  const [contact, setContact] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('activity');
+  const contactQuery       = useContactById(contactId);
+  const notesQuery         = useContactNotes(contactId);
+  const tasksQuery         = useContactTasks(contactId);
+  const eventsQuery        = useEvents({ contactId, limit: 50 });
+  const historyQuery       = useLeadStageHistory(contactId);
+  const addNoteMutation    = useAddContactNote(contactId);
+  const createTaskMutation = useCreateContactTask(contactId);
+  const updateTaskMutation = useUpdateContactTask(contactId);
+  const updateStageMutation = useUpdateContactLeadStage();
 
-  const [events, setEvents] = useState([]);
-  const [notes, setNotes] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [stageHistory, setStageHistory] = useState([]);
+  const contact      = contactQuery.data ?? null;
+  const notes        = notesQuery.data?.notes || [];
+  const tasks        = tasksQuery.data?.tasks || [];
+  const events       = eventsQuery.data?.events || [];
+  const stageHistory = historyQuery.data?.history || [];
+  const isLoading    = contactQuery.isLoading;
 
-  const [noteText, setNoteText] = useState('');
+  const [tab, setTab]             = useState('activity');
+  const [noteText, setNoteText]   = useState('');
   const [addingNote, setAddingNote] = useState(false);
-
-  const [taskForm, setTaskForm] = useState({ title: '', priority: 'Medium', dueDate: '' });
+  const [taskForm, setTaskForm]   = useState({ title: '', priority: 'Medium', dueDate: '' });
   const [addingTask, setAddingTask] = useState(false);
-
   const [editingStage, setEditingStage] = useState(false);
-  const [newStage, setNewStage] = useState('');
+  const [newStage, setNewStage]   = useState('');
   const [stageReason, setStageReason] = useState('');
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [contactData, notesData, tasksData, eventsData, historyData] = await Promise.all([
-        gmailService.getContactById(contactId),
-        gmailService.getContactNotes(contactId),
-        gmailService.getContactTasks(contactId),
-        gmailService.getEvents({ contactId, limit: 50 }),
-        gmailService.getLeadStageHistory(contactId)
-      ]);
-      setContact(contactData);
-      setNotes(notesData.notes || []);
-      setTasks(tasksData.tasks || []);
-      setEvents(eventsData.events || []);
-      setStageHistory(historyData.history || []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
-      showFeedback(error.response?.data?.error || 'Failed to load contact.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [contactId, navigate, showFeedback]);
-
-  useEffect(() => { loadData(); }, [loadData]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
     if (!noteText.trim()) return;
     setAddingNote(true);
     try {
-      await gmailService.addContactNote(contactId, noteText.trim());
+      await addNoteMutation.mutateAsync(noteText.trim());
       setNoteText('');
-      const notesData = await gmailService.getContactNotes(contactId);
-      setNotes(notesData.notes || []);
       showFeedback('Note added.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to add note.', 'error');
@@ -127,14 +106,12 @@ const ContactProfile = () => {
     if (!taskForm.title.trim()) return;
     setAddingTask(true);
     try {
-      await gmailService.createContactTask(contactId, {
-        title: taskForm.title,
+      await createTaskMutation.mutateAsync({
+        title:    taskForm.title,
         priority: taskForm.priority,
         dueAtUtc: taskForm.dueDate ? new Date(taskForm.dueDate).toISOString() : null
       });
       setTaskForm({ title: '', priority: 'Medium', dueDate: '' });
-      const tasksData = await gmailService.getContactTasks(contactId);
-      setTasks(tasksData.tasks || []);
       showFeedback('Task created.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to create task.', 'error');
@@ -145,9 +122,7 @@ const ContactProfile = () => {
 
   const handleCompleteTask = async (taskId) => {
     try {
-      await gmailService.updateContactTask(contactId, taskId, { status: 'Completed' });
-      const tasksData = await gmailService.getContactTasks(contactId);
-      setTasks(tasksData.tasks || []);
+      await updateTaskMutation.mutateAsync({ taskId, patch: { status: 'Completed' } });
       showFeedback('Task completed.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update task.', 'error');
@@ -158,18 +133,17 @@ const ContactProfile = () => {
     e.preventDefault();
     if (!newStage) return;
     try {
-      await gmailService.updateContactLeadStage(contactId, newStage, stageReason || 'Manual update');
+      await updateStageMutation.mutateAsync({ contactId, toLeadStage: newStage, reason: stageReason || 'Manual update' });
       setEditingStage(false);
       setNewStage('');
       setStageReason('');
-      loadData();
       showFeedback('Stage updated.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update stage.', 'error');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="content fade-in">
         <div className="empty-state" style={{ paddingTop: 60 }}>
