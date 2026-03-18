@@ -68,6 +68,7 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, isAuthenticated = 
 
   const showInboxAction = isAuthenticated && (location.pathname === '/emails' || location.pathname.startsWith('/email/'));
   const showDashboardAction = isAuthenticated && location.pathname === '/dashboard';
+  const themeLabel = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
     <header className="topbar">
@@ -80,22 +81,22 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, isAuthenticated = 
       >
         <Icon name="menu" size={18} />
       </button>
-      <div className="topbar-breadcrumb">
+      <nav className="topbar-breadcrumb" aria-label="Breadcrumb">
         <span>{meta.crumb}</span>
-        <span>/</span>
+        <span aria-hidden="true">/</span>
         <span className="current">{meta.title}</span>
-      </div>
+      </nav>
       <div className="topbar-right">
         {isAuthenticated && (
-          <div className="search-box">
+          <div className="search-box" role="search" aria-label="Workspace search">
             <Icon name="search" size={13} color="var(--text-3)" />
-            <input placeholder="Search contacts, emails" />
+            <input type="search" aria-label="Search contacts and emails" placeholder="Search contacts, emails" />
           </div>
         )}
         {isAuthenticated && (
-          <div className="topbar-btn">
+          <span className="topbar-btn topbar-btn-static" aria-hidden="true">
             <Icon name="bell" size={14} />
-          </div>
+          </span>
         )}
         {!isAuthenticated && (
           <button
@@ -108,18 +109,18 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, isAuthenticated = 
           </button>
         )}
         {showInboxAction && (
-          <div className="topbar-btn primary">
+          <button type="button" className="topbar-btn primary" onClick={() => navigate('/emails/bulk')}>
             <Icon name="bulk" size={13} />
             New Campaign
-          </div>
+          </button>
         )}
         {showDashboardAction && (
-          <div className="topbar-btn primary">
+          <button type="button" className="topbar-btn primary" onClick={() => navigate('/marketing?tab=contacts')}>
             <Icon name="plus" size={13} />
             Quick Add
-          </div>
+          </button>
         )}
-        <button type="button" className="topbar-btn icon-only" onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+        <button type="button" className="topbar-btn icon-only" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel}>
           <Icon name={isDark ? 'sun' : 'moon'} size={15} />
         </button>
       </div>

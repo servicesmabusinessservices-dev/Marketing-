@@ -98,6 +98,7 @@ npm start
 
 ## 📚 Documentation
 
+- **[End User Guide](END_USER_GUIDE.md)** - How to use the app day-to-day
 - **[Complete Setup Guide](GMAIL_SETUP_GUIDE.md)** - Step-by-step setup instructions
 - **[API Reference](API_REFERENCE.md)** - API endpoints documentation
 - **[Project Summary](PROJECT_SUMMARY.md)** - Features and architecture overview

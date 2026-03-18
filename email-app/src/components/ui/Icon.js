@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Icon = ({ name, size = 16, color = 'currentColor' }) => {
+const Icon = ({ name, size = 16, color = 'currentColor', title, ariaLabel, decorative = true, className }) => {
   const icons = {
     home: <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />,
     inbox: (
@@ -171,8 +171,11 @@ const Icon = ({ name, size = 16, color = 'currentColor' }) => {
     return null;
   }
 
+  const label = title || ariaLabel;
+
   return (
     <svg
+      className={className}
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -181,7 +184,12 @@ const Icon = ({ name, size = 16, color = 'currentColor' }) => {
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
+      role={decorative ? 'presentation' : 'img'}
+      aria-hidden={decorative ? 'true' : undefined}
+      aria-label={!decorative ? label : undefined}
+      focusable="false"
     >
+      {!decorative && label ? <title>{label}</title> : null}
       {icon}
     </svg>
   );

@@ -43,11 +43,12 @@ export const useEmailById = (emailId) =>
     enabled: Boolean(emailId),
   });
 
-export const useEmailSummary = () =>
+export const useEmailSummary = (enabled = true) =>
   useQuery({
     queryKey: QueryKeys.emailSummary(),
     queryFn: gmailService.getEmailSummary,
     staleTime: 60_000,
+    enabled,
   });
 
 export const useClassificationSummary = () =>
@@ -163,11 +164,12 @@ export const useJourneys = () =>
     staleTime: 60_000,
   });
 
-export const useJourneySummary = () =>
+export const useJourneySummary = (enabled = true) =>
   useQuery({
     queryKey: QueryKeys.journeySummary(),
     queryFn: gmailService.getJourneySummary,
     staleTime: 60_000,
+    enabled,
   });
 
 export const useJourneyById = (journeyId) =>

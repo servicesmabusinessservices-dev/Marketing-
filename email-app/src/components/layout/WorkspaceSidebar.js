@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { gmailService } from '../../services/gmailService';
 import { useFeedback } from '../../context/FeedbackContext';
+import { useEmailSummary, useJourneySummary } from '../../hooks/useApi';
 import { handleUnauthorized } from '../../utils/session';
 import Icon from '../ui/Icon';
 
@@ -24,51 +24,26 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab');
-  const [emailSummary, setEmailSummary] = useState(null);
-  const [journeySummary, setJourneySummary] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
+  const emailSummaryQuery = useEmailSummary(isAuthenticated);
+  const journeySummaryQuery = useJourneySummary(isAuthenticated);
+  const sidebarError = emailSummaryQuery.error || journeySummaryQuery.error;
+  const emailSummary = isAuthenticated ? emailSummaryQuery.data : null;
+  const journeySummary = isAuthenticated ? journeySummaryQuery.data : null;
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setEmailSummary(null);
-      setJourneySummary(null);
+    if (!isAuthenticated || !sidebarError) {
       return undefined;
     }
 
-    let isMounted = true;
+    if (sidebarError.response?.status === 401) {
+      handleUnauthorized(navigate, showFeedback);
+      return undefined;
+    }
 
-    const loadSidebarMetrics = async () => {
-      try {
-        const [emailData, journeyData] = await Promise.all([
-          gmailService.getEmailSummary(),
-          gmailService.getJourneySummary()
-        ]);
-
-        if (!isMounted) {
-          return;
-        }
-
-        setEmailSummary(emailData);
-        setJourneySummary(journeyData);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        if (error.response?.status === 401) {
-          handleUnauthorized(navigate, showFeedback);
-          return;
-        }
-        showFeedback(error.response?.data?.error || 'Failed to load workspace metrics.', 'error');
-      }
-    };
-
-    loadSidebarMetrics();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthenticated, navigate, showFeedback]);
+    showFeedback(sidebarError.response?.data?.error || 'Failed to load workspace metrics.', 'error');
+    return undefined;
+  }, [isAuthenticated, navigate, showFeedback, sidebarError]);
 
   const unreadCount = emailSummary?.unreadCount;
   const inboxBadge = unreadCount !== undefined && unreadCount !== null ? String(unreadCount) : null;
@@ -171,13 +146,14 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
           type="button"
           className="sidebar-collapse-btn"
           onClick={() => setCollapsed(c => !c)}
+          aria-label={collapsed ? 'Expand sidebar navigation' : 'Collapse sidebar navigation'}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? '›' : '‹'}
         </button>
       </div>
 
-      <div className="sidebar-nav">
+      <nav className="sidebar-nav" aria-label={isAuthenticated ? 'Workspace navigation' : 'Public navigation'}>
         {navItems.map((item, index) => {
           if (item.divider) {
             return <div key={`divider-${index}`} className="sidebar-divider" />;
@@ -185,20 +161,24 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
 
           return (
             <div key={item.id} className="sidebar-nav-row">
-              <div
+              <button
+                type="button"
                 className={`nav-item ${isActive(item) ? 'active' : ''}${item.requiresAuth && !isAuthenticated ? ' disabled' : ''}`}
                 onClick={() => handleNavClick(item)}
+                aria-current={isActive(item) ? 'page' : undefined}
+                aria-disabled={item.requiresAuth && !isAuthenticated ? 'true' : undefined}
+                title={collapsed ? item.label : undefined}
               >
                 <span className="nav-icon">
                   <Icon name={item.icon} size={15} />
                 </span>
-                {item.label}
+                <span className="nav-label">{item.label}</span>
                 {item.badge && <span className={`nav-badge ${item.badgeColor || ''}`}>{item.badge}</span>}
-              </div>
+              </button>
             </div>
           );
         })}
-      </div>
+      </nav>
 
       <div className="sidebar-footer">
         <div className="user-row">
@@ -211,19 +191,29 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
         </div>
         <div className="sidebar-footer-action">
           {isAuthenticated ? (
-            <div className="nav-item" onClick={() => { onLogout(); onMobileClose?.(); }}>
+            <button
+              type="button"
+              className="nav-item"
+              onClick={() => { onLogout(); onMobileClose?.(); }}
+              title={collapsed ? 'Sign out' : undefined}
+            >
               <span className="nav-icon">
                 <Icon name="logout" size={14} />
               </span>
-              Sign out
-            </div>
+              <span className="nav-label">Sign out</span>
+            </button>
           ) : (
-            <div className="nav-item" onClick={() => { navigate('/'); onMobileClose?.(); }}>
+            <button
+              type="button"
+              className="nav-item"
+              onClick={() => { navigate('/'); onMobileClose?.(); }}
+              title={collapsed ? 'Continue with Google' : undefined}
+            >
               <span className="nav-icon">
                 <Icon name="mail" size={14} />
               </span>
-              Continue with Google
-            </div>
+              <span className="nav-label">Continue with Google</span>
+            </button>
           )}
         </div>
       </div>
