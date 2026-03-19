@@ -67,8 +67,10 @@ const TemplateEditor = () => {
 
   return (
     <div className="content fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <div className="syne" style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-1)' }}>Template Block Editor</div>
+      <div className="page-header-row">
+        <div className="page-header-copy">
+          <h1 className="page-title-inline">Template Block Editor</h1>
+        </div>
         <div className="inline-actions">
           <button className="topbar-btn" onClick={() => navigate('/marketing')}>Back</button>
           <button className="topbar-btn primary" onClick={saveTemplate} disabled={isSaving}>
@@ -77,7 +79,7 @@ const TemplateEditor = () => {
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
+      <div className="card page-card-stack">
         <div className="card-header">
           <Icon name="template" size={14} color="var(--accent-primary)" />
           <span className="card-title">Template Details</span>
@@ -108,12 +110,12 @@ const TemplateEditor = () => {
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
+      <div className="card page-card-stack">
         <div className="card-header">
           <Icon name="mail" size={14} color="var(--accent-primary)" />
           <span className="card-title">Email Builder</span>
         </div>
-        <div className="card-body" style={{ padding: 0 }}>
+        <div className="card-body card-body-flush">
           <EmailEditor ref={editorRef} minHeight="70vh" />
         </div>
       </div>

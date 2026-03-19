@@ -21,6 +21,7 @@ const BulkEmail         = lazy(() => import('./components/BulkEmail'));
 const ContactProfile    = lazy(() => import('./components/ContactProfile'));
 const JourneyBuilder    = lazy(() => import('./components/JourneyBuilder'));
 const SuppressionList   = lazy(() => import('./components/SuppressionList'));
+const AuthLayout        = lazy(() => import('./components/layout/AuthLayout'));
 const WorkspaceLayout   = lazy(() => import('./components/layout/WorkspaceLayout'));
 
 // ── React Query client ────────────────────────────────────────────────────────
@@ -36,11 +37,16 @@ const queryClient = new QueryClient({
 });
 
 // ── Protected workspace guard ─────────────────────────────────────────────────
-const PublicWorkspace = () => (
-  <Suspense fallback={<PageSkeleton />}>
-    <WorkspaceLayout isAuthenticated={false} />
-  </Suspense>
-);
+const PublicWorkspace = () => {
+  if (hasSession()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <AuthLayout />
+    </Suspense>
+  );
+};
 
 const ProtectedWorkspace = () => {
   if (!hasSession()) {
@@ -48,7 +54,7 @@ const ProtectedWorkspace = () => {
   }
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <WorkspaceLayout isAuthenticated />
+      <WorkspaceLayout />
     </Suspense>
   );
 };
@@ -202,7 +208,7 @@ function App() {
                     />
                   </Route>
 
-                  <Route path="*" element={<Navigate to="/" />} />
+                  <Route path="*" element={<Navigate to={hasSession() ? '/dashboard' : '/'} replace />} />
                 </Routes>
               </ErrorBoundary>
             </BrowserRouter>

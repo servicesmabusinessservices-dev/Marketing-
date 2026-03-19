@@ -4,35 +4,35 @@
 
 .app-feedback {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: var(--space-lg);
+  right: var(--space-lg);
   z-index: 1200;
   min-width: 260px;
   max-width: min(520px, calc(100vw - 26px));
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid var(--panel-border);
   background: var(--panel-bg);
   color: var(--text-primary);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(10px);
-  padding: 10px 12px;
+  padding: var(--space-sm) var(--space-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  font-size: 0.86rem;
-  font-weight: 600;
+  gap: var(--space-sm);
+  font-size: var(--fs-sm);
+  font-weight: var(--font-semibold);
 }
 
 .app-feedback button {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--text-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   width: 26px;
   height: 26px;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: var(--font-bold);
   line-height: 1;
 }
 
@@ -42,17 +42,17 @@
 }
 
 .app-feedback-info {
-  border-color: rgba(95, 125, 247, 0.32);
+  border-color: var(--feedback-info-border);
 }
 
 .app-feedback-success {
-  border-color: rgba(62, 175, 127, 0.42);
+  border-color: var(--feedback-success-border);
 }
 
 .app-feedback-warning {
-  border-color: rgba(224, 170, 76, 0.45);
+  border-color: var(--feedback-warning-border);
 }
 
 .app-feedback-error {
-  border-color: rgba(212, 61, 71, 0.45);
+  border-color: var(--feedback-error-border);
 }

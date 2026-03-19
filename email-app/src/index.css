@@ -14,7 +14,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--fs-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -100,22 +100,112 @@ body {
   --line-normal: 1.5;
   --line-relaxed: 1.75;
   --line-loose: 1.9;
+  /* ── Font Families ────────────────────────────── */
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+
+  /* ── Font Weights ─────────────────────────────── */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  /* ── Spacing Scale ────────────────────────────── */
+  --space-2xs: 4px;
   --space-xs: 6px;
   --space-sm: 10px;
   --space-md: 14px;
+  --space-base: 16px;
   --space-lg: 18px;
   --space-xl: 24px;
   --space-2xl: 32px;
+  --space-3xl: 40px;
+  --space-4xl: 56px;
+  
   --btn-sm: 6px 10px;
   --btn-md: 8px 14px;
   --btn-lg: 12px 20px;
   --control-height-sm: 40px;
   --control-height: 44px;
   --control-height-lg: 48px;
+
+  /* ── Semantic State Tokens ────────────────────── */
+  --status-success-surface: rgba(16, 185, 129, 0.12);
+  --status-success-text: var(--emerald);
+  --status-success-border: rgba(16, 185, 129, 0.25);
+  
+  --status-warning-surface: rgba(245, 158, 11, 0.12);
+  --status-warning-text: var(--amber);
+  --status-warning-border: rgba(245, 158, 11, 0.25);
+  
+  --status-error-surface: rgba(244, 63, 94, 0.12);
+  --status-error-text: var(--rose);
+  --status-error-border: rgba(244, 63, 94, 0.25);
+  
+  --status-info-surface: rgba(56, 189, 248, 0.12);
+  --status-info-text: var(--blue);
+  --status-info-border: rgba(56, 189, 248, 0.25);
+
+  --status-purple-surface: rgba(47, 69, 144, 0.12);
+  --status-purple-text: var(--purple);
+  --status-purple-border: rgba(47, 69, 144, 0.25);
+
+  --status-neutral-surface: rgba(148, 163, 184, 0.12);
+  --status-neutral-text: var(--text-2);
+  --status-neutral-border: rgba(148, 163, 184, 0.2);
+  
+  --disabled-surface: rgba(255, 255, 255, 0.04);
+  --disabled-text: rgba(255, 255, 255, 0.4);
+  --disabled-border: rgba(255, 255, 255, 0.06);
+
+  --feedback-info-border: rgba(95, 125, 247, 0.32);
+  --feedback-success-border: rgba(62, 175, 127, 0.42);
+  --feedback-warning-border: rgba(224, 170, 76, 0.45);
+  --feedback-error-border: rgba(212, 61, 71, 0.45);
+
+  --surface-sidebar-start: rgba(30, 41, 59, 0.98);
+  --surface-sidebar-end: rgba(22, 32, 50, 0.98);
+  --nav-active-surface: rgba(47, 104, 174, 0.16);
+  --nav-active-border: rgba(56, 189, 248, 0.22);
+  --nav-active-accent: var(--indigo);
+  --hero-accent-primary: rgba(47, 104, 174, 0.08);
+  --hero-accent-secondary: rgba(47, 69, 144, 0.06);
+  --grid-dot-color: rgba(255, 255, 255, 0.018);
+  --glow-success-sm: 0 0 6px rgba(16, 185, 129, 0.6);
+
+  /* ── Z-Index Scale ────────────────────────────── */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 500;
+  --z-fixed: 750;
+  --z-modal-backdrop: 900;
+  --z-modal: 950;
+  --z-popover: 1000;
+  --z-notification: 1200;
+  --z-tooltip: 1300;
+
+  /* ── Blur Effects ─────────────────────────────── */
+  --blur-sm: blur(4px);
+  --blur-md: blur(8px);
+  --blur-lg: blur(12px);
+  --blur-xl: blur(24px);
+
+  /* ── Motion & Animation ───────────────────────── */
+  --duration-fast: 0.1s;
+  --duration-base: 0.2s;
+  --duration-slow: 0.3s;
+  --duration-slower: 0.5s;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --sidebar-width: 240px;
   --sidebar-collapsed-width: 72px;
   --topbar-height: 60px;
   --content-max: 1440px;
+    --radius-2xs: 4px;
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
@@ -208,6 +298,31 @@ h3,
   --surface-1: rgba(15, 23, 42, 0.02);
   --surface-2: rgba(15, 23, 42, 0.04);
   --surface-3: rgba(15, 23, 42, 0.08);
+
+  /* ── Semantic State Tokens (Light) ────────────── */
+  --status-success-surface: rgba(16, 185, 129, 0.1);
+  --status-warning-surface: rgba(217, 119, 6, 0.1);
+  --status-error-surface: rgba(225, 29, 72, 0.1);
+  --status-info-surface: rgba(37, 99, 235, 0.1);
+  --status-purple-surface: rgba(124, 58, 237, 0.1);
+  --status-purple-border: rgba(124, 58, 237, 0.22);
+  --status-neutral-surface: rgba(100, 116, 139, 0.1);
+  --status-neutral-border: rgba(100, 116, 139, 0.18);
+  --disabled-surface: rgba(15, 23, 42, 0.04);
+  --disabled-text: rgba(15, 23, 42, 0.5);
+  --disabled-border: rgba(15, 23, 42, 0.08);
+  --feedback-info-border: rgba(79, 70, 229, 0.22);
+  --feedback-success-border: rgba(5, 150, 105, 0.28);
+  --feedback-warning-border: rgba(217, 119, 6, 0.3);
+  --feedback-error-border: rgba(225, 29, 72, 0.3);
+  --surface-sidebar-start: rgba(255, 255, 255, 0.96);
+  --surface-sidebar-end: rgba(237, 241, 251, 0.96);
+  --nav-active-surface: rgba(47, 104, 174, 0.12);
+  --nav-active-border: rgba(47, 104, 174, 0.18);
+  --hero-accent-primary: rgba(47, 104, 174, 0.06);
+  --hero-accent-secondary: rgba(47, 69, 144, 0.05);
+  --grid-dot-color: rgba(15, 23, 42, 0.04);
+  --glow-success-sm: 0 0 6px rgba(5, 150, 105, 0.28);
 }
 
 .dark-theme {
@@ -266,6 +381,31 @@ h3,
   --surface-1: rgba(255, 255, 255, 0.03);
   --surface-2: rgba(255, 255, 255, 0.05);
   --surface-3: rgba(255, 255, 255, 0.08);
+
+  /* ── Semantic State Tokens (Dark) ──────────────– */
+  --status-success-surface: rgba(16, 185, 129, 0.15);
+  --status-warning-surface: rgba(245, 158, 11, 0.15);
+  --status-error-surface: rgba(244, 63, 94, 0.15);
+  --status-info-surface: rgba(56, 189, 248, 0.15);
+  --status-purple-surface: rgba(47, 69, 144, 0.16);
+  --status-purple-border: rgba(47, 69, 144, 0.28);
+  --status-neutral-surface: rgba(148, 163, 184, 0.14);
+  --status-neutral-border: rgba(148, 163, 184, 0.22);
+  --disabled-surface: rgba(255, 255, 255, 0.04);
+  --disabled-text: rgba(255, 255, 255, 0.4);
+  --disabled-border: rgba(255, 255, 255, 0.06);
+  --feedback-info-border: rgba(95, 125, 247, 0.32);
+  --feedback-success-border: rgba(62, 175, 127, 0.42);
+  --feedback-warning-border: rgba(224, 170, 76, 0.45);
+  --feedback-error-border: rgba(212, 61, 71, 0.45);
+  --surface-sidebar-start: rgba(30, 41, 59, 0.98);
+  --surface-sidebar-end: rgba(22, 32, 50, 0.98);
+  --nav-active-surface: rgba(47, 104, 174, 0.16);
+  --nav-active-border: rgba(56, 189, 248, 0.22);
+  --hero-accent-primary: rgba(47, 104, 174, 0.08);
+  --hero-accent-secondary: rgba(47, 69, 144, 0.06);
+  --grid-dot-color: rgba(255, 255, 255, 0.018);
+  --glow-success-sm: 0 0 6px rgba(16, 185, 129, 0.6);
 }
 
 code {

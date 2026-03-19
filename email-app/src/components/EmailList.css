@@ -1,101 +1,204 @@
-.email-list {
-  min-height: 0;
+/* ── EmailList.css ──────────────────────────────────────────────────────────
+   Component-scoped additions only. Shared inbox styles live in maBusiness.css.
+   Adds: skeletons, mobile view toggle, button resets, search clear button.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  from { background-position: -600px 0; }
+  to   { background-position:  600px 0; }
+}
+
+.sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--navy-3) 25%,
+    var(--navy-4) 50%,
+    var(--navy-3) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.sk--text  { height: 11px; }
+.sk--block { border-radius: 8px; }
+.sk--h20   { height: 20px; }
+.sk--h260  { height: 260px; }
+.sk--w18   { width: 18%; }
+.sk--w30   { width: 30%; }
+.sk--w40   { width: 40%; }
+.sk--w55   { width: 55%; }
+.sk--w65   { width: 65%; }
+.sk--w80   { width: 80%; }
+.sk--mt    { margin-top: 6px; }
+.sk--mb12  { margin-bottom: 12px; }
+.sk--mb24  { margin-bottom: 24px; }
+
+.email-item--skeleton { pointer-events: none; }
+
+.detail-skeleton-wrap {
+  padding: 28px 32px;
+  width: 100%;
+}
+
+/* Light theme skeleton tones */
+.light-theme .sk {
+  background: linear-gradient(
+    90deg,
+    var(--navy-3) 25%,
+    var(--navy-5) 50%,
+    var(--navy-3) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Email list <ul> reset ───────────────────────────────────────────────── */
+
+.inbox-email-list {
+  list-style: none;
+  margin: 0;
   padding: 0;
 }
 
-.header {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(10px);
+/* ── Email item keyboard focus ring ─────────────────────────────────────── */
+
+.email-item:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* ── Filter chip — button element resets ─────────────────────────────────── */
+
+button.filter-chip {
+  appearance: none;
+  font-family: inherit;
+  line-height: 1;
+  background: none;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+button.filter-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.header-left h1 {
-  margin: 0;
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
-  font-weight: 700;
-  color: var(--text-primary);
+/* ── Search box full-width variant ──────────────────────────────────────── */
+
+.search-box--full {
+  width: 100%;
 }
 
-.email-count {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
+/* ── Clear button inside search box ─────────────────────────────────────── */
 
-.main-content {
-  display: flex;
-  margin-top: 12px;
-  gap: 14px;
-}
-
-.list-btn {
-  border: 1px solid var(--control-border);
-  background: var(--control-bg);
-  color: var(--text-secondary);
-  border-radius: 10px;
-  min-height: 34px;
-  padding: 7px 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
+.search-clear-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--text-3);
   cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color var(--transition);
+}
+.search-clear-btn:hover { color: var(--text-1); }
+.search-clear-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ── Action buttons — real button resets ─────────────────────────────────── */
+
+button.action-btn {
+  appearance: none;
+  font-family: inherit;
 }
 
-.list-btn:hover {
-  background: var(--control-bg-hover);
-  border-color: var(--control-border-hover);
+button.action-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.list-btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-color: transparent;
-  color: #fff;
+button.action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.list-btn-primary:hover {
-  filter: brightness(1.03);
+/* ── CRM hint button reset ───────────────────────────────────────────────── */
+
+button.crm-hint {
+  appearance: none;
+  font-family: inherit;
+  transition: background var(--transition), border-color var(--transition);
 }
 
-.email-content {
-  flex: 1;
-  min-width: 0;
-  background: var(--panel-bg);
-  border-radius: 14px;
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(10px);
+button.crm-hint:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.emails {
+/* ── Inbox detail wrapper ────────────────────────────────────────────────── */
+
+.inbox-detail-wrapper {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: visible;
 }
 
-.emails-footer {
-  padding: 16px;
-  border-top: 1px solid var(--divider);
-  display: flex;
-  justify-content: center;
+/* ── Back button (hidden on desktop, shown on mobile) ────────────────────── */
+
+.inbox-back-btn {
+  display: none;
+}
+
+/* ── Empty/error state helpers ───────────────────────────────────────────── */
+
+.inbox-empty-btn {
+  margin-top: 12px;
+}
+
+.inbox-error-msg {
+  color: var(--rose);
+  margin-top: 8px;
+}
+
+.inbox-select-hint {
+  margin-top: 12px;
+  color: var(--text-3);
+}
+
+/* ── Mobile: single-panel view toggle ────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Show the back button inside the detail wrapper */
+  .inbox-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 14px 4px;
+  }
+
+  /* Show only the active panel */
+  .inbox-layout--detail .inbox-sidebar        { display: none; }
+  .inbox-layout--list   .inbox-detail-wrapper { display: none; }
+
+  /* Let the workspace scroll container handle mobile scroll instead of nested panel caps */
+  .inbox-layout--list .inbox-sidebar {
+    max-height: none !important;
+    overflow: visible;
+  }
+  .inbox-layout--detail .inbox-detail-pane .email-detail {
+    max-height: none !important;
+    overflow: visible;
+  }
+
+  .inbox-detail-wrapper {
+    width: 100%;
+    min-height: 0;
+  }
 }
 
 .load-more-btn {

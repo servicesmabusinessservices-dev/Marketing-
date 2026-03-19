@@ -16,14 +16,14 @@
 .sidebar-brand h2 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--fs-md);
+  font-weight: var(--font-bold);
 }
 
 .sidebar-brand p {
-  margin: 4px 0 0;
+  margin: var(--space-2xs) 0 0;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--fs-xs);
 }
 
 .sidebar-section {
@@ -34,8 +34,10 @@
 
 .sidebar-label {
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .sidebar-search-wrap {
@@ -57,8 +59,9 @@
   background: var(--control-bg);
   color: var(--text-primary);
   border-radius: 10px;
-  padding: 9px 11px 9px 31px;
-  font-size: 0.86rem;
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 31px;
+  font-size: var(--fs-sm);
+  font-weight: var(--font-normal);
 }
 
 .sidebar-search-input::placeholder {
@@ -77,9 +80,9 @@
   background: var(--control-bg);
   color: var(--text-primary);
   border-radius: 10px;
-  padding: 9px 10px;
-  font-size: 0.83rem;
-  font-weight: 600;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--font-semibold);
 }
 
 .sidebar-select:focus {
@@ -94,12 +97,12 @@
 
 .sidebar-chip {
   width: fit-content;
-  padding: 5px 9px;
+  padding: var(--space-2xs) var(--space-xs);
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-strong);
-  font-size: 0.76rem;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--font-semibold);
   border: 1px solid var(--control-border);
 }
 
@@ -120,9 +123,10 @@
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--text-secondary);
-  border-radius: 8px;
-  padding: 6px 8px;
-  font-size: 0.77rem;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2xs) var(--space-xs);
+  font-size: var(--fs-xs);
+  font-weight: var(--font-normal);
 }
 
 .sidebar-btn {
@@ -131,10 +135,10 @@
   color: var(--text-secondary);
   border-radius: 10px;
   min-height: 36px;
-  padding: 8px 10px;
+  padding: var(--space-sm) var(--space-md);
   text-align: left;
-  font-size: 0.84rem;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--font-semibold);
   cursor: pointer;
 }
 
@@ -155,7 +159,7 @@
 }
 
 .sidebar-btn-danger {
-  color: #c03d48;
+  color: var(--status-error-text);
 }
 
 @media (max-width: 992px) {

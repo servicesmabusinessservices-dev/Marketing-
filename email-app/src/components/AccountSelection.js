@@ -49,8 +49,8 @@ const AccountSelection = () => {
     >
     <div className="login-screen">
       <div className="login-left">
-        <div className="login-bg-grid" />
-        <div className="login-bg-glow" />
+        <div className="login-bg-grid" aria-hidden="true" />
+        <div className="login-bg-glow" aria-hidden="true" />
         <div className="login-card">
           <div className="login-logo">
             <div className="login-logo-icon">MA</div>
@@ -66,11 +66,21 @@ const AccountSelection = () => {
           <div className="login-sub">
             Connect your Gmail account to unlock cold email campaigns, CRM tracking, and intelligent automation - all in one place.
           </div>
-          <button className="google-btn" onClick={handleLogin} disabled={isLoggingIn}>
-            <span>G</span>
-            {isLoggingIn ? 'Connecting...' : 'Continue with Google'}
+          <button
+            className="google-btn"
+            onClick={handleLogin}
+            disabled={isLoggingIn}
+            aria-busy={isLoggingIn}
+          >
+            {isLoggingIn
+              ? <><span className="btn-spinner" aria-hidden="true" />Connecting...</>
+              : <><span aria-hidden="true">G</span>Continue with Google</>}
           </button>
-          {loginError && <div className="auth-error">{loginError}</div>}
+          {loginError && (
+            <div className="auth-error" role="alert" aria-live="polite">
+              {loginError}
+            </div>
+          )}
           <div className="login-footer">
             <span>Secure OAuth 2.0</span>
             <span>|</span>
@@ -78,8 +88,8 @@ const AccountSelection = () => {
           </div>
         </div>
       </div>
-      <div className="login-right">
-        <div className="login-right-glow" />
+      <div className="login-right" aria-hidden="true">
+        <div className="login-right-glow" aria-hidden="true" />
         <div className="feature-list">
           <div className="login-right-title">Everything you need to<br /><span>close more deals.</span></div>
           {[
@@ -90,7 +100,7 @@ const AccountSelection = () => {
           ].map((feature) => (
             <div key={feature.title} className="feature-item">
               <div className="feature-icon-wrap feature-icon-wrap-cta">
-                <Icon name={feature.icon} size={18} color="#fff" />
+                <Icon name={feature.icon} size={18} color="var(--text-primary)" />
               </div>
               <div className="feature-text">
                 <div className="feat-title">{feature.title}</div>

@@ -3,6 +3,10 @@ import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
 import AnimatedCard from './ui/AnimatedCard';
 import { useAnalytics } from '../hooks/useApi';
+import LoadingSpinner from './ui/LoadingSpinner';
+import EmptyState from './ui/EmptyState';
+import ErrorState from './ui/ErrorState';
+import { getStageColorVar, JOURNEY_ICON_COLOR } from '../utils/uiColorMaps';
 
 const AnalyticsDashboard = () => {
   const { showFeedback } = useFeedback();
@@ -34,35 +38,62 @@ const AnalyticsDashboard = () => {
 
   const funnelMax = stageFunnel.New || 0;
   const funnelData = [
-    { label: 'New', count: stageFunnel.New || 0, pct: funnelMax ? Math.round((stageFunnel.New || 0) / funnelMax * 100) : 0, color: '#60a5fa' },
-    { label: 'Qualified', count: stageFunnel.Qualified || 0, pct: funnelMax ? Math.round((stageFunnel.Qualified || 0) / funnelMax * 100) : 0, color: '#f59e0b' },
-    { label: 'Proposal', count: stageFunnel.Proposal || 0, pct: funnelMax ? Math.round((stageFunnel.Proposal || 0) / funnelMax * 100) : 0, color: '#8b5cf6' },
-    { label: 'Won', count: stageFunnel.Won || 0, pct: funnelMax ? Math.round((stageFunnel.Won || 0) / funnelMax * 100) : 0, color: '#10b981' }
+    { label: 'New', count: stageFunnel.New || 0, pct: funnelMax ? Math.round((stageFunnel.New || 0) / funnelMax * 100) : 0, color: getStageColorVar('New') },
+    { label: 'Qualified', count: stageFunnel.Qualified || 0, pct: funnelMax ? Math.round((stageFunnel.Qualified || 0) / funnelMax * 100) : 0, color: getStageColorVar('Qualified') },
+    { label: 'Proposal', count: stageFunnel.Proposal || 0, pct: funnelMax ? Math.round((stageFunnel.Proposal || 0) / funnelMax * 100) : 0, color: getStageColorVar('Proposal') },
+    { label: 'Won', count: stageFunnel.Won || 0, pct: funnelMax ? Math.round((stageFunnel.Won || 0) / funnelMax * 100) : 0, color: getStageColorVar('Won') }
   ];
+
+  const hasAnyData =
+    funnelData.some((f) => f.count > 0) ||
+    ownerWorkload.length > 0 ||
+    transitions.length > 0 ||
+    Boolean(engagement.sent) ||
+    Boolean(journeyPerformance.active) ||
+    Boolean(journeyPerformance.completed) ||
+    Boolean(journeyPerformance.failed) ||
+    Boolean(journeyPerformance.paused);
 
   return (
     <div className="content fade-in">
       <div className="analytics-toolbar-row">
-        {[7, 30, 90, 180].map((value) => (
-          <div key={value} className={`filter-chip ${days === value ? 'active' : ''}`} onClick={() => setDays(value)}>
-            Last {value} days
-          </div>
-        ))}
+        <div className="analytics-chip-row" role="group" aria-label="Analytics date range">
+          {[7, 30, 90, 180].map((value) => (
+            <button
+              type="button"
+              key={value}
+              className={`filter-chip ${days === value ? 'active' : ''}`}
+              onClick={() => setDays(value)}
+              aria-pressed={days === value}
+            >
+              Last {value} days
+            </button>
+          ))}
+        </div>
         <input
+          type="text"
           className="form-input analytics-owner-input"
+          aria-label="Filter analytics by owner email"
           value={ownerEmail}
           onChange={(event) => setOwnerEmail(event.target.value)}
           placeholder="Filter by owner email"
         />
-        <div className="ml-auto">
-          <button className="topbar-btn" onClick={refetch}>Refresh</button>
+        <div className="analytics-toolbar-action ml-auto">
+          <button type="button" className="topbar-btn" onClick={refetch}>Refresh</button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="empty-state empty-state-top">
-          <p>Loading analytics...</p>
-        </div>
+        <LoadingSpinner label="Loading analytics..." />
+      ) : isError ? (
+        <ErrorState message="Failed to load analytics." onRetry={refetch} />
+      ) : !hasAnyData ? (
+        <EmptyState
+          icon="-"
+          title="No analytics data yet"
+          subtitle="Data will appear after emails, events, and journeys start flowing."
+          action={{ label: 'Refresh', onClick: refetch }}
+        />
       ) : (
         <>
           <div className="stats-grid">
@@ -125,7 +156,7 @@ const AnalyticsDashboard = () => {
 
             <div className="card">
               <div className="card-header">
-                <Icon name="journey" size={14} color="#a78bfa" />
+                <Icon name="journey" size={14} color={JOURNEY_ICON_COLOR} />
                 <span className="card-title">Journey Performance</span>
               </div>
               <div className="card-body">
@@ -171,6 +202,11 @@ const AnalyticsDashboard = () => {
                         <td className={owner.overdueTasks > 0 ? 'table-overdue' : ''}>{owner.overdueTasks}</td>
                       </tr>
                     ))}
+                    {ownerWorkload.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="marketing-table-empty">No owner workload data.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -200,6 +236,11 @@ const AnalyticsDashboard = () => {
                         <td>{transition.count}</td>
                       </tr>
                     ))}
+                    {transitions.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="marketing-table-empty">No stage transitions yet.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

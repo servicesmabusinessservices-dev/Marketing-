@@ -6,10 +6,6 @@ const getTitle = (location) => {
   const params = new URLSearchParams(location.search);
   const tab = params.get('tab');
 
-  if (location.pathname === '/' || location.pathname === '/auth-success' || location.pathname === '/auth-error') {
-    return { crumb: 'Welcome', title: 'Sign In' };
-  }
-
   if (location.pathname === '/dashboard') {
     return { crumb: 'Home', title: 'Dashboard' };
   }
@@ -61,25 +57,27 @@ const getTitle = (location) => {
   return { crumb: 'Home', title: 'Workspace' };
 };
 
-const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, isAuthenticated = true }) => {
+const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = false, menuButtonRef }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const meta = getTitle(location);
 
-  const showInboxAction = isAuthenticated && (location.pathname === '/emails' || location.pathname.startsWith('/email/'));
-  const showDashboardAction = isAuthenticated && location.pathname === '/dashboard';
+  const showInboxAction = location.pathname === '/emails' || location.pathname.startsWith('/email/');
+  const showDashboardAction = location.pathname === '/dashboard';
   const themeLabel = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
     <header className="topbar">
-      {/* Hamburger — visible only on mobile (CSS controls display) */}
       <button
+        ref={menuButtonRef}
         type="button"
         className="topbar-hamburger"
         onClick={onMenuToggle}
         aria-label="Toggle navigation"
+        aria-expanded={mobileMenuOpen}
+        aria-controls="workspace-sidebar"
       >
-        <Icon name="menu" size={18} />
+        <Icon name="menu" size={18} decorative />
       </button>
       <nav className="topbar-breadcrumb" aria-label="Breadcrumb">
         <span>{meta.crumb}</span>
@@ -87,41 +85,39 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, isAuthenticated = 
         <span className="current">{meta.title}</span>
       </nav>
       <div className="topbar-right">
-        {isAuthenticated && (
-          <div className="search-box" role="search" aria-label="Workspace search">
-            <Icon name="search" size={13} color="var(--text-3)" />
-            <input type="search" aria-label="Search contacts and emails" placeholder="Search contacts, emails" />
-          </div>
-        )}
-        {isAuthenticated && (
-          <span className="topbar-btn topbar-btn-static" aria-hidden="true">
-            <Icon name="bell" size={14} />
-          </span>
-        )}
-        {!isAuthenticated && (
+        <div className="search-box topbar-search" role="search" aria-label="Workspace search">
+          <Icon name="search" size={13} color="var(--text-3)" decorative />
+          <input type="search" aria-label="Search contacts and emails" placeholder="Search contacts, emails" />
+        </div>
+        <span className="topbar-btn topbar-btn-static icon-only" aria-hidden="true">
+          <Icon name="bell" size={14} decorative />
+        </span>
+        {showInboxAction && (
           <button
             type="button"
-            className="topbar-btn primary"
-            onClick={() => navigate('/')}
+            className="topbar-btn primary topbar-btn-mobile-preserve"
+            onClick={() => navigate('/emails/bulk')}
+            aria-label="Create new bulk email campaign"
+            title="Create new bulk email campaign"
           >
-            <Icon name="mail" size={13} />
-            Sign In
-          </button>
-        )}
-        {showInboxAction && (
-          <button type="button" className="topbar-btn primary" onClick={() => navigate('/emails/bulk')}>
-            <Icon name="bulk" size={13} />
-            New Campaign
+            <Icon name="bulk" size={13} decorative />
+            <span className="topbar-btn-text">New Campaign</span>
           </button>
         )}
         {showDashboardAction && (
-          <button type="button" className="topbar-btn primary" onClick={() => navigate('/marketing?tab=contacts')}>
-            <Icon name="plus" size={13} />
-            Quick Add
+          <button
+            type="button"
+            className="topbar-btn primary topbar-btn-mobile-preserve"
+            onClick={() => navigate('/marketing?tab=contacts')}
+            aria-label="Open contacts workspace"
+            title="Open contacts workspace"
+          >
+            <Icon name="plus" size={13} decorative />
+            <span className="topbar-btn-text">Quick Add</span>
           </button>
         )}
         <button type="button" className="topbar-btn icon-only" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel}>
-          <Icon name={isDark ? 'sun' : 'moon'} size={15} />
+          <Icon name={isDark ? 'sun' : 'moon'} size={15} decorative />
         </button>
       </div>
     </header>

@@ -5,34 +5,46 @@ import { useEmailSummary, useJourneySummary } from '../../hooks/useApi';
 import { handleUnauthorized } from '../../utils/session';
 import Icon from '../ui/Icon';
 
-const PUBLIC_NAV_ITEMS = [
-  { id: 'welcome', icon: 'home', label: 'Welcome', to: '/' },
-  { id: 'signin', icon: 'mail', label: 'Sign In', to: '/' },
+const NAV_ITEMS = [
+  { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard' },
+  { id: 'inbox', icon: 'inbox', label: 'Inbox', to: '/emails', badgeKey: 'inbox' },
+  { id: 'bulk', icon: 'bulk', label: 'Bulk Email', to: '/emails/bulk' },
   { divider: true },
-  { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard', requiresAuth: true },
-  { id: 'inbox', icon: 'inbox', label: 'Inbox', to: '/emails', requiresAuth: true },
-  { id: 'bulk', icon: 'bulk', label: 'Bulk Email', to: '/emails/bulk', requiresAuth: true },
+  { id: 'contacts', icon: 'users', label: 'Contacts', to: '/marketing?tab=contacts' },
+  { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', to: '/marketing/pipeline' },
+  { id: 'campaigns', icon: 'campaign', label: 'Campaigns', to: '/marketing?tab=campaigns' },
+  { id: 'templates', icon: 'template', label: 'Templates', to: '/marketing/template-editor' },
+  { id: 'journeys', icon: 'journey', label: 'Journeys', to: '/marketing?tab=journeys', badgeKey: 'journeys' },
   { divider: true },
-  { id: 'contacts', icon: 'users', label: 'Contacts', to: '/marketing?tab=contacts', requiresAuth: true },
-  { id: 'journeys', icon: 'journey', label: 'Journeys', to: '/marketing?tab=journeys', requiresAuth: true },
-  { id: 'analytics', icon: 'bar', label: 'Analytics', to: '/marketing/analytics', requiresAuth: true }
+  { id: 'analytics', icon: 'bar', label: 'Analytics', to: '/marketing/analytics' },
+  { id: 'suppression', icon: 'shield', label: 'Suppression', to: '/marketing/suppression' }
 ];
 
-const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAuthenticated = true }) => {
+const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, sidebarRef }) => {
   const navigate = useNavigate();
   const { showFeedback } = useFeedback();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab');
   const [collapsed, setCollapsed] = useState(false);
-  const emailSummaryQuery = useEmailSummary(isAuthenticated);
-  const journeySummaryQuery = useJourneySummary(isAuthenticated);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  const emailSummaryQuery = useEmailSummary();
+  const journeySummaryQuery = useJourneySummary();
   const sidebarError = emailSummaryQuery.error || journeySummaryQuery.error;
-  const emailSummary = isAuthenticated ? emailSummaryQuery.data : null;
-  const journeySummary = isAuthenticated ? journeySummaryQuery.data : null;
+  const emailSummary = emailSummaryQuery.data;
+  const journeySummary = journeySummaryQuery.data;
+  const sidebarIsCollapsed = collapsed && !mobileOpen;
 
   useEffect(() => {
-    if (!isAuthenticated || !sidebarError) {
+    if (!sidebarError) {
       return undefined;
     }
 
@@ -43,7 +55,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
 
     showFeedback(sidebarError.response?.data?.error || 'Failed to load workspace metrics.', 'error');
     return undefined;
-  }, [isAuthenticated, navigate, showFeedback, sidebarError]);
+  }, [navigate, showFeedback, sidebarError]);
 
   const unreadCount = emailSummary?.unreadCount;
   const inboxBadge = unreadCount !== undefined && unreadCount !== null ? String(unreadCount) : null;
@@ -54,47 +66,29 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
   const journeysBadge = journeySummary ? String(activeEnrollments) : null;
 
   const navItems = useMemo(() => {
-    if (!isAuthenticated) {
-      return PUBLIC_NAV_ITEMS;
-    }
+    return NAV_ITEMS.map((item) => {
+      if (item.divider) {
+        return item;
+      }
 
-    return [
-      { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard' },
-      { id: 'inbox', icon: 'inbox', label: 'Inbox', to: '/emails', badge: inboxBadge },
-      { id: 'bulk', icon: 'bulk', label: 'Bulk Email', to: '/emails/bulk' },
-      { divider: true },
-      { id: 'contacts', icon: 'users', label: 'Contacts', to: '/marketing?tab=contacts' },
-      { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', to: '/marketing/pipeline' },
-      { id: 'campaigns', icon: 'campaign', label: 'Campaigns', to: '/marketing?tab=campaigns' },
-      { id: 'templates', icon: 'template', label: 'Templates', to: '/marketing/template-editor' },
-      { id: 'journeys', icon: 'journey', label: 'Journeys', to: '/marketing?tab=journeys', badge: journeysBadge, badgeColor: activeEnrollments > 0 ? 'green' : '' },
-      { divider: true },
-      { id: 'analytics', icon: 'bar', label: 'Analytics', to: '/marketing/analytics' },
-      { id: 'suppression', icon: 'shield', label: 'Suppression', to: '/marketing/suppression' }
-    ];
-  }, [activeEnrollments, inboxBadge, isAuthenticated, journeysBadge]);
+      if (item.badgeKey === 'inbox') {
+        return { ...item, badge: inboxBadge };
+      }
+
+      if (item.badgeKey === 'journeys') {
+        return { ...item, badge: journeysBadge, badgeColor: activeEnrollments > 0 ? 'green' : '' };
+      }
+
+      return item;
+    });
+  }, [activeEnrollments, inboxBadge, journeysBadge]);
 
   const handleNavClick = (item) => {
-    if (item.requiresAuth && !isAuthenticated) {
-      showFeedback('Please sign in to open workspace pages.', 'info');
-      navigate('/');
-      onMobileClose?.();
-      return;
-    }
-
     navigate(item.to);
     onMobileClose?.();
   };
 
   const isActive = (item) => {
-    if (item.id === 'welcome' || item.id === 'signin') {
-      return location.pathname === '/' || location.pathname === '/auth-success' || location.pathname === '/auth-error';
-    }
-
-    if (item.requiresAuth && !isAuthenticated) {
-      return false;
-    }
-
     if (item.id === 'bulk') {
       return location.pathname.startsWith('/emails/bulk');
     }
@@ -133,7 +127,14 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
   };
 
   return (
-    <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}>
+    <aside
+      id="workspace-sidebar"
+      ref={sidebarRef}
+      className={`sidebar${sidebarIsCollapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}
+      aria-label="Workspace sidebar"
+      aria-hidden={isMobile && !mobileOpen ? true : undefined}
+      tabIndex={mobileOpen ? -1 : undefined}
+    >
       <div className="sidebar-logo">
         <div className="logo-mark">
           <div className="logo-icon">MA</div>
@@ -146,14 +147,14 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
           type="button"
           className="sidebar-collapse-btn"
           onClick={() => setCollapsed(c => !c)}
-          aria-label={collapsed ? 'Expand sidebar navigation' : 'Collapse sidebar navigation'}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={sidebarIsCollapsed ? 'Expand sidebar navigation' : 'Collapse sidebar navigation'}
+          title={sidebarIsCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? '›' : '‹'}
+          {sidebarIsCollapsed ? '›' : '‹'}
         </button>
       </div>
 
-      <nav className="sidebar-nav" aria-label={isAuthenticated ? 'Workspace navigation' : 'Public navigation'}>
+      <nav className="sidebar-nav" aria-label="Workspace navigation">
         {navItems.map((item, index) => {
           if (item.divider) {
             return <div key={`divider-${index}`} className="sidebar-divider" />;
@@ -163,11 +164,10 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
             <div key={item.id} className="sidebar-nav-row">
               <button
                 type="button"
-                className={`nav-item ${isActive(item) ? 'active' : ''}${item.requiresAuth && !isAuthenticated ? ' disabled' : ''}`}
+                className={`nav-item ${isActive(item) ? 'active' : ''}`}
                 onClick={() => handleNavClick(item)}
                 aria-current={isActive(item) ? 'page' : undefined}
-                aria-disabled={item.requiresAuth && !isAuthenticated ? 'true' : undefined}
-                title={collapsed ? item.label : undefined}
+                title={sidebarIsCollapsed ? item.label : undefined}
               >
                 <span className="nav-icon">
                   <Icon name={item.icon} size={15} />
@@ -184,37 +184,23 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, isAu
         <div className="user-row">
           <div className="avatar">{(userEmail || 'A')[0]?.toUpperCase()}</div>
           <div className="user-info">
-            <div className="user-name">{isAuthenticated ? 'Admin User' : 'Guest Mode'}</div>
-            <div className="user-email">{isAuthenticated ? (userEmail || 'signed-in-user') : 'Sign in to unlock all pages'}</div>
+            <div className="user-name">Admin User</div>
+            <div className="user-email">{userEmail || 'signed-in-user'}</div>
           </div>
-          <div className={`status-dot${isAuthenticated ? '' : ' muted'}`} />
+          <div className="status-dot" />
         </div>
         <div className="sidebar-footer-action">
-          {isAuthenticated ? (
-            <button
-              type="button"
-              className="nav-item"
-              onClick={() => { onLogout(); onMobileClose?.(); }}
-              title={collapsed ? 'Sign out' : undefined}
-            >
-              <span className="nav-icon">
-                <Icon name="logout" size={14} />
-              </span>
-              <span className="nav-label">Sign out</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="nav-item"
-              onClick={() => { navigate('/'); onMobileClose?.(); }}
-              title={collapsed ? 'Continue with Google' : undefined}
-            >
-              <span className="nav-icon">
-                <Icon name="mail" size={14} />
-              </span>
-              <span className="nav-label">Continue with Google</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className="nav-item"
+            onClick={() => { onLogout(); onMobileClose?.(); }}
+            title={sidebarIsCollapsed ? 'Sign out' : undefined}
+          >
+            <span className="nav-icon">
+              <Icon name="logout" size={14} />
+            </span>
+            <span className="nav-label">Sign out</span>
+          </button>
         </div>
       </div>
     </aside>

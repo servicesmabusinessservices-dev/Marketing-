@@ -47,12 +47,12 @@ const SuppressionList = () => {
 
   return (
     <div className="content fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div className="syne" style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-1)' }}>Suppression List</div>
+      <div className="page-header-row">
+        <div className="page-header-copy">
+          <div className="page-title-inline">Suppression List</div>
           <div className="helper-text">Manage opted-out and bounced email addresses.</div>
         </div>
-        <button className="topbar-btn" onClick={refetch}>Refresh</button>
+        <button type="button" className="topbar-btn" onClick={refetch}>Refresh</button>
       </div>
 
       <div className="page-grid">
@@ -106,8 +106,9 @@ const SuppressionList = () => {
             <Icon name="shield" size={14} color="var(--rose)" />
             <span className="card-title">Suppressed Addresses ({filtered.length})</span>
             <input
-              className="form-input"
-              style={{ marginLeft: 'auto', maxWidth: 220 }}
+              className="form-input inline-search-field"
+              type="search"
+              aria-label="Search suppressed email addresses"
               placeholder="Search emails…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,17 +132,32 @@ const SuppressionList = () => {
                 </div>
                 {filtered.map((s) => (
                   <div key={s.email} className="sl-row">
-                    <span className="mono sl-email">{s.email}</span>
-                    <span className={`sl-reason-badge reason-${(s.reason || 'other').toLowerCase()}`}>
-                      {s.reason || 'Other'}
-                    </span>
-                    <span className="sl-notes">{s.notes || '—'}</span>
-                    <span className="helper-text sl-date">
-                      {s.createdAtUtc ? new Date(s.createdAtUtc).toLocaleDateString() : '—'}
-                    </span>
-                    <button className="sl-remove-btn" onClick={() => handleRemove(s.email)}>
-                      Remove
-                    </button>
+                    <div className="sl-field">
+                      <span className="sl-field-label">Email</span>
+                      <span className="mono sl-email">{s.email}</span>
+                    </div>
+                    <div className="sl-field">
+                      <span className="sl-field-label">Reason</span>
+                      <span className={`sl-reason-badge reason-${(s.reason || 'other').toLowerCase()}`}>
+                        {s.reason || 'Other'}
+                      </span>
+                    </div>
+                    <div className="sl-field sl-field-notes">
+                      <span className="sl-field-label">Notes</span>
+                      <span className="sl-notes">{s.notes || '—'}</span>
+                    </div>
+                    <div className="sl-field sl-field-date">
+                      <span className="sl-field-label">Suppressed At</span>
+                      <span className="helper-text sl-date">
+                        {s.createdAtUtc ? new Date(s.createdAtUtc).toLocaleDateString() : '—'}
+                      </span>
+                    </div>
+                    <div className="sl-field sl-field-action">
+                      <span className="sl-field-label">Action</span>
+                      <button type="button" className="sl-remove-btn" onClick={() => handleRemove(s.email)}>
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

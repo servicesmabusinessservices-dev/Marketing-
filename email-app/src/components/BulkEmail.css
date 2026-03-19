@@ -167,6 +167,18 @@
   transform: translateY(-1px);
 }
 
+@media (max-width: 480px) {
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+  .schedule-btn,
+  .cancel-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: center;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

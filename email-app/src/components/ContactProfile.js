@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
 import {
-  useContactById, useContactNotes, useContactTasks, useEvents, useLeadStageHistory,
-  useAddContactNote, useCreateContactTask, useUpdateContactTask, useUpdateContactLeadStage
+  useContactById,
+  useContactNotes,
+  useContactTasks,
+  useEvents,
+  useLeadStageHistory,
+  useAddContactNote,
+  useCreateContactTask,
+  useUpdateContactTask,
+  useUpdateContactLeadStage,
 } from '../hooks/useApi';
 import './ContactProfile.css';
-
-const STAGE_COLORS = {
-  new: 'blue',
-  qualified: 'amber',
-  proposal: 'purple',
-  won: 'emerald',
-  lost: 'rose'
-};
+import { getEventTone, getStageTone, ON_SOLID_ICON_COLOR } from '../utils/uiColorMaps';
 
 const EVENT_LABELS = {
   opened: 'Email opened',
@@ -25,13 +25,7 @@ const EVENT_LABELS = {
   unsubscribed: 'Unsubscribed',
   proposal_sent: 'Proposal sent',
   no_reply_3d: 'No reply after 3 days',
-  new_lead: 'New lead added'
-};
-
-const EVENT_COLORS = {
-  replied: 'emerald', opened: 'purple', clicked: 'blue',
-  delivered: 'blue', bounced: 'rose', unsubscribed: 'rose',
-  proposal_sent: 'amber', no_reply_3d: 'amber', new_lead: 'emerald'
+  new_lead: 'New lead added',
 };
 
 const LEAD_STAGES = ['New', 'Qualified', 'Proposal', 'Won', 'Lost'];
@@ -39,7 +33,9 @@ const LEAD_STAGES = ['New', 'Qualified', 'Proposal', 'Won', 'Lost'];
 const formatDate = (value) => {
   if (!value) return '';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
 const formatRelativeTime = (value) => {
@@ -55,39 +51,268 @@ const formatRelativeTime = (value) => {
   return formatDate(value);
 };
 
+const ActivityTab = React.memo(({ events }) => {
+  if (!events.length) {
+    return (
+      <div className="card">
+        <div className="card-body">
+          <div className="empty-state empty-state-sm">
+            <p>No activity yet</p>
+            <small>Events appear once tracked via the Marketing module</small>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <div className="card-body">
+        <div className="cp-activity-list">
+          {events.map((event) => {
+            const eventType = String(event.eventType || '').toLowerCase();
+            const color = getEventTone(eventType);
+            const label = EVENT_LABELS[eventType] || event.eventType;
+            return (
+              <div key={event.eventId} className="activity-item">
+                <div className={`activity-dot ${color}`} />
+                <div>
+                  <div className="activity-text">{label}</div>
+                  <div className="activity-time">{formatRelativeTime(event.occurredAtUtc || event.createdAtUtc)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ActivityTab.displayName = 'ActivityTab';
+
+const NotesTab = React.memo(({ notes, noteText, setNoteText, addingNote, onAddNote }) => (
+  <div className="card">
+    <div className="card-body">
+      <form onSubmit={onAddNote} className="cp-note-form">
+        <textarea
+          className="form-input"
+          rows={3}
+          placeholder="Write a note..."
+          value={noteText}
+          onChange={(event) => setNoteText(event.target.value)}
+        />
+        <button
+          type="submit"
+          className="topbar-btn primary"
+          disabled={addingNote || !noteText.trim()}
+        >
+          {addingNote ? 'Adding...' : 'Add Note'}
+        </button>
+      </form>
+
+      <div className="cp-notes-list">
+        {notes.length === 0 ? (
+          <div className="empty-state empty-state-sm">
+            <p>No notes yet</p>
+          </div>
+        ) : (
+          notes.map((note) => (
+            <div key={note.noteId} className="cp-note">
+              <div className="cp-note-body">{note.body}</div>
+              <div className="cp-note-date">{formatRelativeTime(note.createdAtUtc)}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+NotesTab.displayName = 'NotesTab';
+
+const TasksTab = React.memo(({ tasks, taskForm, setTaskForm, addingTask, onAddTask, onCompleteTask }) => (
+  <div className="card">
+    <div className="card-body">
+      <form onSubmit={onAddTask} className="cp-task-form">
+        <input
+          className="form-input"
+          placeholder="Task title"
+          value={taskForm.title}
+          onChange={(event) => setTaskForm((prev) => ({ ...prev, title: event.target.value }))}
+        />
+        <div className="cp-task-row">
+          <select
+            className="form-input cp-task-priority"
+            value={taskForm.priority}
+            onChange={(event) => setTaskForm((prev) => ({ ...prev, priority: event.target.value }))}
+          >
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+          <input
+            type="date"
+            className="form-input cp-task-date"
+            value={taskForm.dueDate}
+            onChange={(event) => setTaskForm((prev) => ({ ...prev, dueDate: event.target.value }))}
+          />
+          <button
+            type="submit"
+            className="topbar-btn primary"
+            disabled={addingTask || !taskForm.title.trim()}
+          >
+            {addingTask ? 'Adding...' : 'Add Task'}
+          </button>
+        </div>
+      </form>
+
+      <div className="cp-task-list">
+        {tasks.length === 0 ? (
+          <div className="empty-state empty-state-sm">
+            <p>No tasks yet</p>
+          </div>
+        ) : (
+          tasks.map((task) => {
+            const done = String(task.status || '').toLowerCase() === 'completed';
+            const overdue = task.dueAtUtc && new Date(task.dueAtUtc) < new Date() && !done;
+            return (
+              <div key={task.taskId} className="task-item">
+                <button
+                  type="button"
+                  className={`task-check ${done ? 'done' : ''}`}
+                  onClick={() => !done && onCompleteTask(task.taskId)}
+                >
+                  {done && <Icon name="check" size={10} color={ON_SOLID_ICON_COLOR} />}
+                </button>
+                <div className="task-info">
+                  <div className={`task-name ${done ? 'done' : ''}`}>{task.title}</div>
+                  <div className={`task-meta ${overdue ? 'overdue' : ''}`}>
+                    {task.dueAtUtc
+                      ? `Due ${formatDate(task.dueAtUtc)}${overdue ? ' - Overdue' : ''}`
+                      : 'No due date'}
+                  </div>
+                </div>
+                <span className={`priority-badge ${(task.priority || 'medium').toLowerCase()}`}>
+                  {task.priority || 'medium'}
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+TasksTab.displayName = 'TasksTab';
+
+const HistoryTab = React.memo(({ stageHistory }) => {
+  if (!stageHistory.length) {
+    return (
+      <div className="card">
+        <div className="card-body">
+          <div className="empty-state empty-state-sm">
+            <p>No stage history yet</p>
+            <small>Stage changes will appear here</small>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <div className="card-body">
+        <div className="cp-history">
+          {stageHistory.map((entry, index) => {
+            const fromColor = getStageTone(entry.fromLeadStage);
+            const toColor = getStageTone(entry.toLeadStage);
+            return (
+              <div key={`${entry.changedAtUtc || index}`} className="cp-history-item">
+                <div className="cp-history-dot" />
+                <div className="cp-history-content">
+                  <div className="cp-history-stages">
+                    {entry.fromLeadStage && (
+                      <>
+                        <span className={`stage-badge stage-${fromColor}`}>{entry.fromLeadStage}</span>
+                        <span className="cp-history-arrow">{'->'}</span>
+                      </>
+                    )}
+                    <span className={`stage-badge stage-${toColor}`}>{entry.toLeadStage}</span>
+                  </div>
+                  {entry.reason && <div className="cp-history-reason">{entry.reason}</div>}
+                  <div className="cp-history-date">{formatRelativeTime(entry.changedAtUtc)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+HistoryTab.displayName = 'HistoryTab';
+
 const ContactProfile = () => {
   const { contactId } = useParams();
   const navigate = useNavigate();
   const { showFeedback } = useFeedback();
 
-  const contactQuery       = useContactById(contactId);
-  const notesQuery         = useContactNotes(contactId);
-  const tasksQuery         = useContactTasks(contactId);
-  const eventsQuery        = useEvents({ contactId, limit: 50 });
-  const historyQuery       = useLeadStageHistory(contactId);
-  const addNoteMutation    = useAddContactNote(contactId);
+  const contactQuery = useContactById(contactId);
+  const notesQuery = useContactNotes(contactId);
+  const tasksQuery = useContactTasks(contactId);
+  const eventsQuery = useEvents({ contactId, limit: 50 });
+  const historyQuery = useLeadStageHistory(contactId);
+  const addNoteMutation = useAddContactNote(contactId);
   const createTaskMutation = useCreateContactTask(contactId);
   const updateTaskMutation = useUpdateContactTask(contactId);
   const updateStageMutation = useUpdateContactLeadStage();
 
-  const contact      = contactQuery.data ?? null;
-  const notes        = notesQuery.data?.notes || [];
-  const tasks        = tasksQuery.data?.tasks || [];
-  const events       = eventsQuery.data?.events || [];
-  const stageHistory = historyQuery.data?.history || [];
-  const isLoading    = contactQuery.isLoading;
+  const contact = contactQuery.data ?? null;
+  const isLoading = contactQuery.isLoading;
 
-  const [tab, setTab]             = useState('activity');
-  const [noteText, setNoteText]   = useState('');
+  const notes = useMemo(() => {
+    const rows = notesQuery.data?.notes || [];
+    return [...rows].sort((a, b) => new Date(b.createdAtUtc) - new Date(a.createdAtUtc));
+  }, [notesQuery.data]);
+
+  const tasks = useMemo(() => {
+    const rows = tasksQuery.data?.tasks || [];
+    return [...rows].sort((a, b) => {
+      const aDone = String(a.status || '').toLowerCase() === 'completed';
+      const bDone = String(b.status || '').toLowerCase() === 'completed';
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      const aDue = a.dueAtUtc ? new Date(a.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
+      const bDue = b.dueAtUtc ? new Date(b.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
+      return aDue - bDue;
+    });
+  }, [tasksQuery.data]);
+
+  const events = useMemo(() => {
+    const rows = eventsQuery.data?.events || [];
+    return [...rows].sort(
+      (a, b) => new Date(b.occurredAtUtc || b.createdAtUtc) - new Date(a.occurredAtUtc || a.createdAtUtc)
+    );
+  }, [eventsQuery.data]);
+
+  const stageHistory = useMemo(() => {
+    const rows = historyQuery.data?.history || [];
+    return [...rows].sort((a, b) => new Date(b.changedAtUtc) - new Date(a.changedAtUtc));
+  }, [historyQuery.data]);
+
+  const [tab, setTab] = useState('activity');
+  const [noteText, setNoteText] = useState('');
   const [addingNote, setAddingNote] = useState(false);
-  const [taskForm, setTaskForm]   = useState({ title: '', priority: 'Medium', dueDate: '' });
+  const [taskForm, setTaskForm] = useState({ title: '', priority: 'Medium', dueDate: '' });
   const [addingTask, setAddingTask] = useState(false);
   const [editingStage, setEditingStage] = useState(false);
-  const [newStage, setNewStage]   = useState('');
+  const [newStage, setNewStage] = useState('');
   const [stageReason, setStageReason] = useState('');
 
-  const handleAddNote = async (e) => {
-    e.preventDefault();
+  const handleAddNote = useCallback(async (event) => {
+    event.preventDefault();
     if (!noteText.trim()) return;
     setAddingNote(true);
     try {
@@ -99,17 +324,17 @@ const ContactProfile = () => {
     } finally {
       setAddingNote(false);
     }
-  };
+  }, [addNoteMutation, noteText, showFeedback]);
 
-  const handleAddTask = async (e) => {
-    e.preventDefault();
+  const handleAddTask = useCallback(async (event) => {
+    event.preventDefault();
     if (!taskForm.title.trim()) return;
     setAddingTask(true);
     try {
       await createTaskMutation.mutateAsync({
-        title:    taskForm.title,
+        title: taskForm.title,
         priority: taskForm.priority,
-        dueAtUtc: taskForm.dueDate ? new Date(taskForm.dueDate).toISOString() : null
+        dueAtUtc: taskForm.dueDate ? new Date(taskForm.dueDate).toISOString() : null,
       });
       setTaskForm({ title: '', priority: 'Medium', dueDate: '' });
       showFeedback('Task created.', 'success');
@@ -118,22 +343,26 @@ const ContactProfile = () => {
     } finally {
       setAddingTask(false);
     }
-  };
+  }, [createTaskMutation, showFeedback, taskForm]);
 
-  const handleCompleteTask = async (taskId) => {
+  const handleCompleteTask = useCallback(async (taskId) => {
     try {
       await updateTaskMutation.mutateAsync({ taskId, patch: { status: 'Completed' } });
       showFeedback('Task completed.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update task.', 'error');
     }
-  };
+  }, [showFeedback, updateTaskMutation]);
 
-  const handleUpdateStage = async (e) => {
-    e.preventDefault();
+  const handleUpdateStage = useCallback(async (event) => {
+    event.preventDefault();
     if (!newStage) return;
     try {
-      await updateStageMutation.mutateAsync({ contactId, toLeadStage: newStage, reason: stageReason || 'Manual update' });
+      await updateStageMutation.mutateAsync({
+        contactId,
+        toLeadStage: newStage,
+        reason: stageReason || 'Manual update',
+      });
       setEditingStage(false);
       setNewStage('');
       setStageReason('');
@@ -141,7 +370,7 @@ const ContactProfile = () => {
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update stage.', 'error');
     }
-  };
+  }, [contactId, newStage, showFeedback, stageReason, updateStageMutation]);
 
   if (isLoading) {
     return (
@@ -164,22 +393,32 @@ const ContactProfile = () => {
   }
 
   const displayName = [contact.firstName, contact.lastName].filter(Boolean).join(' ') || contact.email;
-  const initials = displayName.split(' ').map(w => w[0]).filter(Boolean).join('').toUpperCase().slice(0, 2);
+  const initials = displayName
+    .split(' ')
+    .map((word) => word[0])
+    .filter(Boolean)
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
   const stageKey = (contact.leadStage || '').toLowerCase();
-  const stageColor = STAGE_COLORS[stageKey] || 'blue';
+  const stageColor = getStageTone(stageKey);
+  const openTasks = tasks.filter((task) => String(task.status || '').toLowerCase() !== 'completed').length;
 
-  const openTasks = tasks.filter(t => (t.status || '').toLowerCase() !== 'completed').length;
+  const tabItems = [
+    { id: 'activity', label: `Activity (${events.length})` },
+    { id: 'notes', label: `Notes (${notes.length})` },
+    { id: 'tasks', label: `Tasks (${openTasks} open)` },
+    { id: 'history', label: 'Stage History' },
+  ];
 
   return (
     <div className="content fade-in">
-      {/* Back */}
       <div className="cp-back-row">
-        <button className="topbar-btn" onClick={() => navigate('/marketing?tab=contacts')}>
-          ← Back to Contacts
+        <button type="button" className="topbar-btn" onClick={() => navigate('/marketing?tab=contacts')}>
+          {'<-'} Back to Contacts
         </button>
       </div>
 
-      {/* Header card */}
       <div className="cp-header card">
         <div className="cp-avatar-lg">{initials}</div>
         <div className="cp-info">
@@ -189,35 +428,38 @@ const ContactProfile = () => {
           <div className="cp-tags-row">
             <span className={`stage-badge stage-${stageColor}`}>{contact.leadStage || 'No Stage'}</span>
             {contact.dealValue > 0 && (
-              <span className="cp-deal">£{Number(contact.dealValue).toLocaleString()}</span>
+              <span className="cp-deal">GBP {Number(contact.dealValue).toLocaleString()}</span>
             )}
-            {(contact.tags || []).map(tag => (
+            {(contact.tags || []).map((tag) => (
               <span key={tag} className="cp-tag">{tag}</span>
             ))}
           </div>
         </div>
+
         <div className="cp-actions">
           {!editingStage ? (
             <button
+              type="button"
               className="topbar-btn"
-              onClick={() => { setEditingStage(true); setNewStage(contact.leadStage || 'New'); }}
+              onClick={() => {
+                setEditingStage(true);
+                setNewStage(contact.leadStage || 'New');
+              }}
             >
               Change Stage
             </button>
           ) : (
             <form onSubmit={handleUpdateStage} className="cp-stage-form">
-              <select
-                className="form-input"
-                value={newStage}
-                onChange={e => setNewStage(e.target.value)}
-              >
-                {LEAD_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+              <select className="form-input" value={newStage} onChange={(event) => setNewStage(event.target.value)}>
+                {LEAD_STAGES.map((stage) => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
               </select>
               <input
                 className="form-input"
                 placeholder="Reason (optional)"
                 value={stageReason}
-                onChange={e => setStageReason(e.target.value)}
+                onChange={(event) => setStageReason(event.target.value)}
               />
               <div className="cp-stage-form-row">
                 <button type="submit" className="topbar-btn primary">Save</button>
@@ -228,9 +470,7 @@ const ContactProfile = () => {
         </div>
       </div>
 
-      {/* Two-column layout */}
       <div className="cp-layout">
-        {/* Left: contact details */}
         <div>
           <div className="card">
             <div className="card-header">
@@ -246,8 +486,8 @@ const ContactProfile = () => {
                 ['Source', contact.source],
                 ['Timezone', contact.timezone],
                 ['Added', formatDate(contact.createdAtUtc)],
-                ['Updated', formatDate(contact.updatedAtUtc)]
-              ].filter(([, v]) => v).map(([label, value]) => (
+                ['Updated', formatDate(contact.updatedAtUtc)],
+              ].filter(([, value]) => value).map(([label, value]) => (
                 <div key={label} className="cp-detail-row">
                   <span className="cp-detail-lbl">{label}</span>
                   <span className="cp-detail-val">{value}</span>
@@ -257,206 +497,41 @@ const ContactProfile = () => {
           </div>
         </div>
 
-        {/* Right: tabs */}
         <div>
           <div className="cp-tabs">
-            {[
-              { id: 'activity', label: `Activity (${events.length})` },
-              { id: 'notes',    label: `Notes (${notes.length})` },
-              { id: 'tasks',    label: `Tasks (${openTasks} open)` },
-              { id: 'history',  label: 'Stage History' }
-            ].map(t => (
+            {tabItems.map((item) => (
               <button
-                key={t.id}
-                className={`cp-tab ${tab === t.id ? 'active' : ''}`}
-                onClick={() => setTab(t.id)}
+                type="button"
+                key={item.id}
+                className={`cp-tab ${tab === item.id ? 'active' : ''}`}
+                onClick={() => setTab(item.id)}
               >
-                {t.label}
+                {item.label}
               </button>
             ))}
           </div>
 
-          {/* ── Activity ── */}
-          {tab === 'activity' && (
-            <div className="card">
-              <div className="card-body">
-                {events.length === 0 ? (
-                  <div className="empty-state empty-state-sm">
-                    <p>No activity yet</p>
-                    <small>Events appear once tracked via the Marketing module</small>
-                  </div>
-                ) : (
-                  <div className="cp-activity-list">
-                    {events.map(ev => {
-                      const color = EVENT_COLORS[ev.eventType] || 'blue';
-                      const label = EVENT_LABELS[ev.eventType] || ev.eventType;
-                      return (
-                        <div key={ev.eventId} className="activity-item">
-                          <div className={`activity-dot ${color}`} />
-                          <div>
-                            <div className="activity-text">{label}</div>
-                            <div className="activity-time">{formatRelativeTime(ev.occurredAtUtc || ev.createdAtUtc)}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── Notes ── */}
+          {tab === 'activity' && <ActivityTab events={events} />}
           {tab === 'notes' && (
-            <div className="card">
-              <div className="card-body">
-                <form onSubmit={handleAddNote} className="cp-note-form">
-                  <textarea
-                    className="form-input"
-                    rows={3}
-                    placeholder="Write a note..."
-                    value={noteText}
-                    onChange={e => setNoteText(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="topbar-btn primary"
-                    disabled={addingNote || !noteText.trim()}
-                  >
-                    {addingNote ? 'Adding…' : 'Add Note'}
-                  </button>
-                </form>
-                <div className="cp-notes-list">
-                  {notes.length === 0 ? (
-                    <div className="empty-state empty-state-sm">
-                      <p>No notes yet</p>
-                    </div>
-                  ) : (
-                    notes.map(note => (
-                      <div key={note.noteId} className="cp-note">
-                        <div className="cp-note-body">{note.body}</div>
-                        <div className="cp-note-date">{formatRelativeTime(note.createdAtUtc)}</div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+            <NotesTab
+              notes={notes}
+              noteText={noteText}
+              setNoteText={setNoteText}
+              addingNote={addingNote}
+              onAddNote={handleAddNote}
+            />
           )}
-
-          {/* ── Tasks ── */}
           {tab === 'tasks' && (
-            <div className="card">
-              <div className="card-body">
-                <form onSubmit={handleAddTask} className="cp-task-form">
-                  <input
-                    className="form-input"
-                    placeholder="Task title"
-                    value={taskForm.title}
-                    onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))}
-                  />
-                  <div className="cp-task-row">
-                    <select
-                      className="form-input cp-task-priority"
-                      value={taskForm.priority}
-                      onChange={e => setTaskForm(f => ({ ...f, priority: e.target.value }))}
-                    >
-                      <option>Low</option>
-                      <option>Medium</option>
-                      <option>High</option>
-                    </select>
-                    <input
-                      type="date"
-                      className="form-input cp-task-date"
-                      value={taskForm.dueDate}
-                      onChange={e => setTaskForm(f => ({ ...f, dueDate: e.target.value }))}
-                    />
-                    <button
-                      type="submit"
-                      className="topbar-btn primary"
-                      disabled={addingTask || !taskForm.title.trim()}
-                    >
-                      {addingTask ? 'Adding…' : 'Add Task'}
-                    </button>
-                  </div>
-                </form>
-                <div className="cp-task-list">
-                  {tasks.length === 0 ? (
-                    <div className="empty-state empty-state-sm">
-                      <p>No tasks yet</p>
-                    </div>
-                  ) : (
-                    tasks.map(task => {
-                      const done = (task.status || '').toLowerCase() === 'completed';
-                      const overdue = task.dueAtUtc && new Date(task.dueAtUtc) < new Date() && !done;
-                      return (
-                        <div key={task.taskId} className="task-item">
-                          <div
-                            className={`task-check ${done ? 'done' : ''}`}
-                            onClick={() => !done && handleCompleteTask(task.taskId)}
-                          >
-                            {done && <Icon name="check" size={10} color="#fff" />}
-                          </div>
-                          <div className="task-info">
-                            <div className={`task-name ${done ? 'done' : ''}`}>{task.title}</div>
-                            <div
-                              className={`task-meta ${overdue ? 'overdue' : ''}`}
-                            >
-                              {task.dueAtUtc
-                                ? `Due ${formatDate(task.dueAtUtc)}${overdue ? ' · Overdue' : ''}`
-                                : 'No due date'}
-                            </div>
-                          </div>
-                          <span className={`priority-badge ${(task.priority || 'medium').toLowerCase()}`}>
-                            {task.priority || 'medium'}
-                          </span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
+            <TasksTab
+              tasks={tasks}
+              taskForm={taskForm}
+              setTaskForm={setTaskForm}
+              addingTask={addingTask}
+              onAddTask={handleAddTask}
+              onCompleteTask={handleCompleteTask}
+            />
           )}
-
-          {/* ── Stage History ── */}
-          {tab === 'history' && (
-            <div className="card">
-              <div className="card-body">
-                {stageHistory.length === 0 ? (
-                  <div className="empty-state empty-state-sm">
-                    <p>No stage history yet</p>
-                    <small>Stage changes will appear here</small>
-                  </div>
-                ) : (
-                  <div className="cp-history">
-                    {stageHistory.map((entry, i) => {
-                      const fromColor = STAGE_COLORS[(entry.fromLeadStage || '').toLowerCase()] || 'blue';
-                      const toColor   = STAGE_COLORS[(entry.toLeadStage  || '').toLowerCase()] || 'blue';
-                      return (
-                        <div key={i} className="cp-history-item">
-                          <div className="cp-history-dot" />
-                          <div className="cp-history-content">
-                            <div className="cp-history-stages">
-                              {entry.fromLeadStage && (
-                                <>
-                                  <span className={`stage-badge stage-${fromColor}`}>{entry.fromLeadStage}</span>
-                                  <span className="cp-history-arrow">→</span>
-                                </>
-                              )}
-                              <span className={`stage-badge stage-${toColor}`}>{entry.toLeadStage}</span>
-                            </div>
-                            {entry.reason && <div className="cp-history-reason">{entry.reason}</div>}
-                            <div className="cp-history-date">{formatRelativeTime(entry.changedAtUtc)}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {tab === 'history' && <HistoryTab stageHistory={stageHistory} />}
         </div>
       </div>
     </div>

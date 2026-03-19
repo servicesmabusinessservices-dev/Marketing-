@@ -27,6 +27,9 @@ const EmailDetail = () => {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
       html, body {
         margin: 0;
         padding: 0;
@@ -39,21 +42,29 @@ const EmailDetail = () => {
         word-break: break-word;
       }
       body {
-        padding: 14px;
+        max-width: 100%;
+        padding: clamp(12px, 3vw, 16px);
       }
       img, video, canvas, svg {
         max-width: 100% !important;
         height: auto !important;
       }
+      iframe {
+        max-width: 100% !important;
+      }
       table {
         max-width: 100% !important;
-        width: auto !important;
+        width: max-content !important;
+        min-width: 100%;
         display: block;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
-      pre, code {
+      pre, code, blockquote {
+        max-width: 100%;
         white-space: pre-wrap;
         word-break: break-word;
+        overflow-x: auto;
       }
       a {
         color: #2d63d8;
@@ -141,7 +152,7 @@ const EmailDetail = () => {
   return (
     <div className="email-detail">
       <div className="top-bar">
-        <button onClick={() => navigate('/emails')} className="back-btn">← Back</button>
+        <button type="button" onClick={() => navigate('/emails')} className="back-btn">← Back</button>
       </div>
       
       <div className="email-container">
@@ -162,12 +173,12 @@ const EmailDetail = () => {
                 <span className="meta-value">{email.to}</span>
               </div>
             )}
-            <div className="meta-item" style={{ marginTop: 8 }}>
+            <div className="meta-item meta-item-action">
               <button
+                type="button"
                 onClick={handleSaveSenderAsContact}
                 disabled={savingContact || contactSaved}
-                className="reply-btn"
-                style={{ fontSize: 13, padding: '5px 14px' }}
+                className="reply-btn reply-btn-compact"
               >
                 {contactSaved ? '✓ Contact saved' : savingContact ? 'Saving…' : '+ Save sender as contact'}
               </button>
@@ -180,6 +191,7 @@ const EmailDetail = () => {
             <iframe
               className="email-body-frame"
               title="email-body"
+              loading="lazy"
               sandbox="allow-popups allow-popups-to-escape-sandbox"
               srcDoc={getEmailHtmlDocument(email.body)}
             />
@@ -188,19 +200,22 @@ const EmailDetail = () => {
           <pre className="email-body email-body-plain">{email.body || '(No content)'}</pre>
         )}
 
-        <button onClick={() => setShowReply(!showReply)} className="reply-btn">
+        <button type="button" onClick={() => setShowReply(!showReply)} className="reply-btn" aria-pressed={showReply}>
           {showReply ? 'Cancel Reply' : 'Reply'}
         </button>
 
         {showReply && (
           <div className="reply-section">
+            <label className="form-label reply-textarea-label" htmlFor="reply-textarea">Reply message</label>
             <textarea
+              id="reply-textarea"
+              aria-label="Reply message"
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Type your reply..."
               rows="6"
             />
-            <button onClick={handleSendReply} disabled={sending} className="send-btn">
+            <button type="button" onClick={handleSendReply} disabled={sending} className="send-btn">
               {sending ? 'Sending...' : 'Send Reply'}
             </button>
           </div>

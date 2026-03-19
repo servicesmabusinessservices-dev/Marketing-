@@ -26,6 +26,7 @@ export const QueryKeys = {
   suppressions:       ()       => ['suppressions'],
   suppressionSummary: ()       => ['suppressionSummary'],
   leadStageHistory:   (id)     => ['leadStageHistory', id],
+  tokens:             ()       => ['tokens'],
 };
 
 // ── Email queries ─────────────────────────────────────────────────────────────
@@ -200,6 +201,13 @@ export const useSuppressionSummary = () =>
     queryKey: QueryKeys.suppressionSummary(),
     queryFn: gmailService.getSuppressionSummary,
     staleTime: 60_000,
+  });
+
+export const useTokens = () =>
+  useQuery({
+    queryKey: QueryKeys.tokens(),
+    queryFn: gmailService.getTokens,
+    staleTime: 300_000,
   });
 
 // ── Mutations ─────────────────────────────────────────────────────────────────

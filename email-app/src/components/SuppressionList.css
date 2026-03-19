@@ -1,7 +1,7 @@
 /* SuppressionList.css */
 .sl-table {
   width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   max-height: min(58vh, 520px);
   overflow: auto;
   border: 1px solid var(--border);
@@ -10,16 +10,24 @@
 .sl-row {
   display: grid;
   grid-template-columns: 1.4fr 110px 1fr 130px 80px;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   align-items: center;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  color: var(--text-1);
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
 }
 
 .sl-row:last-child {
   border-bottom: none;
+}
+
+.sl-field {
+  min-width: 0;
+}
+
+.sl-field-label {
+  display: none;
 }
 
 .sl-row:not(.sl-header):hover {
@@ -27,8 +35,8 @@
 }
 
 .sl-header {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-3);
@@ -39,52 +47,52 @@
 }
 
 .sl-email {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   word-break: break-all;
 }
 
 .sl-reason-badge {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
+  font-size: var(--fs-xs);
+  font-weight: var(--font-semibold);
+  padding: var(--space-2xs) var(--space-xs);
   border-radius: 20px;
   text-transform: capitalize;
 }
 
-.reason-unsubscribed { background: rgba(251, 191, 36, 0.12);  color: var(--amber); }
-.reason-bounced      { background: rgba(244, 63, 94, 0.12);   color: var(--rose); }
-.reason-complained   { background: rgba(244, 63, 94, 0.12);   color: var(--rose); }
-.reason-manual       { background: rgba(148, 163, 184, 0.12); color: var(--text-2); }
-.reason-other        { background: rgba(148, 163, 184, 0.12); color: var(--text-2); }
+.reason-unsubscribed { background: var(--status-warning-surface); color: var(--status-warning-text); }
+.reason-bounced      { background: var(--status-error-surface); color: var(--status-error-text); }
+.reason-complained   { background: var(--status-error-surface); color: var(--status-error-text); }
+.reason-manual       { background: var(--status-neutral-surface); color: var(--status-neutral-text); }
+.reason-other        { background: var(--status-neutral-surface); color: var(--status-neutral-text); }
 
 .sl-notes {
-  color: var(--text-2);
-  font-size: 12px;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .sl-date {
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .sl-remove-btn {
   background: none;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2xs) var(--space-sm);
+  font-size: var(--fs-sm);
   cursor: pointer;
-  color: var(--text-2);
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  color: var(--text-secondary);
+  transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
 }
 
 .sl-remove-btn:hover {
-  color: var(--rose);
-  border-color: var(--rose);
-  background: rgba(244, 63, 94, 0.06);
+  color: var(--status-error-text);
+  border-color: var(--status-error-border);
+  background: var(--status-error-surface);
 }
 
 @media (max-width: 768px) {
@@ -96,8 +104,70 @@
     grid-template-columns: 1fr 90px 80px;
   }
 
-  .sl-notes,
-  .sl-date {
+  .sl-field-notes,
+  .sl-field-date {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .sl-table {
+    max-height: none;
+    overflow: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .sl-header {
+    display: none;
+  }
+
+  .sl-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--panel-bg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .sl-row:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sl-field,
+  .sl-field-notes,
+  .sl-field-date,
+  .sl-field-action {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sl-field-label {
+    display: block;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sl-field-notes,
+  .sl-field-date {
+    display: flex;
+  }
+
+  .sl-notes {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+
+  .sl-remove-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

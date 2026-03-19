@@ -1,14 +1,16 @@
 import React, { useMemo } from 'react';
 import Icon from './ui/Icon';
 import AnimatedCard from './ui/AnimatedCard';
+import ErrorState from './ui/ErrorState';
 import {
   useAnalytics,
   useContacts,
   useEmailSummary,
   useTasks,
   useJourneySummary,
-  useEvents
+  useEvents,
 } from '../hooks/useApi';
+import { getEventTone, JOURNEY_ICON_COLOR, ON_SOLID_ICON_COLOR } from '../utils/uiColorMaps';
 
 const EVENT_LABELS = {
   opened: 'Email opened',
@@ -19,19 +21,7 @@ const EVENT_LABELS = {
   unsubscribed: 'Unsubscribed',
   proposal_sent: 'Proposal sent',
   no_reply_3d: 'No reply after 3 days',
-  new_lead: 'New lead added'
-};
-
-const EVENT_COLORS = {
-  replied: 'emerald',
-  opened: 'purple',
-  clicked: 'blue',
-  delivered: 'blue',
-  bounced: 'rose',
-  unsubscribed: 'rose',
-  proposal_sent: 'amber',
-  no_reply_3d: 'amber',
-  new_lead: 'emerald'
+  new_lead: 'New lead added',
 };
 
 const formatRelativeTime = (value) => {
@@ -90,7 +80,7 @@ const formatTaskDue = (task) => {
   const dueDate = new Date(task.dueAtUtc);
   if (Number.isNaN(dueDate.getTime())) return 'No due date';
   const label = dueDate.toLocaleDateString();
-  return isTaskOverdue(task) ? `Overdue · ${label}` : `Due ${label}`;
+  return isTaskOverdue(task) ? `Overdue - ${label}` : `Due ${label}`;
 };
 
 const formatTaskContact = (task) => {
@@ -100,87 +90,272 @@ const formatTaskContact = (task) => {
   return name || contact.email || 'Contact unavailable';
 };
 
+const StatCard = React.memo(({ stat }) => (
+  <AnimatedCard className={`stat-card ${stat.color}`}>
+    <div className="stat-label">{stat.label}</div>
+    <div className="stat-value">{stat.value}</div>
+    <div className={`stat-change ${stat.dir || ''}`}>{stat.change}</div>
+    <div className="stat-icon">
+      <Icon name={stat.icon} size={28} color="currentColor" />
+    </div>
+  </AnimatedCard>
+));
+
+StatCard.displayName = 'StatCard';
+
+const ActivityFeed = React.memo(({ activities, windowLabel }) => (
+  <div className="card">
+    <div className="card-header">
+      <Icon name="zap" size={14} color="var(--purple)" />
+      <span className="card-title">Recent Activity</span>
+      <span className="card-header-meta">{windowLabel}</span>
+    </div>
+    <div className="card-body">
+      {activities.length === 0 ? (
+        <div className="empty-state empty-state-sm">
+          <p>No activity yet</p>
+          <small>Events will appear once tracked</small>
+        </div>
+      ) : (
+        <div className="dashboard-activity-list">
+          {activities.map((activity) => (
+            <div key={activity.id} className="activity-item">
+              <div className={`activity-dot ${activity.color}`} />
+              <div>
+                <div className="activity-text">{activity.text}</div>
+                <div className="activity-time">{activity.time}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+));
+
+ActivityFeed.displayName = 'ActivityFeed';
+
+const PipelineOverview = React.memo(({ pipelineStages }) => (
+  <div className="card">
+    <div className="card-header">
+      <Icon name="pipeline" size={14} color="var(--blue)" />
+      <span className="card-title">Pipeline Overview</span>
+    </div>
+    <div className="card-body">
+      <div className="pipeline-stages">
+        {pipelineStages.map(([stage, count]) => (
+          <div key={stage} className={`stage-pill ${stage.toLowerCase()}`}>
+            <span className="count">{count}</span>
+            {stage}
+          </div>
+        ))}
+      </div>
+      <div className="card-footer-note">Live view from analytics window</div>
+    </div>
+  </div>
+));
+
+PipelineOverview.displayName = 'PipelineOverview';
+
+const TaskFocus = React.memo(({ tasks, taskTotal }) => (
+  <div className="card">
+    <div className="card-header">
+      <Icon name="check" size={14} color="var(--emerald)" />
+      <span className="card-title">Task Focus</span>
+      <span className="card-header-meta">{formatNumber(taskTotal)} open</span>
+    </div>
+    <div className="card-body">
+      {tasks.length === 0 ? (
+        <div className="empty-state empty-state-sm">
+          <p>No open tasks</p>
+          <small>Create a task from pipeline contacts</small>
+        </div>
+      ) : (
+        <div className="task-scroll-wrap">
+          {tasks.map((task) => {
+            const done = String(task.status || '').toLowerCase() === 'completed';
+            const overdue = isTaskOverdue(task);
+            const priorityClass = getTaskPriorityClass(task.priority);
+            return (
+              <div key={task.taskId} className="task-item">
+                <div className={`task-check ${done ? 'done' : ''}`}>
+                  {done && <Icon name="check" size={10} color={ON_SOLID_ICON_COLOR} />}
+                </div>
+                <div className="task-info">
+                  <div className={`task-name ${done ? 'done' : ''}`}>{task.title}</div>
+                  <div className={`task-meta ${overdue ? 'overdue' : ''}`}>
+                    {formatTaskDue(task)} - {formatTaskContact(task)}
+                  </div>
+                </div>
+                <span className={`priority-badge ${priorityClass}`}>{priorityClass}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+));
+
+TaskFocus.displayName = 'TaskFocus';
+
+const JourneyPanel = React.memo(({ journeys }) => (
+  <div className="card">
+    <div className="card-header">
+      <Icon name="journey" size={14} color={JOURNEY_ICON_COLOR} />
+      <span className="card-title">Active Journeys</span>
+    </div>
+    <div className="card-body">
+      {journeys.length === 0 ? (
+        <div className="empty-state empty-state-sm">
+          <p>No published journeys</p>
+          <small>Create and publish a journey to see it here</small>
+        </div>
+      ) : (
+        <div className="dashboard-journey-list">
+          {journeys.map((journey) => (
+            <div key={journey.journeyId} className="journey-card journey-card-compact">
+              <div className={`journey-status ${String(journey.status || '').toLowerCase()}`} />
+              <div className="journey-info">
+                <div className="journey-name">{journey.name}</div>
+                <div className="journey-trigger">{formatTrigger(journey.triggerType)}</div>
+              </div>
+              <div className="journey-stats">
+                <div className="journey-enrolled">{journey.activeEnrollments || 0}</div>
+                <div className="journey-lbl">active</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+));
+
+JourneyPanel.displayName = 'JourneyPanel';
+
 const Dashboard = () => {
-  const analyticsQuery      = useAnalytics({ days: 30 });
-  const contactsQuery       = useContacts({ limit: 200 });
-  const emailSummaryQuery   = useEmailSummary();
-  const tasksQuery          = useTasks({ status: 'Open', limit: 50 });
+  const analyticsQuery = useAnalytics({ days: 30 });
+  const contactsQuery = useContacts({ limit: 200 });
+  const emailSummaryQuery = useEmailSummary();
+  const tasksQuery = useTasks({ status: 'Open', limit: 50 });
   const journeySummaryQuery = useJourneySummary();
-  const eventsQuery         = useEvents({ limit: 6 });
+  const eventsQuery = useEvents({ limit: 6 });
 
   const loading = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
-    .some((q) => q.isLoading);
+    .some((query) => query.isLoading);
+  const hasError = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
+    .some((query) => query.isError);
 
-  const analytics      = analyticsQuery.data;
-  const contactsData   = contactsQuery.data;
-  const emailSummary   = emailSummaryQuery.data;
-  const tasksData      = tasksQuery.data;
+  const analytics = analyticsQuery.data;
+  const contactsData = contactsQuery.data;
+  const emailSummary = emailSummaryQuery.data;
+  const tasksData = tasksQuery.data;
   const journeySummary = journeySummaryQuery.data;
-  const eventsData     = eventsQuery.data;
+  const eventsData = eventsQuery.data;
 
   const windowLabel = useMemo(() => `Last ${analytics?.windowDays ?? 30} days`, [analytics]);
-
   const contactMap = useMemo(() => buildContactMap(contactsData?.contacts || []), [contactsData]);
 
   const stats = useMemo(() => {
     const deliverability = analytics?.deliverability || {};
-    const windowDays     = analytics?.windowDays || 30;
-    const totalContacts  = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
-    const totalEmails    = emailSummary?.totalCount || 0;
-    const unreadEmails   = emailSummary?.unreadCount || 0;
+    const windowDays = analytics?.windowDays || 30;
+    const totalContacts = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
+    const totalEmails = emailSummary?.totalCount || 0;
+    const unreadEmails = emailSummary?.unreadCount || 0;
+
     return [
-      { key: 'contacts',   label: 'Total Contacts', value: formatNumber(totalContacts),            change: 'All time',            dir: 'neutral', color: 'amber',   icon: 'users' },
-      { key: 'totalEmails',label: 'Total Emails',   value: formatNumber(totalEmails),              change: 'Gmail total',         dir: 'neutral', color: 'blue',    icon: 'mail'  },
-      { key: 'unread',     label: 'Unread Emails',  value: formatNumber(unreadEmails),             change: 'Live',                dir: 'neutral', color: 'rose',    icon: 'inbox' },
-      { key: 'openRate',   label: 'Avg Open Rate',  value: formatPercent(deliverability.openRate), change: `Last ${windowDays} days`, dir: 'neutral', color: 'emerald', icon: 'bar'   }
+      {
+        key: 'contacts',
+        label: 'Total Contacts',
+        value: formatNumber(totalContacts),
+        change: 'All time',
+        dir: 'neutral',
+        color: 'amber',
+        icon: 'users',
+      },
+      {
+        key: 'totalEmails',
+        label: 'Total Emails',
+        value: formatNumber(totalEmails),
+        change: 'Gmail total',
+        dir: 'neutral',
+        color: 'blue',
+        icon: 'mail',
+      },
+      {
+        key: 'unread',
+        label: 'Unread Emails',
+        value: formatNumber(unreadEmails),
+        change: 'Live',
+        dir: 'neutral',
+        color: 'rose',
+        icon: 'inbox',
+      },
+      {
+        key: 'openRate',
+        label: 'Avg Open Rate',
+        value: formatPercent(deliverability.openRate),
+        change: `Last ${windowDays} days`,
+        dir: 'neutral',
+        color: 'emerald',
+        icon: 'bar',
+      },
     ];
   }, [analytics, contactsData, emailSummary]);
 
   const pipelineStages = useMemo(() => {
     const stageFunnel = analytics?.stageFunnel || {};
     return [
-      ['New',       stageFunnel.New       || 0],
+      ['New', stageFunnel.New || 0],
       ['Qualified', stageFunnel.Qualified || 0],
-      ['Proposal',  stageFunnel.Proposal  || 0],
-      ['Won',       stageFunnel.Won       || 0],
-      ['Lost',      stageFunnel.Lost      || 0]
+      ['Proposal', stageFunnel.Proposal || 0],
+      ['Won', stageFunnel.Won || 0],
+      ['Lost', stageFunnel.Lost || 0],
     ];
   }, [analytics]);
 
   const activities = useMemo(() => {
-    const events = eventsData?.events || [];
-    return events.map((event) => {
-      const eventType    = (event.eventType || '').toLowerCase();
-      const contact      = contactMap.get(event.contactId);
-      const label        = EVENT_LABELS[eventType] || 'Activity logged';
+    const rows = eventsData?.events || [];
+    return rows.map((event) => {
+      const eventType = (event.eventType || '').toLowerCase();
+      const contact = contactMap.get(event.contactId);
+      const label = EVENT_LABELS[eventType] || 'Activity logged';
       const contactLabel = contact?.label || `Contact ${String(event.contactId || '').slice(0, 6)}`;
       return {
-        id:    event.eventId || `${eventType}-${event.contactId}-${event.occurredAtUtc}`,
-        color: EVENT_COLORS[eventType] || 'blue',
-        text:  `${label} · ${contactLabel}`,
-        time:  formatRelativeTime(event.occurredAtUtc || event.createdAtUtc)
+        id: event.eventId || `${eventType}-${event.contactId}-${event.occurredAtUtc}`,
+        color: getEventTone(eventType),
+        text: `${label} - ${contactLabel}`,
+        time: formatRelativeTime(event.occurredAtUtc || event.createdAtUtc),
       };
     });
   }, [eventsData, contactMap]);
 
   const { tasks, taskTotal } = useMemo(() => {
-    const taskRows = tasksData?.tasks || [];
-    const now      = Date.now();
-    const sorted   = [...taskRows].sort((a, b) => {
+    const rows = tasksData?.tasks || [];
+    const now = Date.now();
+
+    const sorted = [...rows].sort((a, b) => {
       const aOverdue = a.dueAtUtc && new Date(a.dueAtUtc).getTime() < now;
       const bOverdue = b.dueAtUtc && new Date(b.dueAtUtc).getTime() < now;
       if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+
       const aDue = a.dueAtUtc ? new Date(a.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
       const bDue = b.dueAtUtc ? new Date(b.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
       if (aDue !== bDue) return aDue - bDue;
+
       return new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime();
     });
-    return { tasks: sorted.slice(0, 12), taskTotal: tasksData?.totalCount || taskRows.length };
+
+    return {
+      tasks: sorted.slice(0, 12),
+      taskTotal: tasksData?.totalCount || rows.length,
+    };
   }, [tasksData]);
 
   const journeys = useMemo(() => {
     const published = (journeySummary?.journeys || []).filter(
-      (j) => String(j.status || '').toLowerCase() === 'published'
+      (journey) => String(journey.status || '').toLowerCase() === 'published'
     );
     return [...published]
       .sort((a, b) => (b.activeEnrollments || 0) - (a.activeEnrollments || 0))
@@ -189,161 +364,55 @@ const Dashboard = () => {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const refetchAll = () => {
+    analyticsQuery.refetch();
+    contactsQuery.refetch();
+    emailSummaryQuery.refetch();
+    tasksQuery.refetch();
+    journeySummaryQuery.refetch();
+    eventsQuery.refetch();
+  };
 
   return (
     <div className="content fade-in">
       {loading ? (
         <div className="loading-state">
           <div className="spinner" />
-          <p>Loading dashboard…</p>
+          <p>Loading dashboard...</p>
         </div>
+      ) : hasError ? (
+        <ErrorState message="Failed to load dashboard data." onRetry={refetchAll} />
       ) : (
         <>
           <div className="page-header">
             <div className="syne page-title-greeting">
-              {greeting} — <span className="gradient-text">let’s make moves today.</span>
+              {greeting} - <span className="gradient-text">let's make moves today.</span>
             </div>
             <div className="helper-text helper-text-top">{today}</div>
           </div>
 
           <div className="stats-grid">
             {stats.map((stat) => (
-              <AnimatedCard key={stat.key} className={`stat-card ${stat.color}`}>
-                <div className="stat-label">{stat.label}</div>
-                <div className="stat-value">{stat.value}</div>
-                <div className={`stat-change ${stat.dir || ''}`}>
-                  {stat.dir === 'up' && <span>+</span>}
-                  {stat.dir === 'down' && <span>-</span>}
-                  {stat.change}
-                </div>
-                <div className="stat-icon">
-                  <Icon name={stat.icon} size={28} color="currentColor" />
-                </div>
-              </AnimatedCard>
+              <StatCard key={stat.key} stat={stat} />
             ))}
           </div>
 
           <div className="dash-grid">
             <div className="dash-left">
-              <div className="card">
-                <div className="card-header">
-                <Icon name="zap" size={14} color="var(--purple)" />
-                  <span className="card-title">Recent Activity</span>
-                  <span className="card-header-meta">{windowLabel}</span>
-                </div>
-                <div className="card-body">
-                  {activities.length === 0 ? (
-                    <div className="empty-state empty-state-sm">
-                      <p>No activity yet</p>
-                      <small>Events will appear once tracked</small>
-                    </div>
-                  ) : (
-                    <div className="dashboard-activity-list">
-                      {activities.map((activity) => (
-                        <div key={activity.id} className="activity-item">
-                          <div className={`activity-dot ${activity.color}`} />
-                          <div>
-                            <div className="activity-text">{activity.text}</div>
-                            <div className="activity-time">{activity.time}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="card-header">
-                <Icon name="pipeline" size={14} color="var(--blue)" />
-                  <span className="card-title">Pipeline Overview</span>
-                </div>
-                <div className="card-body">
-                  <div className="pipeline-stages">
-                    {pipelineStages.map(([stage, count]) => (
-                      <div key={stage} className={`stage-pill ${stage.toLowerCase()}`}>
-                        <span className="count">{count}</span>
-                        {stage}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="card-footer-note">
-                    Live view from analytics window
-                  </div>
-                </div>
-              </div>
+              <ActivityFeed activities={activities} windowLabel={windowLabel} />
+              <PipelineOverview pipelineStages={pipelineStages} />
             </div>
 
             <div className="dash-right">
-              <div className="card">
-                <div className="card-header">
-                <Icon name="check" size={14} color="var(--emerald)" />
-                  <span className="card-title">Task Focus</span>
-                  <span className="card-header-meta">{formatNumber(taskTotal)} open</span>
-                </div>
-                <div className="card-body">
-                  {tasks.length === 0 ? (
-                    <div className="empty-state empty-state-sm">
-                      <p>No open tasks</p>
-                      <small>Create a task from pipeline contacts</small>
-                    </div>
-                  ) : (
-                    <div className="task-scroll-wrap">
-                      {tasks.map((task) => {
-                        const done = String(task.status || '').toLowerCase() === 'completed';
-                        const overdue = isTaskOverdue(task);
-                        const priorityClass = getTaskPriorityClass(task.priority);
-                        return (
-                          <div key={task.taskId} className="task-item">
-                            <div className={`task-check ${done ? 'done' : ''}`}>
-                              {done && <Icon name="check" size={10} color="#fff" />}
-                            </div>
-                            <div className="task-info">
-                              <div className={`task-name ${done ? 'done' : ''}`}>{task.title}</div>
-                              <div className={`task-meta ${overdue ? 'overdue' : ''}`}>
-                                {formatTaskDue(task)} · {formatTaskContact(task)}
-                              </div>
-                            </div>
-                            <span className={`priority-badge ${priorityClass}`}>{priorityClass}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="card-header">
-                <Icon name="journey" size={14} color="#a78bfa" />
-                  <span className="card-title">Active Journeys</span>
-                </div>
-                <div className="card-body">
-                  {journeys.length === 0 ? (
-                    <div className="empty-state empty-state-sm">
-                      <p>No published journeys</p>
-                      <small>Create and publish a journey to see it here</small>
-                    </div>
-                  ) : (
-                    <div className="dashboard-journey-list">
-                      {journeys.map((journey) => (
-                        <div key={journey.journeyId} className="journey-card journey-card-compact">
-                          <div className={`journey-status ${String(journey.status || '').toLowerCase()}`} />
-                          <div className="journey-info">
-                            <div className="journey-name">{journey.name}</div>
-                            <div className="journey-trigger">{formatTrigger(journey.triggerType)}</div>
-                          </div>
-                          <div className="journey-stats">
-                            <div className="journey-enrolled">{journey.activeEnrollments || 0}</div>
-                            <div className="journey-lbl">active</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <TaskFocus tasks={tasks} taskTotal={taskTotal} />
+              <JourneyPanel journeys={journeys} />
             </div>
           </div>
         </>

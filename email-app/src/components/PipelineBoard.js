@@ -1,143 +1,177 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
-import { usePipeline, useContactNotes, useContactTasks } from '../hooks/useApi';
+import {
+  usePipeline,
+  useContactNotes,
+  useContactTasks,
+  useUpdateContactLeadStage,
+  useAddContactNote,
+  useCreateContactTask,
+  useUpdateContactTask,
+} from '../hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
+import { getStageColorVar } from '../utils/uiColorMaps';
 
 const STAGES = ['New', 'Qualified', 'Proposal', 'Won', 'Lost'];
+
+const formatDealValue = (contact) => {
+  const value = contact?.dealValue || contact?.dealAmount || contact?.estimatedValue;
+  if (!value) return '-';
+  return typeof value === 'number' ? `$${value.toLocaleString()}` : String(value);
+};
+
+const getTaskCount = (contact) => contact?.openTasks ?? contact?.taskCount ?? 0;
+
+const ContactCard = React.memo(({ contact, isSelected, onSelect }) => {
+  return (
+    <button
+      type="button"
+      className={`contact-card${isSelected ? ' selected' : ''}`}
+      onClick={() => onSelect(contact)}
+    >
+      <div className="contact-name">{contact.firstName || contact.email}</div>
+      <div className="contact-company">{contact.company || 'No company'}</div>
+      <div className="contact-card-footer">
+        <div className="deal-value">{formatDealValue(contact)}</div>
+        <div className="task-count">
+          <Icon name="check" size={11} color="var(--text-3)" />
+          {getTaskCount(contact)} tasks
+        </div>
+      </div>
+    </button>
+  );
+});
+
+ContactCard.displayName = 'ContactCard';
 
 const PipelineBoard = () => {
   const { showFeedback } = useFeedback();
   const queryClient = useQueryClient();
 
-  const [search, setSearch]           = useState('');
+  const [search, setSearch] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');
   const [stageFilter, setStageFilter] = useState('');
   const [selectedContact, setSelectedContact] = useState(null);
-  const [newNote, setNewNote]         = useState('');
-  const [newTask, setNewTask]         = useState({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
-  const [ownerDrafts, setOwnerDrafts] = useState({});
+  const [ownerDraft, setOwnerDraft] = useState('');
+  const [newNote, setNewNote] = useState('');
+  const [newTask, setNewTask] = useState({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
 
-  const pipelineQuery = usePipeline({
+  const pipelineParams = useMemo(() => ({
     ownerEmail: ownerFilter || null,
-    search:     search     || null,
-    stage:      stageFilter|| null,
-    pageSize:   120
-  });
+    search: search || null,
+    stage: stageFilter || null,
+    pageSize: 120,
+  }), [ownerFilter, search, stageFilter]);
+
+  const pipelineQuery = usePipeline(pipelineParams);
   const notesQuery = useContactNotes(selectedContact?.contactId);
   const tasksQuery = useContactTasks(selectedContact?.contactId);
 
-  const columns      = pipelineQuery.data?.columns      || [];
+  const updateStageMutation = useUpdateContactLeadStage();
+  const addNoteMutation = useAddContactNote(selectedContact?.contactId);
+  const createTaskMutation = useCreateContactTask(selectedContact?.contactId);
+  const updateTaskMutation = useUpdateContactTask(selectedContact?.contactId);
+
+  const columns = pipelineQuery.data?.columns || [];
   const ownerOptions = pipelineQuery.data?.ownerOptions || [];
-  const loading      = pipelineQuery.isLoading;
-  const notes        = notesQuery.data?.notes || [];
-  const tasks        = tasksQuery.data?.tasks || [];
+  const loading = pipelineQuery.isLoading;
+  const notes = notesQuery.data?.notes || [];
+  const tasks = tasksQuery.data?.tasks || [];
 
-  const invalidatePipeline = () => queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+  useEffect(() => {
+    setOwnerDraft(selectedContact?.ownerEmail || '');
+  }, [selectedContact?.contactId, selectedContact?.ownerEmail]);
 
-  const handleStageMove = async (contactId, toStage) => {
+  const invalidatePipeline = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+  }, [queryClient]);
+
+  const handleSelectContact = useCallback((contact) => {
+    setSelectedContact(contact);
+  }, []);
+
+  const handleStageMove = useCallback(async (contactId, toStage) => {
     try {
-      await gmailService.updateContactLeadStage(contactId, toStage, 'Pipeline board move');
+      await updateStageMutation.mutateAsync({
+        contactId,
+        toLeadStage: toStage,
+        reason: 'Pipeline board move',
+      });
       invalidatePipeline();
       showFeedback('Contact stage updated.', 'success');
-      if (selectedContact?.contactId === contactId) {
-        setSelectedContact({ ...selectedContact, leadStage: toStage });
-      }
+      setSelectedContact((prev) => {
+        if (!prev || prev.contactId !== contactId) return prev;
+        return { ...prev, leadStage: toStage };
+      });
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update stage.', 'error');
     }
-  };
+  }, [invalidatePipeline, showFeedback, updateStageMutation]);
 
-  const handleAssignOwner = async (contact) => {
-    const ownerEmail = ownerDrafts[contact.contactId] || contact.ownerEmail || '';
-    if (!ownerEmail.trim()) {
+  const handleAssignOwner = useCallback(async () => {
+    if (!selectedContact) return;
+    if (!ownerDraft.trim()) {
       showFeedback('Owner email is required.', 'warning');
       return;
     }
 
     try {
-      await gmailService.assignContactOwner(contact.contactId, ownerEmail.trim());
+      await gmailService.assignContactOwner(selectedContact.contactId, ownerDraft.trim());
       invalidatePipeline();
       showFeedback('Owner assigned.', 'success');
-      if (selectedContact?.contactId === contact.contactId) {
-        setSelectedContact({ ...selectedContact, ownerEmail: ownerEmail.trim() });
-      }
+      setSelectedContact((prev) => (prev ? { ...prev, ownerEmail: ownerDraft.trim() } : prev));
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to assign owner.', 'error');
     }
-  };
+  }, [invalidatePipeline, ownerDraft, selectedContact, showFeedback]);
 
-  const handleAddNote = async () => {
-    if (!selectedContact || !newNote.trim()) {
-      return;
-    }
+  const handleAddNote = useCallback(async () => {
+    if (!selectedContact || !newNote.trim()) return;
 
     try {
-      await gmailService.addContactNote(selectedContact.contactId, newNote.trim());
+      await addNoteMutation.mutateAsync(newNote.trim());
       setNewNote('');
-      queryClient.invalidateQueries({ queryKey: ['contactNotes', selectedContact.contactId] });
       showFeedback('Note added.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to add note.', 'error');
     }
-  };
+  }, [addNoteMutation, newNote, selectedContact, showFeedback]);
 
-  const handleAddTask = async () => {
+  const handleAddTask = useCallback(async () => {
     if (!selectedContact || !newTask.title.trim()) {
       showFeedback('Task title is required.', 'warning');
       return;
     }
 
     try {
-      await gmailService.createContactTask(selectedContact.contactId, {
+      await createTaskMutation.mutateAsync({
         title: newTask.title.trim(),
         priority: newTask.priority,
         dueAtUtc: newTask.dueAtUtc ? new Date(newTask.dueAtUtc).toISOString() : null,
-        ownerEmail: newTask.ownerEmail || selectedContact.ownerEmail || null
+        ownerEmail: newTask.ownerEmail || selectedContact.ownerEmail || null,
       });
       setNewTask({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
-      queryClient.invalidateQueries({ queryKey: ['contactTasks', selectedContact.contactId] });
       showFeedback('Task added.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to add task.', 'error');
     }
-  };
+  }, [createTaskMutation, newTask, selectedContact, showFeedback]);
 
-  const handleTaskComplete = async (task) => {
-    if (!selectedContact) {
-      return;
-    }
+  const handleTaskComplete = useCallback(async (taskId) => {
+    if (!selectedContact) return;
 
     try {
-      await gmailService.updateContactTask(selectedContact.contactId, task.taskId, { status: 'Completed' });
-      queryClient.invalidateQueries({ queryKey: ['contactTasks', selectedContact.contactId] });
+      await updateTaskMutation.mutateAsync({ taskId, patch: { status: 'Completed' } });
       showFeedback('Task marked as completed.', 'success');
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update task.', 'error');
     }
-  };
+  }, [selectedContact, showFeedback, updateTaskMutation]);
 
   const stageOptions = useMemo(() => ['All', ...STAGES], []);
-  const stageColors = {
-    New: '#60a5fa',
-    Qualified: '#f59e0b',
-    Proposal: '#8b5cf6',
-    Won: '#10b981',
-    Lost: '#f43f5e'
-  };
-
-  const formatDealValue = (contact) => {
-    const value = contact?.dealValue || contact?.dealAmount || contact?.estimatedValue;
-    if (!value) {
-      return '-';
-    }
-    return typeof value === 'number' ? `$${value.toLocaleString()}` : String(value);
-  };
-
-  const getTaskCount = (contact) => {
-    return contact?.openTasks ?? contact?.taskCount ?? 0;
-  };
+  const hasActiveFilters = Boolean(search || ownerFilter || stageFilter);
 
   return (
     <div className="content fade-in">
@@ -145,28 +179,52 @@ const PipelineBoard = () => {
         <div className="search-box pipeline-search-box">
           <Icon name="search" size={13} color="var(--text-3)" />
           <input
+            type="search"
+            aria-label="Search pipeline contacts"
             placeholder="Search contacts"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
+
         {stageOptions.map((stage) => (
-          <div
+          <button
+            type="button"
             key={stage}
             className={`filter-chip ${stageFilter === stage || (stage === 'All' && stageFilter === '') ? 'active' : ''}`}
             onClick={() => setStageFilter(stage === 'All' ? '' : stage)}
           >
             {stage}
-          </div>
+          </button>
         ))}
-        <select className="form-input pipeline-owner-filter" value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}>
+
+        <select
+          className="form-input pipeline-owner-filter"
+          aria-label="Filter pipeline by owner"
+          value={ownerFilter}
+          onChange={(event) => setOwnerFilter(event.target.value)}
+        >
           <option value="">All owners</option>
           {ownerOptions.map((owner) => (
             <option key={owner} value={owner}>{owner}</option>
           ))}
         </select>
-        <button className="topbar-btn" onClick={() => pipelineQuery.refetch()}>Apply Filters</button>
-        <div className="ml-auto">
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="topbar-btn"
+            onClick={() => {
+              setSearch('');
+              setOwnerFilter('');
+              setStageFilter('');
+            }}
+          >
+            Clear Filters
+          </button>
+        )}
+
+        <div className="pipeline-primary-action ml-auto">
           <button className="topbar-btn primary" type="button">Add Contact</button>
         </div>
       </div>
@@ -179,31 +237,30 @@ const PipelineBoard = () => {
         <div className="pipeline-shell">
           <div className="pipeline-shell-main">
             <div className="pipeline-board">
-              {(columns || []).map((column) => (
+              {columns.map((column) => (
                 <div key={column.stage} className="pipeline-col">
                   <div className="pipeline-col-header">
-                    <div className="col-dot" style={{ background: stageColors[column.stage] || 'var(--text-3)' }} />
+                    <div className="col-dot" style={{ background: getStageColorVar(column.stage) }} />
                     <div className="col-name">{column.stage}</div>
                     <div className="col-count">{(column.items || []).length}</div>
                   </div>
+
                   <div className="pipeline-col-body">
                     {(column.items || []).map((contact) => (
-                      <div
+                      <ContactCard
                         key={contact.contactId}
-                        className={`contact-card ${selectedContact?.contactId === contact.contactId ? 'selected' : ''}`}
-                        onClick={() => setSelectedContact(contact)}
-                      >
-                        <div className="contact-name">{contact.firstName || contact.email}</div>
-                        <div className="contact-company">{contact.company || 'No company'}</div>
-                        <div className="contact-card-footer">
-                          <div className="deal-value">{formatDealValue(contact)}</div>
-                          <div className="task-count">
-                            <Icon name="check" size={11} color="var(--text-3)" />
-                            {getTaskCount(contact)} tasks
-                          </div>
-                        </div>
-                      </div>
+                        contact={contact}
+                        isSelected={selectedContact?.contactId === contact.contactId}
+                        onSelect={handleSelectContact}
+                      />
                     ))}
+
+                    {(column.items || []).length === 0 && (
+                      <div className="empty-state empty-state-sm">
+                        <small>No contacts</small>
+                      </div>
+                    )}
+
                     <div className="pipeline-add-row">
                       <div className="pipeline-add-action">
                         <Icon name="plus" size={12} color="var(--text-3)" /> Add
@@ -220,13 +277,19 @@ const PipelineBoard = () => {
               <div className="pipeline-contact-header">
                 <div className="avatar pipeline-contact-avatar">{(selectedContact.firstName || selectedContact.email || 'A')[0]}</div>
                 <div className="pipeline-contact-meta">
-                  <div className="pipeline-contact-name">
-                    {selectedContact.firstName || selectedContact.email}
-                  </div>
+                  <div className="pipeline-contact-name">{selectedContact.firstName || selectedContact.email}</div>
                   <div className="pipeline-contact-company">{selectedContact.company || 'No company'}</div>
                 </div>
-                <button type="button" className="pipeline-close-btn ml-auto" onClick={() => setSelectedContact(null)}>x</button>
+                <button
+                  type="button"
+                  className="pipeline-close-btn ml-auto"
+                  aria-label="Close contact details"
+                  onClick={() => setSelectedContact(null)}
+                >
+                  x
+                </button>
               </div>
+
               <div className="pipeline-summary-card">
                 <div className="pipeline-summary-row pipeline-summary-row-gap">
                   <span className="pipeline-summary-label">Deal Value</span>
@@ -249,15 +312,16 @@ const PipelineBoard = () => {
                     <option key={stage} value={stage}>{stage}</option>
                   ))}
                 </select>
+
                 <label className="form-label form-label-offset">Owner</label>
                 <div className="inline-actions">
                   <input
                     className="form-input"
-                    value={ownerDrafts[selectedContact.contactId] ?? selectedContact.ownerEmail ?? ''}
-                    onChange={(event) => setOwnerDrafts((prev) => ({ ...prev, [selectedContact.contactId]: event.target.value }))}
+                    value={ownerDraft}
+                    onChange={(event) => setOwnerDraft(event.target.value)}
                     placeholder="Owner email"
                   />
-                  <button type="button" className="topbar-btn" onClick={() => handleAssignOwner(selectedContact)}>Assign</button>
+                  <button type="button" className="topbar-btn" onClick={handleAssignOwner}>Assign</button>
                 </div>
               </div>
 
@@ -269,13 +333,19 @@ const PipelineBoard = () => {
                 value={newNote}
                 onChange={(event) => setNewNote(event.target.value)}
               />
-              <button className="topbar-btn pipeline-full-btn pipeline-btn-gap-bottom" onClick={handleAddNote}>Add Note</button>
+              <button type="button" className="topbar-btn pipeline-full-btn pipeline-btn-gap-bottom" onClick={handleAddNote}>Add Note</button>
+
               <div className="data-list">
                 {notes.map((note) => (
                   <div key={note.noteId} className="data-list-item">
                     <span>{note.body}</span>
                   </div>
                 ))}
+                {notes.length === 0 && (
+                  <div className="empty-state empty-state-sm">
+                    <small>No notes yet</small>
+                  </div>
+                )}
               </div>
 
               <div className="pipeline-section-title pipeline-section-title-gap">Tasks</div>
@@ -306,7 +376,7 @@ const PipelineBoard = () => {
                 onChange={(event) => setNewTask((prev) => ({ ...prev, ownerEmail: event.target.value }))}
                 placeholder="Task owner email"
               />
-              <button className="topbar-btn pipeline-full-btn pipeline-input-gap" onClick={handleAddTask}>Add Task</button>
+              <button type="button" className="topbar-btn pipeline-full-btn pipeline-input-gap" onClick={handleAddTask}>Add Task</button>
 
               <div className="data-list pipeline-input-gap">
                 {tasks.map((task) => (
@@ -316,10 +386,15 @@ const PipelineBoard = () => {
                       <div className="helper-text">{task.priority} | {task.status}</div>
                     </div>
                     {task.status !== 'Completed' && (
-                      <button className="topbar-btn" onClick={() => handleTaskComplete(task)}>Complete</button>
+                      <button type="button" className="topbar-btn" onClick={() => handleTaskComplete(task.taskId)}>Complete</button>
                     )}
                   </div>
                 ))}
+                {tasks.length === 0 && (
+                  <div className="empty-state empty-state-sm">
+                    <small>No tasks yet</small>
+                  </div>
+                )}
               </div>
             </div>
           )}
