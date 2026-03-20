@@ -1,4 +1,4 @@
-# MySQL Free Host Setup + EF Migrations
+y# MySQL Free Host Setup + EF Migrations
 
 This backend is now configured for MySQL migrations.
 

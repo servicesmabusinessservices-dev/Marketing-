@@ -148,7 +148,7 @@ const WorkspaceLayout = () => {
         />
         <div className="page-scroll-area">
           <AnimatePresence mode="wait">
-            <PageTransition key={location.pathname + location.search}>
+            <PageTransition key={location.pathname}>
               <Outlet />
             </PageTransition>
           </AnimatePresence>

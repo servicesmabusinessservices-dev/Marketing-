@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/authConfig';
+import { isDevelopmentBypassSession } from '../utils/session';
 
 /**
  * Centralized axios instance.
@@ -26,7 +27,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && window.location.pathname !== '/') {
+    if (error.response?.status === 401 && window.location.pathname !== '/' && !isDevelopmentBypassSession()) {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_email');
       window.location.replace('/');

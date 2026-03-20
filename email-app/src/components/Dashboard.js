@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import Icon from './ui/Icon';
 import AnimatedCard from './ui/AnimatedCard';
+import MagicBento from './ui/MagicBento';
 import ErrorState from './ui/ErrorState';
 import {
   useAnalytics,
@@ -403,6 +404,28 @@ const Dashboard = () => {
               <StatCard key={stat.key} stat={stat} />
             ))}
           </div>
+
+          <MagicBento
+            cards={[
+              { title: 'Email Campaigns', description: 'Send targeted cold email sequences with tracking and analytics', label: 'Outreach' },
+              { title: 'CRM Pipeline', description: 'Track leads from first contact to closed deal', label: 'Sales' },
+              { title: 'Smart Automation', description: 'Set up drip campaigns, follow-ups, and journey triggers that run on autopilot', label: 'Workflows' },
+              { title: 'Contact Management', description: 'Organize and segment your contacts with tags, stages, and custom fields', label: 'Contacts' },
+              { title: 'Multi-Account', description: 'Manage multiple Gmail accounts from a single dashboard', label: 'Accounts' },
+              { title: 'Analytics', description: 'Open rates, click tracking, and deliverability insights', label: 'Insights' },
+            ]}
+            textAutoHide
+            enableStars
+            enableSpotlight
+            enableBorderGlow
+            enableTilt={false}
+            enableMagnetism={false}
+            clickEffect
+            spotlightRadius={400}
+            particleCount={12}
+            glowColor="56, 189, 248"
+            disableAnimations={false}
+          />
 
           <div className="dash-grid">
             <div className="dash-left">

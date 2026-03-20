@@ -207,8 +207,7 @@ export function useInboxData(emailIdFromRoute) {
 
   const selectEmail = useCallback((id) => {
     setSelectedEmailId(id);
-    navigate(`/email/${id}`);
-  }, [navigate]);
+  }, []);
 
   const handleUpdateClassification = useCallback(async (targetId, classification) => {
     const previousEmails = emailsRef.current;

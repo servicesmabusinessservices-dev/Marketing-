@@ -1,17 +1,24 @@
 import apiClient from './apiClient';
+import { API_BASE_URL } from '../config/authConfig';
 
 export const gmailService = {
+  devLogin: () => {
+    window.location.href = `${API_BASE_URL}/auth/dev-login`;
+  },
+
   login: async () => {
     try {
       const response = await apiClient.get('/auth/login');
-      window.location.href = response.data.authUrl;
+      return response.data;
     } catch (error) {
       if (!error.response) {
         throw new Error(
-          'Unable to reach backend. Start API with HTTPS and trust dev certificate: dotnet dev-certs https --trust'
+          'Unable to reach backend. Start the API and make sure it is listening on http://localhost:5049.'
         );
       }
-      throw error;
+
+      const backendMessage = error.response?.data?.error || error.message || 'Login failed. Please try again.';
+      throw new Error(backendMessage);
     }
   },
 

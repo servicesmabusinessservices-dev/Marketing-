@@ -16,27 +16,52 @@ public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;
     private readonly IUserTokenStore _userTokenStore;
+    private readonly IWebHostEnvironment _env;
 
-    public AuthController(IConfiguration config, IUserTokenStore userTokenStore)
+    public AuthController(IConfiguration config, IUserTokenStore userTokenStore, IWebHostEnvironment env)
     {
         _config = config;
         _userTokenStore = userTokenStore;
+        _env = env;
     }
 
     [HttpGet("login")]
     public IActionResult Login()
     {
         var clientId = _config["GoogleAuth:ClientId"];
+        var clientSecret = _config["GoogleAuth:ClientSecret"];
         var redirectUri = _config["GoogleAuth:RedirectUri"];
 
-        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(redirectUri))
+        var missingSettings = new List<string>();
+        if (IsMissingOrPlaceholder(clientId)) missingSettings.Add("GoogleAuth:ClientId");
+        if (IsMissingOrPlaceholder(clientSecret)) missingSettings.Add("GoogleAuth:ClientSecret");
+        if (IsMissingOrPlaceholder(redirectUri)) missingSettings.Add("GoogleAuth:RedirectUri");
+
+        if (missingSettings.Count > 0)
         {
-            return StatusCode(500, new { error = "GoogleAuth configuration is missing" });
+            if (_env.IsDevelopment())
+            {
+                var devEmail = "dev@localhost";
+                var jwt = GenerateJwt(devEmail);
+                return Ok(new
+                {
+                    mode = "development-bypass",
+                    token = jwt,
+                    email = devEmail
+                });
+            }
+
+            return StatusCode(500, new
+            {
+                error = $"Google OAuth configuration is missing: {string.Join(", ", missingSettings)}"
+            });
         }
 
+        var resolvedClientId = clientId!;
+        var resolvedRedirectUri = redirectUri!;
         var scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/userinfo.email";
         
-        var authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code&scope={Uri.EscapeDataString(scope)}&access_type=offline&prompt=consent";
+        var authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={resolvedClientId}&redirect_uri={Uri.EscapeDataString(resolvedRedirectUri)}&response_type=code&scope={Uri.EscapeDataString(scope)}&access_type=offline&prompt=consent";
         
         return Ok(new { authUrl });
     }
@@ -46,17 +71,30 @@ public class AuthController : ControllerBase
     {
         try
         {
+            var clientId = _config["GoogleAuth:ClientId"];
+            var clientSecret = _config["GoogleAuth:ClientSecret"];
+            var redirectUri = _config["GoogleAuth:RedirectUri"];
+
+            var missingSettings = new List<string>();
+            if (IsMissingOrPlaceholder(clientId)) missingSettings.Add("GoogleAuth:ClientId");
+            if (IsMissingOrPlaceholder(clientSecret)) missingSettings.Add("GoogleAuth:ClientSecret");
+            if (IsMissingOrPlaceholder(redirectUri)) missingSettings.Add("GoogleAuth:RedirectUri");
+            if (missingSettings.Count > 0)
+            {
+                throw new InvalidOperationException($"Google OAuth configuration is missing: {string.Join(", ", missingSettings)}");
+            }
+
             var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
                 ClientSecrets = new ClientSecrets
                 {
-                    ClientId = _config["GoogleAuth:ClientId"],
-                    ClientSecret = _config["GoogleAuth:ClientSecret"]
+                    ClientId = clientId!,
+                    ClientSecret = clientSecret!
                 },
                 Scopes = new[] { "https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.compose", "https://www.googleapis.com/auth/userinfo.email" }
             });
 
-            var tokenResponse = await flow.ExchangeCodeForTokenAsync("user", code, _config["GoogleAuth:RedirectUri"], CancellationToken.None);
+            var tokenResponse = await flow.ExchangeCodeForTokenAsync("user", code, redirectUri!, CancellationToken.None);
             
             var userEmail = await GetUserEmail(tokenResponse.AccessToken);
             
@@ -72,6 +110,37 @@ public class AuthController : ControllerBase
             var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
             return Redirect($"{frontendUrl}/auth-error?message={Uri.EscapeDataString(ex.Message)}");
         }
+    }
+
+    /// <summary>
+    /// Development-only bypass: issues a JWT for dev@localhost when Google credentials are not configured.
+    /// Returns 404 in any non-Development environment.
+    /// </summary>
+    [HttpGet("dev-login")]
+    public IActionResult DevLogin()
+    {
+        if (!_env.IsDevelopment())
+            return NotFound();
+
+        var clientId = _config["GoogleAuth:ClientId"];
+        if (!IsMissingOrPlaceholder(clientId))
+            return BadRequest(new { error = "Dev login is disabled when Google OAuth credentials are configured. Use the normal login flow." });
+
+        var jwt = GenerateJwt("dev@localhost");
+        var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
+        return Redirect($"{frontendUrl}/auth-success?token={Uri.EscapeDataString(jwt)}&email=dev%40localhost");
+    }
+
+    private static bool IsMissingOrPlaceholder(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return true;
+
+        var trimmed = value.Trim();
+
+        return trimmed.Equals("CHANGE_ME", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase)
+            || trimmed.EndsWith("_HERE", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<string> GetUserEmail(string accessToken)

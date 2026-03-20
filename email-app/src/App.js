@@ -7,6 +7,7 @@ import { FeedbackProvider } from './context/FeedbackContext';
 import { hasSession } from './utils/session';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import PageSkeleton from './components/ui/PageSkeleton';
+import GlobalCardEffects from './components/ui/GlobalCardEffects';
 import './App.css';
 
 // ── Lazy-loaded page components (code-split per route) ────────────────────────
@@ -65,6 +66,7 @@ function App() {
       <ThemeProvider>
         <FeedbackProvider>
           <div className="app-shell">
+            <GlobalCardEffects />
             <BrowserRouter>
               <ErrorBoundary>
                 <Routes>

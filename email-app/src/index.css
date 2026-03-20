@@ -57,7 +57,7 @@ body {
   --gradient-cta-hover: linear-gradient(135deg, #1e4f8a 0%, #243785 100%);
   --gradient-amber: linear-gradient(135deg, #f59e0b, #fbbf24);
   --gradient-text: linear-gradient(135deg, #ffffff 0%, #bfdbfe 50%, #93c5fd 100%);
-  --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2f68ae 100%);
+  --gradient-hero: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
   --glow-indigo: 0 0 30px rgba(47, 104, 174, 0.4);
   --glow-amber: 0 0 20px rgba(245, 158, 11, 0.35);
   --glow-purple: 0 0 20px rgba(47, 69, 144, 0.3);
@@ -353,7 +353,7 @@ h3,
   --gradient-cta-hover: linear-gradient(135deg, #1e4f8a 0%, #243785 100%);
   --gradient-amber: linear-gradient(135deg, #f59e0b, #fbbf24);
   --gradient-text: linear-gradient(135deg, #ffffff 0%, #bfdbfe 50%, #93c5fd 100%);
-  --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2f68ae 100%);
+  --gradient-hero: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
   --glow-indigo: 0 0 30px rgba(47, 104, 174, 0.4);
   --glow-amber: 0 0 20px rgba(245, 158, 11, 0.35);
   --glow-purple: 0 0 20px rgba(47, 69, 144, 0.3);

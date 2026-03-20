@@ -14,6 +14,7 @@ using GmailManager.Api.Models;
 using GmailManager.Api.Services;
 using GmailManager.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GmailManager.Api.Controllers;
 
@@ -36,25 +37,31 @@ public class EmailController : ControllerBase
 
     private readonly IConfiguration _config;
     private readonly IUserTokenStore _userTokenStore;
+    private readonly IDevelopmentDemoEmailStore _developmentDemoEmailStore;
     private readonly IBulkEmailJobQueue _bulkEmailJobQueue;
     private readonly IBulkEmailJobStore _bulkEmailJobStore;
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly ILogger<EmailController> _logger;
+    private readonly IWebHostEnvironment _env;
 
     public EmailController(
         IConfiguration config,
         IUserTokenStore userTokenStore,
+        IDevelopmentDemoEmailStore developmentDemoEmailStore,
         IBulkEmailJobQueue bulkEmailJobQueue,
         IBulkEmailJobStore bulkEmailJobStore,
         IDbContextFactory<AppDbContext> dbContextFactory,
-        ILogger<EmailController> logger)
+        ILogger<EmailController> logger,
+        IWebHostEnvironment env)
     {
         _config = config;
         _logger = logger;
         _userTokenStore = userTokenStore;
+        _developmentDemoEmailStore = developmentDemoEmailStore;
         _bulkEmailJobQueue = bulkEmailJobQueue;
         _bulkEmailJobStore = bulkEmailJobStore;
         _dbContextFactory = dbContextFactory;
+        _env = env;
     }
 
     [HttpGet("list")]
@@ -99,8 +106,28 @@ public class EmailController : ControllerBase
             return BadRequest(new { error = "Invalid sortDir value." });
         }
 
-        var service = await GetGmailService();
         maxResults = Math.Clamp(maxResults, 1, 100);
+
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var (demoEmails, nextToken) = await _developmentDemoEmailStore.GetEmailsAsync(
+                userEmail,
+                maxResults,
+                pageToken,
+                classification,
+                sortBy,
+                sortDir,
+                q);
+
+            return Ok(new
+            {
+                emails = demoEmails.Select(MapDemoListItem).ToList(),
+                nextPageToken = nextToken,
+                mode = "development-bypass"
+            });
+        }
+
+        var service = await GetGmailService();
 
         var collected = new List<EmailListItem>();
         var cursor = pageToken;
@@ -217,6 +244,17 @@ public class EmailController : ControllerBase
             return BadRequest(new { error = "Invalid classification value" });
         }
 
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var updated = await _developmentDemoEmailStore.UpdateClassificationAsync(userEmail, id, classification);
+            if (!updated)
+            {
+                return NotFound(new { error = "Email not found" });
+            }
+
+            return Ok(new { messageId = id, classification, mode = "development-bypass" });
+        }
+
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         var existing = await dbContext.EmailClassifications.FindAsync(userEmail, id);
 
@@ -254,6 +292,12 @@ public class EmailController : ControllerBase
             return Unauthorized(new { error = "User email not found in token" });
         }
 
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var demoGrouped = await _developmentDemoEmailStore.GetClassificationSummaryAsync(userEmail);
+            return Ok(new { classifications = demoGrouped, mode = "development-bypass" });
+        }
+
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         var grouped = await dbContext.EmailClassifications
             .Where(x => x.UserEmail == userEmail)
@@ -273,6 +317,25 @@ public class EmailController : ControllerBase
             return Unauthorized(new { error = "User email not found in token" });
         }
 
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var summary = await _developmentDemoEmailStore.GetSummaryAsync(userEmail);
+            return Ok(new
+            {
+                totalCount = summary.TotalCount,
+                unreadCount = summary.UnreadCount,
+                classificationSummary = summary.ClassificationSummary,
+                mode = "development-bypass"
+            });
+        }
+
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        var grouped = await dbContext.EmailClassifications
+            .Where(x => x.UserEmail == userEmail)
+            .GroupBy(x => x.Classification)
+            .Select(x => new { classification = x.Key, count = x.Count() })
+            .ToListAsync();
+
         var service = await GetGmailService();
         var totalRequest = service.Users.Messages.List("me");
         totalRequest.MaxResults = 1;
@@ -282,13 +345,6 @@ public class EmailController : ControllerBase
         unreadRequest.MaxResults = 1;
         unreadRequest.Q = "is:unread";
         var unreadResponse = await unreadRequest.ExecuteAsync();
-
-        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-        var grouped = await dbContext.EmailClassifications
-            .Where(x => x.UserEmail == userEmail)
-            .GroupBy(x => x.Classification)
-            .Select(x => new { classification = x.Key, count = x.Count() })
-            .ToListAsync();
 
         return Ok(new
         {
@@ -301,6 +357,28 @@ public class EmailController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetEmail(string id)
     {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var demoEmail = await _developmentDemoEmailStore.GetEmailAsync(userEmail!, id);
+            if (demoEmail == null)
+            {
+                return NotFound(new { error = "Email not found" });
+            }
+
+            return Ok(new
+            {
+                id = demoEmail.MessageId,
+                subject = demoEmail.Subject,
+                from = demoEmail.From,
+                to = demoEmail.To,
+                date = demoEmail.ReceivedAtUtc,
+                body = demoEmail.Body,
+                threadId = demoEmail.ThreadId,
+                mode = "development-bypass"
+            });
+        }
+
         var service = await GetGmailService();
         var message = await service.Users.Messages.Get("me", id).ExecuteAsync();
         
@@ -321,6 +399,23 @@ public class EmailController : ControllerBase
     [HttpPost("send")]
     public async Task<IActionResult> SendEmail([FromBody] SendEmailRequest request)
     {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            return Unauthorized(new { error = "User email not found in token" });
+        }
+
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            if (request.To == null || request.To.Count == 0 || request.To.All(string.IsNullOrWhiteSpace))
+            {
+                return BadRequest(new { error = "At least one recipient is required" });
+            }
+
+            var email = await _developmentDemoEmailStore.CreateSentEmailAsync(userEmail, request.To, request.Subject, request.Body);
+            return Ok(new { success = true, messageId = email.MessageId, mode = "development-bypass" });
+        }
+
         try
         {
             var service = await GetGmailService();
@@ -350,6 +445,33 @@ public class EmailController : ControllerBase
     [HttpPost("forward")]
     public async Task<IActionResult> ForwardEmail([FromBody] ForwardEmailRequest request)
     {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            return Unauthorized(new { error = "User email not found in token" });
+        }
+
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            if (string.IsNullOrWhiteSpace(request.MessageId))
+            {
+                return BadRequest(new { error = "MessageId is required" });
+            }
+
+            if (request.To == null || request.To.Count == 0 || request.To.All(string.IsNullOrWhiteSpace))
+            {
+                return BadRequest(new { error = "At least one recipient is required" });
+            }
+
+            var email = await _developmentDemoEmailStore.CreateForwardEmailAsync(userEmail, request.MessageId, request.To, request.Note);
+            if (email == null)
+            {
+                return NotFound(new { error = "Email not found" });
+            }
+
+            return Ok(new { success = true, messageId = email.MessageId, mode = "development-bypass" });
+        }
+
         if (string.IsNullOrWhiteSpace(request.MessageId))
         {
             return BadRequest(new { error = "MessageId is required" });
@@ -435,6 +557,19 @@ public class EmailController : ControllerBase
             return BadRequest(new { error = "At least one recipient is required" });
         }
 
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var demoJob = await _developmentDemoEmailStore.CreateBulkSendJobAsync(userEmail, request);
+            return Accepted(new
+            {
+                jobId = demoJob.JobId,
+                status = demoJob.Status.ToString(),
+                totalRecipients = demoJob.TotalRecipients,
+                statusUrl = $"/api/email/bulk-send/{demoJob.JobId}",
+                mode = "development-bypass"
+            });
+        }
+
         var job = new BulkEmailJob
         {
             UserEmail = userEmail,
@@ -465,6 +600,17 @@ public class EmailController : ControllerBase
             return Unauthorized(new { error = "User email not found in token" });
         }
 
+        if (await ShouldUseDevelopmentEmailFallbackAsync(userEmail))
+        {
+            var demoJob = await _developmentDemoEmailStore.GetBulkSendJobAsync(userEmail, jobId);
+            if (demoJob == null)
+            {
+                return NotFound(new { error = "Bulk job not found" });
+            }
+
+            return Ok(MapBulkJobStatus(demoJob, true));
+        }
+
         var job = await _bulkEmailJobStore.GetAsync(jobId);
         if (job == null)
         {
@@ -477,20 +623,37 @@ public class EmailController : ControllerBase
             return NotFound(new { error = "Bulk job not found" });
         }
 
-        return Ok(new
+        return Ok(MapBulkJobStatus(job, false));
+    }
+
+    private static EmailListItem MapDemoListItem(DevelopmentDemoEmail email)
+        => new()
+        {
+            Id = email.MessageId,
+            Subject = email.Subject,
+            From = email.From,
+            Date = email.ReceivedAtUtc.ToString("o"),
+            Snippet = email.Snippet,
+            IsRead = email.IsRead,
+            IsImportant = email.IsImportant,
+            Classification = email.Classification
+        };
+
+    private static object MapBulkJobStatus(BulkEmailJob job, bool isDevelopmentBypass)
+        => new
         {
             jobId = job.JobId,
-            job.Status,
-            job.TotalRecipients,
-            job.ProcessedCount,
-            job.SuccessCount,
-            job.FailureCount,
-            job.Error,
-            job.CreatedAtUtc,
-            job.StartedAtUtc,
-            job.CompletedAtUtc
-        });
-    }
+            status = job.Status.ToString(),
+            totalRecipients = job.TotalRecipients,
+            processedCount = job.ProcessedCount,
+            successCount = job.SuccessCount,
+            failureCount = job.FailureCount,
+            error = job.Error,
+            createdAtUtc = job.CreatedAtUtc,
+            startedAtUtc = job.StartedAtUtc,
+            completedAtUtc = job.CompletedAtUtc,
+            mode = isDevelopmentBypass ? "development-bypass" : null
+        };
 
     private async Task<GmailService> GetGmailService()
     {
@@ -530,6 +693,20 @@ public class EmailController : ControllerBase
             _logger.LogError(ex, "Failed to initialise GmailService");
             throw;
         }
+    }
+
+    private bool IsDevelopmentBypassUser(string? email)
+        => _env.IsDevelopment() && string.Equals(email, "dev@localhost", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<bool> ShouldUseDevelopmentEmailFallbackAsync(string? email)
+    {
+        if (!IsDevelopmentBypassUser(email))
+        {
+            return false;
+        }
+
+        var tokenResponse = await _userTokenStore.GetAsync(email!);
+        return tokenResponse == null;
     }
 
     private string GetEmailBody(MessagePart payload)

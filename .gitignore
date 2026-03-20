@@ -25,3 +25,6 @@ Thumbs.db
 # Local secrets reference — never commit
 .env.render
 *.env.render
+
+# Local development demo inbox persistence
+GmailManager.Api/App_Data/

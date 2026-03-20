@@ -1,0 +1,86 @@
+/* ── Global Card Effects — theme-aware vars ────────── */
+
+:root {
+  --gcfx-glow: 56, 189, 248;
+  --gcfx-spot-peak: 0.12;
+  --gcfx-glow-strong: 0.8;
+  --gcfx-glow-mid: 0.4;
+  --gcfx-ripple-alpha: 0.3;
+  --gcfx-spot-blend: screen;
+}
+
+.light-theme {
+  --gcfx-glow: 79, 70, 229;
+  --gcfx-spot-peak: 0.06;
+  --gcfx-glow-strong: 0.5;
+  --gcfx-glow-mid: 0.25;
+  --gcfx-ripple-alpha: 0.15;
+  --gcfx-spot-blend: multiply;
+}
+
+/* ── Ensure cards are positioned for particles/glow ── */
+
+.card,
+.stat-card,
+.jb-step-card,
+.feature-item,
+.contact-card,
+.pipeline-summary-card {
+  position: relative;
+  overflow: hidden;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 200px;
+}
+
+/* ── Border glow ::after ─────────────────────────────
+   Uses ::after on all targeted cards.
+   .stat-card uses ::before for top accent, so no conflict.
+   .mb-card already has its own ::after from MagicBento.css.
+──────────────────────────────────────────────────────── */
+
+.card::after,
+.stat-card::after,
+.jb-step-card::after,
+.feature-item::after,
+.contact-card::after,
+.pipeline-summary-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 5px;
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--gcfx-glow), calc(var(--glow-intensity) * var(--gcfx-glow-strong))) 0%,
+    rgba(var(--gcfx-glow), calc(var(--glow-intensity) * var(--gcfx-glow-mid))) 30%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* ── Spotlight element ───────────────────────────────── */
+
+.gcfx-spotlight {
+  mix-blend-mode: var(--gcfx-spot-blend, screen);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+/* ── Particles ───────────────────────────────────────── */
+
+.gcfx-particle {
+  pointer-events: none;
+  z-index: 100;
+}

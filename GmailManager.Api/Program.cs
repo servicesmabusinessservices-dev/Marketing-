@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
 using Serilog;
@@ -69,8 +70,20 @@ try
 
     // ── JWT Authentication ────────────────────────────────────────────────────
     var jwtSecret = builder.Configuration["Jwt:Secret"]
-                    ?? Environment.GetEnvironmentVariable("JWT_SECRET")
-                    ?? throw new InvalidOperationException("Jwt:Secret configuration is required.");
+                    ?? Environment.GetEnvironmentVariable("JWT_SECRET");
+
+    if (string.IsNullOrWhiteSpace(jwtSecret))
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            jwtSecret = "LocalDevelopmentJwtSecretKeyMinimum32Chars!";
+            Log.Warning("Jwt:Secret is not configured. Using development-only fallback secret.");
+        }
+        else
+        {
+            throw new InvalidOperationException("Jwt:Secret configuration is required.");
+        }
+    }
 
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
@@ -135,15 +148,25 @@ try
     });
 
     // ── MySQL ─────────────────────────────────────────────────────────────────
-    var mySqlConnection = ResolveMySqlConnectionString(builder.Configuration);
-    var mySqlServerVersion = ServerVersion.AutoDetect(mySqlConnection);
+    var databaseConfig = ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
+
+    if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
+    {
+        Log.Warning("{DatabaseWarning}", databaseConfig.Warning);
+    }
 
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddMemoryCache();
 
     builder.Services.AddDbContextFactory<AppDbContext>(options =>
     {
-        options.UseMySql(mySqlConnection, mySqlServerVersion, mySqlOptions =>
+        if (databaseConfig.UseInMemory)
+        {
+            options.UseInMemoryDatabase("GmailManagerLocalDev");
+            return;
+        }
+
+        options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
         {
             mySqlOptions.EnableRetryOnFailure(
                 maxRetryCount: 5,
@@ -172,6 +195,7 @@ try
 
     // ── Application services ──────────────────────────────────────────────────
     builder.Services.AddSingleton<IUserTokenStore, SqlRedisUserTokenStore>();
+    builder.Services.AddSingleton<IDevelopmentDemoEmailStore, DevelopmentDemoEmailStore>();
     builder.Services.AddSingleton<IBulkEmailJobQueue, BulkEmailJobQueue>();
     builder.Services.AddSingleton<IBulkEmailJobStore, SqlRedisBulkEmailJobStore>();
     builder.Services.AddHostedService<BulkEmailWorker>();
@@ -179,10 +203,21 @@ try
 
     // ── Health checks ─────────────────────────────────────────────────────────
     var hcBuilder = builder.Services.AddHealthChecks();
-    hcBuilder.AddMySql(
-        connectionStringFactory: _ => mySqlConnection,
-        name: "mysql",
-        tags: new[] { "db", "ready" });
+
+    if (databaseConfig.UseInMemory)
+    {
+        hcBuilder.AddCheck(
+            "db",
+            () => HealthCheckResult.Healthy("Using in-memory database for local development."),
+            tags: new[] { "db", "ready" });
+    }
+    else
+    {
+        hcBuilder.AddMySql(
+            connectionStringFactory: _ => databaseConfig.ConnectionString!,
+            name: "mysql",
+            tags: new[] { "db", "ready" });
+    }
 
     if (!string.IsNullOrWhiteSpace(redisConnection))
     {
@@ -201,11 +236,18 @@ try
         var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         await using var dbContext = await dbFactory.CreateDbContextAsync();
 
-        var hasMigrations = dbContext.Database.GetMigrations().Any();
-        if (hasMigrations)
-            await dbContext.Database.MigrateAsync();
+        if (dbContext.Database.IsRelational())
+        {
+            var hasMigrations = dbContext.Database.GetMigrations().Any();
+            if (hasMigrations)
+                await dbContext.Database.MigrateAsync();
+            else
+                await dbContext.Database.EnsureCreatedAsync();
+        }
         else
+        {
             await dbContext.Database.EnsureCreatedAsync();
+        }
     }
 
     // ── Middleware pipeline ───────────────────────────────────────────────────
@@ -226,7 +268,7 @@ try
     app.UseDefaultFiles();
     app.UseStaticFiles();
 
-    if (!app.Environment.IsProduction())
+    if (!app.Environment.IsDevelopment())
         app.UseHttpsRedirection();
 
     app.UseRateLimiter();
@@ -318,4 +360,24 @@ static string ResolveMySqlConnectionString(IConfiguration configuration)
     }
 
     return csb.ConnectionString;
+}
+
+static (bool UseInMemory, string? ConnectionString, ServerVersion? ServerVersion, string? Warning) ResolveDatabaseConfiguration(
+    IConfiguration configuration,
+    IHostEnvironment environment)
+{
+    try
+    {
+        var connectionString = ResolveMySqlConnectionString(configuration);
+        var serverVersion = ServerVersion.AutoDetect(connectionString);
+        return (false, connectionString, serverVersion, null);
+    }
+    catch (Exception ex) when (environment.IsDevelopment())
+    {
+        return (
+            true,
+            null,
+            null,
+            $"Falling back to in-memory database for local development because MySQL is unavailable: {ex.Message}");
+    }
 }
