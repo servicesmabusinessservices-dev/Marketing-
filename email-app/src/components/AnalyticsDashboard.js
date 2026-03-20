@@ -1,12 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  PieChart, Pie, Cell, ResponsiveContainer, Legend,
+} from 'recharts';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
-import AnimatedCard from './ui/AnimatedCard';
-import { useAnalytics } from '../hooks/useApi';
-import LoadingSpinner from './ui/LoadingSpinner';
+import KPICard from './ui/KPICard';
+import ChartCard from './ui/ChartCard';
+import InsightCard from './ui/InsightCard';
+import { KPIRowSkeleton, ChartSkeleton, InsightSkeleton } from './ui/PageSkeleton';
 import EmptyState from './ui/EmptyState';
 import ErrorState from './ui/ErrorState';
-import { getStageColorVar, JOURNEY_ICON_COLOR } from '../utils/uiColorMaps';
+import '../components/ui/DashboardCards.css';
+import { useAnalytics } from '../hooks/useApi';
+import { generateAnalyticsInsights } from '../utils/insightEngine';
+import {
+  STAGE_COLORS, CHART_COLORS, CHART_PALETTE, CHART_HEIGHT, DONUT_INNER_RATIO,
+  getThemeStyles,
+} from '../utils/chartTheme';
+
+const formatNumber = (v) => {
+  const safe = Number.isFinite(v) ? v : 0;
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(safe);
+};
+
+const metricValue = (value, suffix = '') => (value === 0 || value) ? `${value}${suffix}` : '--';
+
+/* ── Custom Tooltips ──────────────────────────────── */
+
+const FunnelTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  const theme = getThemeStyles();
+  return <div style={theme.tooltip}><strong>{d.name}</strong>: {formatNumber(d.value)}</div>;
+};
+
+const ConversionTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  const theme = getThemeStyles();
+  return <div style={theme.tooltip}><strong>{d.name}</strong>: {d.value}%</div>;
+};
+
+const JourneyPieTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0];
+  const theme = getThemeStyles();
+  return <div style={theme.tooltip}><strong>{d.name}</strong>: {d.value}</div>;
+};
+
+/* ── Pie Chart custom label ── */
+const renderPieCenter = (total) => ({ cx, cy }) => (
+  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Syne', sans-serif", fill: 'var(--text-primary)' }}>
+    {total}
+  </text>
+);
+
+/* ── Main Component ───────────────────────────────── */
 
 const AnalyticsDashboard = () => {
   const { showFeedback } = useFeedback();
@@ -29,62 +79,102 @@ const AnalyticsDashboard = () => {
   const ownerWorkload = data?.ownerWorkload || [];
   const transitions = data?.transitions || [];
 
-  const metricValue = (value, suffix = '') => {
-    if (value === 0 || value) {
-      return `${value}${suffix}`;
-    }
-    return '--';
-  };
-
-  const funnelMax = stageFunnel.New || 0;
-  const funnelData = [
-    { label: 'New', count: stageFunnel.New || 0, pct: funnelMax ? Math.round((stageFunnel.New || 0) / funnelMax * 100) : 0, color: getStageColorVar('New') },
-    { label: 'Qualified', count: stageFunnel.Qualified || 0, pct: funnelMax ? Math.round((stageFunnel.Qualified || 0) / funnelMax * 100) : 0, color: getStageColorVar('Qualified') },
-    { label: 'Proposal', count: stageFunnel.Proposal || 0, pct: funnelMax ? Math.round((stageFunnel.Proposal || 0) / funnelMax * 100) : 0, color: getStageColorVar('Proposal') },
-    { label: 'Won', count: stageFunnel.Won || 0, pct: funnelMax ? Math.round((stageFunnel.Won || 0) / funnelMax * 100) : 0, color: getStageColorVar('Won') }
-  ];
-
-  const hasAnyData =
-    funnelData.some((f) => f.count > 0) ||
+  const hasAnyData = useMemo(() =>
+    Object.values(stageFunnel).some((v) => v > 0) ||
     ownerWorkload.length > 0 ||
     transitions.length > 0 ||
     Boolean(engagement.sent) ||
     Boolean(journeyPerformance.active) ||
     Boolean(journeyPerformance.completed) ||
     Boolean(journeyPerformance.failed) ||
-    Boolean(journeyPerformance.paused);
+    Boolean(journeyPerformance.paused),
+    [stageFunnel, ownerWorkload, transitions, engagement, journeyPerformance]
+  );
+
+  /* ── Chart data ── */
+  const funnelChartData = useMemo(() => [
+    { name: 'New', value: stageFunnel.New || 0, fill: STAGE_COLORS.New },
+    { name: 'Qualified', value: stageFunnel.Qualified || 0, fill: STAGE_COLORS.Qualified },
+    { name: 'Proposal', value: stageFunnel.Proposal || 0, fill: STAGE_COLORS.Proposal },
+    { name: 'Won', value: stageFunnel.Won || 0, fill: STAGE_COLORS.Won },
+  ], [stageFunnel]);
+
+  const conversionChartData = useMemo(() => [
+    { name: 'New → Qual', value: conversionRates.newToQualified || 0, fill: STAGE_COLORS.New },
+    { name: 'Qual → Prop', value: conversionRates.qualifiedToProposal || 0, fill: STAGE_COLORS.Qualified },
+    { name: 'Prop → Won', value: conversionRates.proposalToWon || 0, fill: STAGE_COLORS.Proposal },
+    { name: 'Win Rate', value: conversionRates.overallWinRate || 0, fill: STAGE_COLORS.Won },
+  ], [conversionRates]);
+
+  const journeyPieData = useMemo(() => {
+    const items = [
+      { name: 'Active', value: journeyPerformance.active || 0 },
+      { name: 'Completed', value: journeyPerformance.completed || 0 },
+      { name: 'Failed', value: journeyPerformance.failed || 0 },
+      { name: 'Paused', value: journeyPerformance.paused || 0 },
+    ];
+    return items.filter((i) => i.value > 0);
+  }, [journeyPerformance]);
+
+  const journeyTotal = useMemo(
+    () => journeyPieData.reduce((s, d) => s + d.value, 0),
+    [journeyPieData]
+  );
+
+  const JOURNEY_COLORS = [CHART_COLORS.emerald, CHART_COLORS.primary, CHART_COLORS.rose, CHART_COLORS.amber];
+
+  /* ── Insights ── */
+  const insights = useMemo(
+    () => generateAnalyticsInsights({ engagement, stageFunnel, conversionRates, journeyPerformance, ownerWorkload }),
+    [engagement, stageFunnel, conversionRates, journeyPerformance, ownerWorkload]
+  );
+
+  const theme = getThemeStyles();
 
   return (
     <div className="content fade-in">
-      <div className="analytics-toolbar-row">
-        <div className="analytics-chip-row" role="group" aria-label="Analytics date range">
-          {[7, 30, 90, 180].map((value) => (
-            <button
-              type="button"
-              key={value}
-              className={`filter-chip ${days === value ? 'active' : ''}`}
-              onClick={() => setDays(value)}
-              aria-pressed={days === value}
-            >
-              Last {value} days
-            </button>
-          ))}
+      {/* ── Header + Filters ── */}
+      <div className="analytics-header">
+        <div className="analytics-header-left">
+          <h1>Analytics</h1>
+          <span className="analytics-subtitle">Email &amp; pipeline performance</span>
         </div>
-        <input
-          type="text"
-          className="form-input analytics-owner-input"
-          aria-label="Filter analytics by owner email"
-          value={ownerEmail}
-          onChange={(event) => setOwnerEmail(event.target.value)}
-          placeholder="Filter by owner email"
-        />
-        <div className="analytics-toolbar-action ml-auto">
-          <button type="button" className="topbar-btn" onClick={refetch}>Refresh</button>
+        <div className="analytics-header-right">
+          <div role="group" aria-label="Analytics date range">
+            {[7, 30, 90, 180].map((value) => (
+              <button
+                type="button"
+                key={value}
+                className={`filter-chip ${days === value ? 'active' : ''}`}
+                onClick={() => setDays(value)}
+                aria-pressed={days === value}
+              >
+                {value}d
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            className="analytics-owner-input"
+            aria-label="Filter analytics by owner email"
+            value={ownerEmail}
+            onChange={(e) => setOwnerEmail(e.target.value)}
+            placeholder="Owner email"
+          />
+          <button type="button" className="refresh-btn" onClick={refetch}>
+            <Icon name="refresh" size={14} color="currentColor" />
+            Refresh
+          </button>
         </div>
       </div>
 
+      {/* ── Loading / Error / Empty ── */}
       {isLoading ? (
-        <LoadingSpinner label="Loading analytics..." />
+        <>
+          <KPIRowSkeleton count={4} />
+          <div className="charts-row"><ChartSkeleton /><ChartSkeleton /></div>
+          <InsightSkeleton />
+        </>
       ) : isError ? (
         <ErrorState message="Failed to load analytics." onRetry={refetch} />
       ) : !hasAnyData ? (
@@ -96,131 +186,112 @@ const AnalyticsDashboard = () => {
         />
       ) : (
         <>
-          <div className="stats-grid">
-            {[
-              { label: 'Total Sent', value: metricValue(engagement.sent, ''), color: 'blue' },
-              { label: 'Open Rate', value: metricValue(engagement.openRate, '%'), color: 'amber' },
-              { label: 'Click Rate', value: metricValue(engagement.clickRate, '%'), color: 'emerald' },
-              { label: 'Reply Rate', value: metricValue(engagement.replyRate, '%'), color: 'rose' }
-            ].map((stat) => (
-              <AnimatedCard key={stat.label} className={`stat-card ${stat.color}`}>
-                <div className="stat-label">{stat.label}</div>
-                <div className="stat-value">{stat.value}</div>
-              </AnimatedCard>
-            ))}
+          {/* ── KPI Row (4 cards) ── */}
+          <div className="kpi-grid kpi-grid--4">
+            <KPICard label="Total Sent" value={metricValue(engagement.sent)} change={`Last ${days}d`} changeDirection="neutral" icon="send" accentColor="primary" />
+            <KPICard label="Open Rate" value={metricValue(engagement.openRate, '%')} change={`Last ${days}d`} changeDirection="neutral" icon="mail" accentColor="amber" />
+            <KPICard label="Click Rate" value={metricValue(engagement.clickRate, '%')} change={`Last ${days}d`} changeDirection="neutral" icon="cursor" accentColor="emerald" />
+            <KPICard label="Reply Rate" value={metricValue(engagement.replyRate, '%')} change={`Last ${days}d`} changeDirection="neutral" icon="reply" accentColor="blue" />
           </div>
 
-          <div className="analytics-row">
-            <div className="card">
-              <div className="card-header">
-                <Icon name="pipeline" size={14} color="var(--blue)" />
-                <span className="card-title">Lead Funnel</span>
-              </div>
-              <div className="card-body">
-                <div className="funnel-bar-wrap">
-                  {funnelData.map((funnel) => (
-                    <div key={funnel.label} className="funnel-bar-row">
-                      <div className="funnel-label">{funnel.label}</div>
-                      <div className="funnel-bar">
-                        <div className="funnel-fill" style={{ width: `${funnel.pct}%`, background: funnel.color }} />
-                      </div>
-                      <div className="funnel-num">{funnel.count}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          {/* ── Primary Charts ── */}
+          <div className="charts-row">
+            <ChartCard title="Lead Funnel" subtitle="Leads by pipeline stage" icon="pipeline">
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart data={funnelChartData} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 16 }}>
+                  <CartesianGrid horizontal={false} {...theme.grid} />
+                  <XAxis type="number" tick={theme.axisTick} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={theme.axisTick} axisLine={false} tickLine={false} width={72} />
+                  <Tooltip content={<FunnelTooltip />} cursor={false} />
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
+                    {funnelChartData.map((e) => <Cell key={e.name} fill={e.fill} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-            <div className="card">
-              <div className="card-header">
-                <Icon name="zap" size={14} color="var(--emerald)" />
-                <span className="card-title">Conversion Rates</span>
-              </div>
-              <div className="card-body">
-                <div className="rate-grid">
-                  {[
-                    { label: 'New to Qualified', val: metricValue(conversionRates.newToQualified, '%'), note: 'vs last month' },
-                    { label: 'Qualified to Proposal', val: metricValue(conversionRates.qualifiedToProposal, '%'), note: 'vs last month' },
-                    { label: 'Proposal to Won', val: metricValue(conversionRates.proposalToWon, '%'), note: 'vs last month' },
-                    { label: 'Overall Win Rate', val: metricValue(conversionRates.overallWinRate, '%'), note: 'industry avg' }
-                  ].map((rate) => (
-                    <div key={rate.label} className="rate-item">
-                      <div className="rate-label">{rate.label}</div>
-                      <div className="rate-value">{rate.val}</div>
-                      <div className="rate-sub">{rate.note}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="card-header">
-                <Icon name="journey" size={14} color={JOURNEY_ICON_COLOR} />
-                <span className="card-title">Journey Performance</span>
-              </div>
-              <div className="card-body">
-                {[
-                  { label: 'Active', value: journeyPerformance.active || 0 },
-                  { label: 'Completed', value: journeyPerformance.completed || 0 },
-                  { label: 'Failed', value: journeyPerformance.failed || 0 },
-                  { label: 'Paused', value: journeyPerformance.paused || 0 }
-                ].map((row) => (
-                  <div key={row.label} className="analytics-kv-row">
-                    <div className="analytics-kv-label-wrap">
-                      <div className="analytics-kv-label">{row.label}</div>
-                    </div>
-                    <div className="analytics-kv-value">{row.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ChartCard title="Conversion Rates" subtitle="Stage-to-stage %" icon="trending">
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart data={conversionChartData} margin={{ top: 4, right: 24, bottom: 4, left: 16 }}>
+                  <CartesianGrid vertical={false} {...theme.grid} />
+                  <XAxis dataKey="name" tick={theme.axisTick} axisLine={false} tickLine={false} />
+                  <YAxis tick={theme.axisTick} axisLine={false} tickLine={false} unit="%" />
+                  <Tooltip content={<ConversionTooltip />} cursor={false} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40}>
+                    {conversionChartData.map((e) => <Cell key={e.name} fill={e.fill} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
           </div>
 
-          <div className="card card-stack">
-            <div className="card-header">
-              <Icon name="users" size={14} color="var(--indigo)" />
-              <span className="card-title">Owner Workload</span>
-            </div>
-            <div className="card-body card-body-flush">
-              <div className="table-wrap">
-                <table>
+          {/* ── Secondary Widgets ── */}
+          <div className="secondary-row">
+            {/* Journey Performance — Donut */}
+            <ChartCard title="Journey Performance" icon="journey">
+              {journeyPieData.length === 0 ? (
+                <div className="empty-state empty-state-sm" style={{ padding: 24 }}>
+                  <p>No journey data</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                  <PieChart>
+                    <Pie
+                      data={journeyPieData}
+                      innerRadius={CHART_HEIGHT * DONUT_INNER_RATIO * 0.4}
+                      outerRadius={CHART_HEIGHT * 0.4}
+                      paddingAngle={3}
+                      dataKey="value"
+                      label={renderPieCenter(journeyTotal)}
+                      labelLine={false}
+                    >
+                      {journeyPieData.map((_, i) => (
+                        <Cell key={i} fill={JOURNEY_COLORS[i % JOURNEY_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<JourneyPieTooltip />} />
+                    <Legend
+                      iconType="circle"
+                      iconSize={8}
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{v}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+
+            {/* Owner Workload — Table */}
+            <ChartCard title="Owner Workload" icon="users">
+              <div style={{ overflowX: 'auto' }}>
+                <table className="analytics-table">
                   <thead>
                     <tr>
                       <th>Owner</th>
                       <th>Contacts</th>
-                      <th>Open Tasks</th>
+                      <th>Open</th>
                       <th>Overdue</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {ownerWorkload.map((owner) => (
+                    {ownerWorkload.length === 0 ? (
+                      <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>No owner data</td></tr>
+                    ) : ownerWorkload.map((owner) => (
                       <tr key={owner.ownerEmail}>
-                        <td className="bold">{owner.ownerEmail}</td>
-                        <td>{owner.contacts}</td>
-                        <td>{owner.openTasks}</td>
-                        <td className={owner.overdueTasks > 0 ? 'table-overdue' : ''}>{owner.overdueTasks}</td>
+                        <td style={{ fontWeight: 600 }}>{owner.ownerEmail}</td>
+                        <td className="count-cell">{owner.contacts}</td>
+                        <td className="count-cell">{owner.openTasks}</td>
+                        <td className="count-cell" style={owner.overdueTasks > 0 ? { color: 'var(--rose)', fontWeight: 600 } : undefined}>{owner.overdueTasks}</td>
                       </tr>
                     ))}
-                    {ownerWorkload.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="marketing-table-empty">No owner workload data.</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
+            </ChartCard>
 
-          <div className="card">
-            <div className="card-header">
-              <Icon name="bar" size={14} color="var(--indigo)" />
-              <span className="card-title">Stage Transitions</span>
-            </div>
-            <div className="card-body card-body-flush">
-              <div className="table-wrap">
-                <table>
+            {/* Stage Transitions — Table */}
+            <ChartCard title="Stage Transitions" icon="bar">
+              <div style={{ overflowX: 'auto' }}>
+                <table className="analytics-table">
                   <thead>
                     <tr>
                       <th>From</th>
@@ -229,23 +300,23 @@ const AnalyticsDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {transitions.map((transition, index) => (
-                      <tr key={`${transition.fromStage || 'none'}-${transition.toStage}-${index}`}>
-                        <td className="bold">{transition.fromStage || 'None'}</td>
-                        <td>{transition.toStage}</td>
-                        <td>{transition.count}</td>
+                    {transitions.length === 0 ? (
+                      <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>No transitions yet</td></tr>
+                    ) : transitions.map((t, i) => (
+                      <tr key={`${t.fromStage}-${t.toStage}-${i}`}>
+                        <td style={{ fontWeight: 600 }}>{t.fromStage || 'None'}</td>
+                        <td>{t.toStage}</td>
+                        <td className="count-cell">{t.count}</td>
                       </tr>
                     ))}
-                    {transitions.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="marketing-table-empty">No stage transitions yet.</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </ChartCard>
           </div>
+
+          {/* ── Insights Panel ── */}
+          <InsightCard insights={insights} />
         </>
       )}
     </div>

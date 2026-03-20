@@ -1,0 +1,515 @@
+/* ================================================================
+   DashboardCards.css — Styles for KPICard, InsightCard, ChartCard
+   and dashboard-specific skeleton loaders.
+   Spacing: 8 · 16 · 24 · 32 only.
+   ================================================================ */
+
+/* ── KPI Card ──────────────────────────────────── */
+
+.kpi-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  min-height: 120px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+}
+
+.kpi-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: var(--label-sm, var(--fs-xs));
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: var(--kpi-number, var(--fs-3xl));
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  line-height: var(--line-tight);
+  letter-spacing: -0.02em;
+}
+
+.kpi-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: var(--font-medium);
+  line-height: 1;
+}
+
+.kpi-change--up {
+  color: var(--emerald);
+}
+
+.kpi-change--down {
+  color: var(--rose);
+}
+
+.kpi-change--neutral {
+  color: var(--text-muted);
+}
+
+/* ── KPI Grid ──────────────────────────────────── */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1199px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-card {
+    padding: 16px;
+    min-height: 96px;
+    gap: 8px;
+  }
+
+  .kpi-icon-wrap {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ── Chart Card ────────────────────────────────── */
+
+.chart-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.chart-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-card-title {
+  font-size: var(--section-title, var(--fs-lg));
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-tight);
+  margin: 0;
+}
+
+.chart-card-subtitle {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  display: block;
+}
+
+.chart-card-action {
+  flex-shrink: 0;
+}
+
+.chart-card-body {
+  flex: 1;
+  padding: 16px 8px 8px;
+  min-height: 0;
+}
+
+/* ── Charts Row (2 columns) ────────────────────── */
+
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 899px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Secondary Widgets Row (3 columns) ─────────── */
+
+.secondary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1099px) {
+  .secondary-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .secondary-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Insight Card ──────────────────────────────── */
+
+.insight-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--indigo);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.insight-header-text {
+  font-size: var(--section-title, var(--fs-lg));
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.insight-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-normal);
+}
+
+.insight-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.insight-text {
+  flex: 1;
+}
+
+/* ── Dashboard Page Header ─────────────────────── */
+
+.dash-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dash-title {
+  font-family: var(--font-display);
+  font-size: var(--h1);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: var(--line-tight);
+}
+
+.dash-subtitle {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+/* ── Dashboard Skeleton Loaders ────────────────── */
+
+.kpi-skeleton-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-skeleton-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  min-height: 120px;
+}
+
+.chart-skeleton {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  min-height: 340px;
+  padding: 16px 24px;
+}
+
+.chart-skeleton-title {
+  width: 140px;
+  height: 18px;
+  border-radius: var(--radius-2xs);
+  margin-bottom: 24px;
+}
+
+.chart-skeleton-area {
+  width: 100%;
+  height: 240px;
+  border-radius: var(--radius-sm);
+}
+
+.insight-skeleton {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.insight-skeleton-title {
+  width: 100px;
+  height: 16px;
+  border-radius: var(--radius-2xs);
+  margin-bottom: 16px;
+}
+
+.insight-skeleton-line {
+  height: 14px;
+  border-radius: var(--radius-2xs);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1199px) {
+  .kpi-skeleton-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .kpi-skeleton-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Analytics Header ──────────────────────────── */
+
+.analytics-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.analytics-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analytics-header-left h1 {
+  font-family: var(--font-display);
+  font-size: var(--h1);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.analytics-subtitle {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.analytics-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.analytics-header-right .filter-chip {
+  font-size: var(--fs-xs);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--panel-border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.analytics-header-right .filter-chip:hover {
+  border-color: var(--indigo);
+  color: var(--text-primary);
+}
+
+.analytics-header-right .filter-chip.active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #ffffff;
+}
+
+.analytics-header-right .analytics-owner-input {
+  font-size: var(--fs-xs);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border);
+  background: var(--control-bg);
+  color: var(--text-primary);
+  width: 180px;
+}
+
+.analytics-header-right .refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.analytics-header-right .refresh-btn:hover {
+  border-color: var(--indigo);
+  color: var(--text-primary);
+}
+
+/* ── Analytics KPI Grid (4 columns) ────────────── */
+
+.kpi-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1099px) {
+  .kpi-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  .kpi-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Analytics Tables ──────────────────────────── */
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.analytics-table th {
+  text-align: left;
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.analytics-table td {
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.analytics-table tr:last-child td {
+  border-bottom: none;
+}
+
+.analytics-table tr:nth-child(even) td {
+  background: var(--surface-1);
+}
+
+.analytics-table .stage-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--fs-xs);
+  font-weight: var(--font-medium);
+}
+
+.analytics-table .count-cell {
+  text-align: right;
+  font-weight: var(--font-semibold);
+  font-family: var(--font-mono);
+}
+
+/* ── "View all" links ──────────────────────────── */
+
+.card-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--indigo);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.card-view-all:hover {
+  text-decoration: underline;
+}

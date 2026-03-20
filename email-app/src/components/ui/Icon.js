@@ -163,7 +163,60 @@ const Icon = ({ name, size = 16, color = 'currentColor', title, ariaLabel, decor
         <line x1="3" y1="12" x2="21" y2="12" />
         <line x1="3" y1="18" x2="21" y2="18" />
       </>
-    )
+    ),
+    dollar: (
+      <>
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+      </>
+    ),
+    trending: (
+      <>
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+        <polyline points="17 6 23 6 23 12" />
+      </>
+    ),
+    sparkle: (
+      <>
+        <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+      </>
+    ),
+    send: (
+      <>
+        <line x1="22" y1="2" x2="11" y2="13" />
+        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+      </>
+    ),
+    cursor: (
+      <>
+        <path d="M4 4l7.07 17 2.51-7.39L21 11.07z" />
+      </>
+    ),
+    reply: (
+      <>
+        <polyline points="9 17 4 12 9 7" />
+        <path d="M20 18v-2a4 4 0 00-4-4H4" />
+      </>
+    ),
+    'arrow-up': (
+      <>
+        <line x1="12" y1="19" x2="12" y2="5" />
+        <polyline points="5 12 12 5 19 12" />
+      </>
+    ),
+    'arrow-down': (
+      <>
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <polyline points="19 12 12 19 5 12" />
+      </>
+    ),
+    refresh: (
+      <>
+        <polyline points="23 4 23 10 17 10" />
+        <polyline points="1 20 1 14 7 14" />
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+      </>
+    ),
   };
 
   const icon = icons[name];

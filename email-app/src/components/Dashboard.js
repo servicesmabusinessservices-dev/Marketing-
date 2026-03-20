@@ -1,8 +1,15 @@
 import React, { useMemo } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts';
 import Icon from './ui/Icon';
 import AnimatedCard from './ui/AnimatedCard';
-import MagicBento from './ui/MagicBento';
+import KPICard from './ui/KPICard';
+import ChartCard from './ui/ChartCard';
+import InsightCard from './ui/InsightCard';
 import ErrorState from './ui/ErrorState';
+import { KPIRowSkeleton, ChartSkeleton, InsightSkeleton } from './ui/PageSkeleton';
+import '../components/ui/DashboardCards.css';
 import {
   useAnalytics,
   useContacts,
@@ -11,7 +18,12 @@ import {
   useJourneySummary,
   useEvents,
 } from '../hooks/useApi';
-import { getEventTone, JOURNEY_ICON_COLOR, ON_SOLID_ICON_COLOR } from '../utils/uiColorMaps';
+import { getEventTone, ON_SOLID_ICON_COLOR } from '../utils/uiColorMaps';
+import { generateDashboardInsights } from '../utils/insightEngine';
+import {
+  STAGE_COLORS, CHART_COLORS, CHART_HEIGHT,
+  getThemeStyles,
+} from '../utils/chartTheme';
 
 const EVENT_LABELS = {
   opened: 'Email opened',
@@ -47,11 +59,6 @@ const formatNumber = (value) => {
 const formatPercent = (value) => {
   if (!Number.isFinite(value)) return '--';
   return `${Number(value).toFixed(1)}%`;
-};
-
-const formatTrigger = (value) => {
-  if (!value) return 'Trigger: unknown';
-  return `Trigger: ${value.replace(/_/g, ' ')}`;
 };
 
 const buildContactMap = (contacts) => {
@@ -91,18 +98,7 @@ const formatTaskContact = (task) => {
   return name || contact.email || 'Contact unavailable';
 };
 
-const StatCard = React.memo(({ stat }) => (
-  <AnimatedCard className={`stat-card ${stat.color}`}>
-    <div className="stat-label">{stat.label}</div>
-    <div className="stat-value">{stat.value}</div>
-    <div className={`stat-change ${stat.dir || ''}`}>{stat.change}</div>
-    <div className="stat-icon">
-      <Icon name={stat.icon} size={28} color="currentColor" />
-    </div>
-  </AnimatedCard>
-));
-
-StatCard.displayName = 'StatCard';
+/* ── Sub-components ──────────────────────────────── */
 
 const ActivityFeed = React.memo(({ activities, windowLabel }) => (
   <div className="card">
@@ -119,7 +115,7 @@ const ActivityFeed = React.memo(({ activities, windowLabel }) => (
         </div>
       ) : (
         <div className="dashboard-activity-list">
-          {activities.map((activity) => (
+          {activities.slice(0, 5).map((activity) => (
             <div key={activity.id} className="activity-item">
               <div className={`activity-dot ${activity.color}`} />
               <div>
@@ -133,14 +129,14 @@ const ActivityFeed = React.memo(({ activities, windowLabel }) => (
     </div>
   </div>
 ));
-
 ActivityFeed.displayName = 'ActivityFeed';
 
-const PipelineOverview = React.memo(({ pipelineStages }) => (
+const PipelineOverview = React.memo(({ pipelineStages, totalContacts }) => (
   <div className="card">
     <div className="card-header">
-      <Icon name="pipeline" size={14} color="var(--blue)" />
-      <span className="card-title">Pipeline Overview</span>
+      <Icon name="pipeline" size={14} color="var(--indigo)" />
+      <span className="card-title">Pipeline Snapshot</span>
+      <span className="card-header-meta">{formatNumber(totalContacts)} total</span>
     </div>
     <div className="card-body">
       <div className="pipeline-stages">
@@ -151,11 +147,9 @@ const PipelineOverview = React.memo(({ pipelineStages }) => (
           </div>
         ))}
       </div>
-      <div className="card-footer-note">Live view from analytics window</div>
     </div>
   </div>
 ));
-
 PipelineOverview.displayName = 'PipelineOverview';
 
 const TaskFocus = React.memo(({ tasks, taskTotal }) => (
@@ -173,7 +167,7 @@ const TaskFocus = React.memo(({ tasks, taskTotal }) => (
         </div>
       ) : (
         <div className="task-scroll-wrap">
-          {tasks.map((task) => {
+          {tasks.slice(0, 5).map((task) => {
             const done = String(task.status || '').toLowerCase() === 'completed';
             const overdue = isTaskOverdue(task);
             const priorityClass = getTaskPriorityClass(task.priority);
@@ -197,43 +191,33 @@ const TaskFocus = React.memo(({ tasks, taskTotal }) => (
     </div>
   </div>
 ));
-
 TaskFocus.displayName = 'TaskFocus';
 
-const JourneyPanel = React.memo(({ journeys }) => (
-  <div className="card">
-    <div className="card-header">
-      <Icon name="journey" size={14} color={JOURNEY_ICON_COLOR} />
-      <span className="card-title">Active Journeys</span>
-    </div>
-    <div className="card-body">
-      {journeys.length === 0 ? (
-        <div className="empty-state empty-state-sm">
-          <p>No published journeys</p>
-          <small>Create and publish a journey to see it here</small>
-        </div>
-      ) : (
-        <div className="dashboard-journey-list">
-          {journeys.map((journey) => (
-            <div key={journey.journeyId} className="journey-card journey-card-compact">
-              <div className={`journey-status ${String(journey.status || '').toLowerCase()}`} />
-              <div className="journey-info">
-                <div className="journey-name">{journey.name}</div>
-                <div className="journey-trigger">{formatTrigger(journey.triggerType)}</div>
-              </div>
-              <div className="journey-stats">
-                <div className="journey-enrolled">{journey.activeEnrollments || 0}</div>
-                <div className="journey-lbl">active</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-));
+/* ── Custom Recharts Tooltip ─────────────────────── */
 
-JourneyPanel.displayName = 'JourneyPanel';
+const FunnelTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0].payload;
+  const theme = getThemeStyles();
+  return (
+    <div style={theme.tooltip}>
+      <strong>{name}</strong>: {formatNumber(value)}
+    </div>
+  );
+};
+
+const EngagementTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const { name, value, unit } = payload[0].payload;
+  const theme = getThemeStyles();
+  return (
+    <div style={theme.tooltip}>
+      <strong>{name}</strong>: {unit === '%' ? `${value}%` : formatNumber(value)}
+    </div>
+  );
+};
+
+/* ── Main Dashboard ──────────────────────────────── */
 
 const Dashboard = () => {
   const analyticsQuery = useAnalytics({ days: 30 });
@@ -244,9 +228,9 @@ const Dashboard = () => {
   const eventsQuery = useEvents({ limit: 6 });
 
   const loading = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
-    .some((query) => query.isLoading);
+    .some((q) => q.isLoading);
   const hasError = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
-    .some((query) => query.isError);
+    .some((q) => q.isError);
 
   const analytics = analyticsQuery.data;
   const contactsData = contactsQuery.data;
@@ -258,64 +242,63 @@ const Dashboard = () => {
   const windowLabel = useMemo(() => `Last ${analytics?.windowDays ?? 30} days`, [analytics]);
   const contactMap = useMemo(() => buildContactMap(contactsData?.contacts || []), [contactsData]);
 
-  const stats = useMemo(() => {
-    const deliverability = analytics?.deliverability || {};
-    const windowDays = analytics?.windowDays || 30;
+  /* ── KPI metrics ── */
+  const kpis = useMemo(() => {
+    const engagement = analytics?.engagement || {};
+    const conversion = analytics?.conversionRates || {};
     const totalContacts = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
-    const totalEmails = emailSummary?.totalCount || 0;
-    const unreadEmails = emailSummary?.unreadCount || 0;
+    const publishedJourneys = (journeySummary?.journeys || []).filter(
+      (j) => String(j.status || '').toLowerCase() === 'published'
+    );
+    const totalEnrollments = publishedJourneys.reduce((s, j) => s + (j.activeEnrollments || 0), 0);
 
     return [
-      {
-        key: 'contacts',
-        label: 'Total Contacts',
-        value: formatNumber(totalContacts),
-        change: 'All time',
-        dir: 'neutral',
-        color: 'amber',
-        icon: 'users',
-      },
-      {
-        key: 'totalEmails',
-        label: 'Total Emails',
-        value: formatNumber(totalEmails),
-        change: 'Gmail total',
-        dir: 'neutral',
-        color: 'blue',
-        icon: 'mail',
-      },
-      {
-        key: 'unread',
-        label: 'Unread Emails',
-        value: formatNumber(unreadEmails),
-        change: 'Live',
-        dir: 'neutral',
-        color: 'rose',
-        icon: 'inbox',
-      },
-      {
-        key: 'openRate',
-        label: 'Avg Open Rate',
-        value: formatPercent(deliverability.openRate),
-        change: `Last ${windowDays} days`,
-        dir: 'neutral',
-        color: 'emerald',
-        icon: 'bar',
-      },
+      { label: 'Total Contacts', value: formatNumber(totalContacts), change: 'All time', changeDirection: 'neutral', icon: 'users', accentColor: 'amber' },
+      { label: 'Win Rate', value: formatPercent(conversion.overallWinRate), change: windowLabel, changeDirection: 'neutral', icon: 'trending', accentColor: 'emerald' },
+      { label: 'Open Rate', value: formatPercent(engagement.openRate), change: windowLabel, changeDirection: 'neutral', icon: 'mail', accentColor: 'blue' },
+      { label: 'Click Rate', value: formatPercent(engagement.clickRate), change: windowLabel, changeDirection: 'neutral', icon: 'cursor', accentColor: 'primary' },
+      { label: 'Active Journeys', value: String(publishedJourneys.length), change: `${totalEnrollments} enrolled`, changeDirection: totalEnrollments > 0 ? 'up' : 'neutral', icon: 'journey', accentColor: 'purple' },
     ];
-  }, [analytics, contactsData, emailSummary]);
+  }, [analytics, contactsData, journeySummary, windowLabel]);
 
-  const pipelineStages = useMemo(() => {
-    const stageFunnel = analytics?.stageFunnel || {};
+  /* ── Chart data ── */
+  const funnelData = useMemo(() => {
+    const funnel = analytics?.stageFunnel || {};
     return [
-      ['New', stageFunnel.New || 0],
-      ['Qualified', stageFunnel.Qualified || 0],
-      ['Proposal', stageFunnel.Proposal || 0],
-      ['Won', stageFunnel.Won || 0],
-      ['Lost', stageFunnel.Lost || 0],
+      { name: 'New', value: funnel.New || 0, fill: STAGE_COLORS.New },
+      { name: 'Qualified', value: funnel.Qualified || 0, fill: STAGE_COLORS.Qualified },
+      { name: 'Proposal', value: funnel.Proposal || 0, fill: STAGE_COLORS.Proposal },
+      { name: 'Won', value: funnel.Won || 0, fill: STAGE_COLORS.Won },
     ];
   }, [analytics]);
 
+  const engagementData = useMemo(() => {
+    const eng = analytics?.engagement || {};
+    return [
+      { name: 'Sent', value: eng.sent || 0, unit: '#', fill: CHART_COLORS.primary },
+      { name: 'Open Rate', value: eng.openRate || 0, unit: '%', fill: CHART_COLORS.amber },
+      { name: 'Click Rate', value: eng.clickRate || 0, unit: '%', fill: CHART_COLORS.emerald },
+      { name: 'Reply Rate', value: eng.replyRate || 0, unit: '%', fill: CHART_COLORS.blue },
+    ];
+  }, [analytics]);
+
+  /* ── Pipeline stages ── */
+  const pipelineStages = useMemo(() => {
+    const funnel = analytics?.stageFunnel || {};
+    return [
+      ['New', funnel.New || 0],
+      ['Qualified', funnel.Qualified || 0],
+      ['Proposal', funnel.Proposal || 0],
+      ['Won', funnel.Won || 0],
+      ['Lost', funnel.Lost || 0],
+    ];
+  }, [analytics]);
+  const totalPipelineContacts = useMemo(
+    () => pipelineStages.reduce((s, [, c]) => s + c, 0),
+    [pipelineStages]
+  );
+
+  /* ── Activity feed ── */
   const activities = useMemo(() => {
     const rows = eventsData?.events || [];
     return rows.map((event) => {
@@ -332,44 +315,33 @@ const Dashboard = () => {
     });
   }, [eventsData, contactMap]);
 
+  /* ── Tasks ── */
   const { tasks, taskTotal } = useMemo(() => {
     const rows = tasksData?.tasks || [];
     const now = Date.now();
-
     const sorted = [...rows].sort((a, b) => {
       const aOverdue = a.dueAtUtc && new Date(a.dueAtUtc).getTime() < now;
       const bOverdue = b.dueAtUtc && new Date(b.dueAtUtc).getTime() < now;
       if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
-
       const aDue = a.dueAtUtc ? new Date(a.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
       const bDue = b.dueAtUtc ? new Date(b.dueAtUtc).getTime() : Number.POSITIVE_INFINITY;
       if (aDue !== bDue) return aDue - bDue;
-
       return new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime();
     });
-
-    return {
-      tasks: sorted.slice(0, 12),
-      taskTotal: tasksData?.totalCount || rows.length,
-    };
+    return { tasks: sorted.slice(0, 5), taskTotal: tasksData?.totalCount || rows.length };
   }, [tasksData]);
 
-  const journeys = useMemo(() => {
-    const published = (journeySummary?.journeys || []).filter(
-      (journey) => String(journey.status || '').toLowerCase() === 'published'
-    );
-    return [...published]
-      .sort((a, b) => (b.activeEnrollments || 0) - (a.activeEnrollments || 0))
-      .slice(0, 4);
-  }, [journeySummary]);
+  /* ── Insights ── */
+  const insights = useMemo(
+    () => generateDashboardInsights({ analytics, contacts: contactsData, tasks: tasksData, journeys: journeySummary }),
+    [analytics, contactsData, tasksData, journeySummary]
+  );
 
+  /* ── Greeting ── */
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 
   const refetchAll = () => {
@@ -381,63 +353,85 @@ const Dashboard = () => {
     eventsQuery.refetch();
   };
 
+  const theme = getThemeStyles();
+
   return (
     <div className="content fade-in">
       {loading ? (
-        <div className="loading-state">
-          <div className="spinner" />
-          <p>Loading dashboard...</p>
-        </div>
+        <>
+          <div className="dash-page-header">
+            <div>
+              <div className="skeleton-block" style={{ width: 220, height: 24, borderRadius: 6 }} />
+              <div className="skeleton-block" style={{ width: 160, height: 14, borderRadius: 4, marginTop: 8 }} />
+            </div>
+          </div>
+          <KPIRowSkeleton count={5} />
+          <div className="charts-row"><ChartSkeleton /><ChartSkeleton /></div>
+          <InsightSkeleton />
+        </>
       ) : hasError ? (
         <ErrorState message="Failed to load dashboard data." onRetry={refetchAll} />
       ) : (
         <>
-          <div className="page-header">
-            <div className="syne page-title-greeting">
-              {greeting} - <span className="gradient-text">let's make moves today.</span>
+          {/* ── Page Header ── */}
+          <div className="dash-page-header">
+            <div>
+              <h1 className="dash-title">{greeting}</h1>
+              <p className="dash-subtitle">{today} · {windowLabel}</p>
             </div>
-            <div className="helper-text helper-text-top">{today}</div>
           </div>
 
-          <div className="stats-grid">
-            {stats.map((stat) => (
-              <StatCard key={stat.key} stat={stat} />
+          {/* ── KPI Cards Row ── */}
+          <div className="kpi-grid">
+            {kpis.map((kpi) => (
+              <KPICard key={kpi.label} {...kpi} />
             ))}
           </div>
 
-          <MagicBento
-            cards={[
-              { title: 'Email Campaigns', description: 'Send targeted cold email sequences with tracking and analytics', label: 'Outreach' },
-              { title: 'CRM Pipeline', description: 'Track leads from first contact to closed deal', label: 'Sales' },
-              { title: 'Smart Automation', description: 'Set up drip campaigns, follow-ups, and journey triggers that run on autopilot', label: 'Workflows' },
-              { title: 'Contact Management', description: 'Organize and segment your contacts with tags, stages, and custom fields', label: 'Contacts' },
-              { title: 'Multi-Account', description: 'Manage multiple Gmail accounts from a single dashboard', label: 'Accounts' },
-              { title: 'Analytics', description: 'Open rates, click tracking, and deliverability insights', label: 'Insights' },
-            ]}
-            textAutoHide
-            enableStars
-            enableSpotlight
-            enableBorderGlow
-            enableTilt={false}
-            enableMagnetism={false}
-            clickEffect
-            spotlightRadius={400}
-            particleCount={12}
-            glowColor="56, 189, 248"
-            disableAnimations={false}
-          />
+          {/* ── Primary Charts ── */}
+          <div className="charts-row">
+            <ChartCard title="Pipeline Funnel" subtitle="Leads by stage" icon="pipeline">
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart data={funnelData} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 16 }}>
+                  <CartesianGrid horizontal={false} {...theme.grid} />
+                  <XAxis type="number" tick={theme.axisTick} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={theme.axisTick} axisLine={false} tickLine={false} width={72} />
+                  <Tooltip content={<FunnelTooltip />} cursor={false} />
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
+                    {funnelData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-          <div className="dash-grid">
-            <div className="dash-left">
-              <ActivityFeed activities={activities} windowLabel={windowLabel} />
-              <PipelineOverview pipelineStages={pipelineStages} />
-            </div>
-
-            <div className="dash-right">
-              <TaskFocus tasks={tasks} taskTotal={taskTotal} />
-              <JourneyPanel journeys={journeys} />
-            </div>
+            <ChartCard title="Engagement Overview" subtitle={windowLabel} icon="bar">
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart data={engagementData} margin={{ top: 4, right: 24, bottom: 4, left: 16 }}>
+                  <CartesianGrid vertical={false} {...theme.grid} />
+                  <XAxis dataKey="name" tick={theme.axisTick} axisLine={false} tickLine={false} />
+                  <YAxis tick={theme.axisTick} axisLine={false} tickLine={false} />
+                  <Tooltip content={<EngagementTooltip />} cursor={false} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40}>
+                    {engagementData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
           </div>
+
+          {/* ── Secondary Widgets ── */}
+          <div className="secondary-row">
+            <ActivityFeed activities={activities} windowLabel={windowLabel} />
+            <PipelineOverview pipelineStages={pipelineStages} totalContacts={totalPipelineContacts} />
+            <TaskFocus tasks={tasks} taskTotal={taskTotal} />
+          </div>
+
+          {/* ── Insights Panel ── */}
+          <InsightCard insights={insights} />
         </>
       )}
     </div>
