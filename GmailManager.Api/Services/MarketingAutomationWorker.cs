@@ -160,6 +160,16 @@ public class MarketingAutomationWorker : BackgroundService
             {
                 enrollment.Status = "Completed";
                 enrollment.NextRunAtUtc = null;
+
+                // Write notification for journey completion
+                db.Notifications.Add(new NotificationEntity
+                {
+                    UserEmail = enrollment.UserEmail,
+                    Type = "journey_complete",
+                    Title = $"Journey completed for contact",
+                    Message = $"Journey \"{journey.Name}\" finished for contact {enrollment.ContactId}.",
+                    LinkUrl = $"/marketing?tab=journeys",
+                });
             }
             else
             {

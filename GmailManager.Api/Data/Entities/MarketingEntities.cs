@@ -198,3 +198,15 @@ public class PlatformUpdateEntity
     public DateTime PublishedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime RetrievedAtUtc { get; set; } = DateTime.UtcNow;
 }
+
+public class NotificationEntity
+{
+    public string NotificationId { get; set; } = Guid.NewGuid().ToString("N");
+    public string UserEmail { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;        // "bulk_complete", "bulk_failed", "journey_complete"
+    public string Title { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string? LinkUrl { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}

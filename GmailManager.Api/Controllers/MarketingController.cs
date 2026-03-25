@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Security.Claims;
 using System.Text.Json;
@@ -2676,5 +2677,159 @@ public class MarketingController : ControllerBase
             db.CampaignTemplates.AddRange(defaults);
             await db.SaveChangesAsync();
         }
+    }
+
+    // ── Export endpoints ────────────────────────────────────────────────────
+
+    [HttpGet("contacts/export")]
+    public async Task<IActionResult> ExportContacts(
+        [FromQuery] string format = "csv",
+        [FromQuery] string? search = null,
+        [FromQuery] string? leadStage = null,
+        [FromQuery] string? ownerEmail = null)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail))
+            return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+
+        var query = db.Contacts.Where(x => x.UserEmail == userEmail);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(x => x.EmailNormalized.Contains(term)
+                                     || (x.FirstName ?? string.Empty).ToLower().Contains(term)
+                                     || (x.LastName ?? string.Empty).ToLower().Contains(term)
+                                     || (x.Company ?? string.Empty).ToLower().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(leadStage))
+        {
+            var normalized = NormalizeLeadStage(leadStage);
+            if (normalized != null)
+                query = query.Where(x => x.LeadStage == normalized);
+        }
+
+        if (!string.IsNullOrWhiteSpace(ownerEmail))
+        {
+            var normalizedOwner = NormalizeEmail(ownerEmail);
+            query = query.Where(x => (x.OwnerEmail ?? string.Empty) == normalizedOwner);
+        }
+
+        var contacts = await query.OrderByDescending(x => x.UpdatedAtUtc).Take(MaxPageSize * 50).ToListAsync();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Email,FirstName,LastName,Company,LeadStage,Source,CreatedAtUtc");
+
+        foreach (var c in contacts)
+        {
+            sb.AppendLine(string.Join(",",
+                CsvEscape(c.Email),
+                CsvEscape(c.FirstName),
+                CsvEscape(c.LastName),
+                CsvEscape(c.Company),
+                CsvEscape(c.LeadStage),
+                CsvEscape(c.Source),
+                c.CreatedAtUtc.ToString("o")));
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(bytes, "text/csv", "contacts.csv");
+    }
+
+    [HttpGet("campaigns/export")]
+    public async Task<IActionResult> ExportCampaigns([FromQuery] string format = "csv")
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail))
+            return Unauthorized(new { error = "User email not found in token" });
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+
+        var campaigns = await db.Campaigns
+            .Where(x => x.UserEmail == userEmail)
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(MaxPageSize * 50)
+            .ToListAsync();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Name,Status,TemplateId,ListId,ScheduledAtUtc,CreatedAtUtc");
+
+        foreach (var c in campaigns)
+        {
+            sb.AppendLine(string.Join(",",
+                CsvEscape(c.Name),
+                CsvEscape(c.Status),
+                CsvEscape(c.TemplateId),
+                CsvEscape(c.ListId),
+                c.ScheduledAtUtc?.ToString("o") ?? string.Empty,
+                c.CreatedAtUtc.ToString("o")));
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(bytes, "text/csv", "campaigns.csv");
+    }
+
+    // ── Global search endpoint ──────────────────────────────────────────────
+
+    [HttpGet("/api/search")]
+    public async Task<IActionResult> GlobalSearch([FromQuery] string? q = null, [FromQuery] int limit = 20)
+    {
+        var userEmail = GetUserEmail();
+        if (string.IsNullOrWhiteSpace(userEmail))
+            return Unauthorized(new { error = "User email not found in token" });
+
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+            return Ok(new { contacts = Array.Empty<object>(), templates = Array.Empty<object>() });
+
+        var term = q.Trim().ToLowerInvariant();
+        var clampedLimit = Math.Clamp(limit, 1, 50);
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+
+        var contactResults = await db.Contacts
+            .Where(x => x.UserEmail == userEmail &&
+                (x.EmailNormalized.Contains(term) ||
+                 (x.FirstName ?? string.Empty).ToLower().Contains(term) ||
+                 (x.LastName ?? string.Empty).ToLower().Contains(term) ||
+                 (x.Company ?? string.Empty).ToLower().Contains(term)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(clampedLimit)
+            .Select(x => new
+            {
+                type = "contact",
+                id = x.ContactId,
+                label = ((x.FirstName ?? string.Empty) + " " + (x.LastName ?? string.Empty)).Trim(),
+                subtitle = x.Email,
+                leadStage = x.LeadStage
+            })
+            .ToListAsync();
+
+        var templateResults = await db.CampaignTemplates
+            .Where(x => x.UserEmail == userEmail &&
+                (x.Name.ToLower().Contains(term) ||
+                 x.Subject.ToLower().Contains(term)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(clampedLimit)
+            .Select(x => new
+            {
+                type = "template",
+                id = x.TemplateId,
+                label = x.Name,
+                subtitle = x.Category
+            })
+            .ToListAsync();
+
+        return Ok(new { contacts = contactResults, templates = templateResults });
+    }
+
+    private static string CsvEscape(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        return value;
     }
 }
