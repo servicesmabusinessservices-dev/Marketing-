@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../ui/Icon';
+import NotificationPanel from '../ui/NotificationPanel';
 
 const getTitle = (location) => {
   const params = new URLSearchParams(location.search);
@@ -93,6 +94,9 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
           style={{ cursor: 'pointer' }}
         >
           <Icon name="search" size={13} color="var(--text-3)" decorative />
+          <input type="search" aria-label="Search contacts and emails" placeholder="Search contacts, emails" />
+        </div>
+        <NotificationPanel />
           <span style={{ color: 'var(--text-4)', fontSize: 'var(--text-sm)' }}>Search... ⌘K</span>
         </button>
         <span className="topbar-btn topbar-btn-static icon-only" aria-hidden="true">

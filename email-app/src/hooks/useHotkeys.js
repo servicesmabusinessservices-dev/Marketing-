@@ -4,15 +4,21 @@ const MODIFIER_KEYS = new Set(['Control', 'Alt', 'Shift', 'Meta']);
 const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 
 /**
- * Parse a shortcut string into a normalized descriptor.
- * Supports: "mod+k", "shift+mod+k", "g d" (two-key sequence), "j", "Escape"
- * "mod" maps to Meta on Mac and Control elsewhere.
+ * Parse shortcut string
+ * Supports:
+ * - "mod+k"
+ * - "shift+mod+k"
+ * - "g d" (sequence)
  */
 function parseShortcut(shortcut) {
   const parts = shortcut.split(' ').map(s => s.trim()).filter(Boolean);
 
   if (parts.length === 2) {
-    return { type: 'sequence', first: parts[0].toLowerCase(), second: parts[1].toLowerCase() };
+    return {
+      type: 'sequence',
+      first: parts[0].toLowerCase(),
+      second: parts[1].toLowerCase()
+    };
   }
 
   const keys = parts[0].split('+').map(k => k.trim().toLowerCase());
@@ -23,8 +29,7 @@ function parseShortcut(shortcut) {
 
   for (const k of keys) {
     if (k === 'mod') {
-      if (isMac) modifiers.meta = true;
-      else modifiers.ctrl = true;
+      isMac ? (modifiers.meta = true) : (modifiers.ctrl = true);
     } else if (k === 'ctrl' || k === 'control') {
       modifiers.ctrl = true;
     } else if (k === 'alt') {
@@ -43,6 +48,7 @@ function parseShortcut(shortcut) {
 
 function matchesSingle(event, desc) {
   const eventKey = event.key.toLowerCase();
+
   return (
     eventKey === desc.key &&
     event.ctrlKey === desc.ctrl &&
@@ -61,12 +67,18 @@ function isEditableTarget(event) {
 }
 
 /**
- * Register global keyboard shortcuts.
+ * useHotkeys Hook
  *
- * @param {Record<string, () => void>} keyMap
- *   e.g. { 'mod+k': openPalette, 'j': nextEmail, 'g d': gotoDashboard }
- * @param {object} [options]
- * @param {boolean} [options.enableInInputs=false] Fire even when focus is in an input/textarea
+ * @param {Record<string, Function>} keyMap
+ * Example:
+ * {
+ *   'mod+k': openSearch,
+ *   'j': nextItem,
+ *   'g d': goDashboard
+ * }
+ *
+ * @param {object} options
+ * @param {boolean} options.enableInInputs
  */
 export function useHotkeys(keyMap, { enableInInputs = false } = {}) {
   const keyMapRef = useRef(keyMap);
@@ -86,29 +98,41 @@ export function useHotkeys(keyMap, { enableInInputs = false } = {}) {
       for (const [shortcut, callback] of Object.entries(currentMap)) {
         const desc = parseShortcut(shortcut);
 
+        // 🔹 Sequence (e.g., "g d")
         if (desc.type === 'sequence') {
-          if (pendingRef.current === desc.first && event.key.toLowerCase() === desc.second &&
-              !event.ctrlKey && !event.altKey && !event.metaKey) {
+          if (
+            pendingRef.current === desc.first &&
+            event.key.toLowerCase() === desc.second &&
+            !event.ctrlKey &&
+            !event.altKey &&
+            !event.metaKey
+          ) {
             event.preventDefault();
             pendingRef.current = null;
             clearTimeout(timerRef.current);
             callback();
             return;
           }
-        } else if (desc.type === 'single') {
-          if (matchesSingle(event, desc)) {
-            event.preventDefault();
-            callback();
-            return;
-          }
+        }
+
+        // 🔹 Single key
+        if (desc.type === 'single' && matchesSingle(event, desc)) {
+          event.preventDefault();
+          callback();
+          return;
         }
       }
 
+      // 🔹 Track first key for sequences
       const hasSequences = Object.keys(currentMap).some(s => s.includes(' '));
+
       if (hasSequences && !event.ctrlKey && !event.altKey && !event.metaKey) {
         pendingRef.current = event.key.toLowerCase();
+
         clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => { pendingRef.current = null; }, 800);
+        timerRef.current = setTimeout(() => {
+          pendingRef.current = null;
+        }, 800);
       } else {
         pendingRef.current = null;
       }
@@ -118,6 +142,7 @@ export function useHotkeys(keyMap, { enableInInputs = false } = {}) {
 
   useEffect(() => {
     document.addEventListener('keydown', handler);
+
     return () => {
       document.removeEventListener('keydown', handler);
       clearTimeout(timerRef.current);

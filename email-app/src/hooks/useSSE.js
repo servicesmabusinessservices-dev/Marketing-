@@ -2,16 +2,21 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE_URL } from '../config/authConfig';
 
 /**
- * Hook that consumes a Server-Sent Events endpoint.
+ * Hook to consume a Server-Sent Events (SSE) endpoint
  *
- * @param {string|null} path  Relative API path, e.g. "/email/bulk-send/abc/stream".
- *                            Pass null to disable/disconnect.
- * @returns {{ data: any, status: 'idle'|'connecting'|'open'|'closed'|'error', error: string|null, close: () => void }}
+ * @param {string|null} path Relative API path (e.g. "/email/bulk-send/abc/stream")
+ * @returns {{
+ *   data: any,
+ *   status: 'idle'|'connecting'|'open'|'closed'|'error',
+ *   error: string|null,
+ *   close: () => void
+ * }}
  */
 export function useSSE(path) {
   const [data, setData] = useState(null);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
+
   const esRef = useRef(null);
 
   const close = useCallback(() => {
@@ -24,6 +29,7 @@ export function useSSE(path) {
 
   useEffect(() => {
     if (!path) {
+      close();
       setStatus('idle');
       setData(null);
       setError(null);
@@ -32,7 +38,10 @@ export function useSSE(path) {
 
     const token = localStorage.getItem('jwt_token');
     const separator = path.includes('?') ? '&' : '?';
-    const url = `${API_BASE_URL}${path}${token ? `${separator}access_token=${encodeURIComponent(token)}` : ''}`;
+
+    const url = `${API_BASE_URL}${path}${
+      token ? `${separator}access_token=${encodeURIComponent(token)}` : ''
+    }`;
 
     setStatus('connecting');
     setError(null);
@@ -40,7 +49,9 @@ export function useSSE(path) {
     const es = new EventSource(url);
     esRef.current = es;
 
-    es.onopen = () => setStatus('open');
+    es.onopen = () => {
+      setStatus('open');
+    };
 
     es.onmessage = (event) => {
       try {
@@ -54,15 +65,20 @@ export function useSSE(path) {
     es.onerror = () => {
       setError('SSE connection failed');
       setStatus('error');
-      es.close();
-      esRef.current = null;
+
+      if (esRef.current) {
+        esRef.current.close();
+        esRef.current = null;
+      }
     };
 
     return () => {
-      es.close();
-      esRef.current = null;
+      if (esRef.current) {
+        esRef.current.close();
+        esRef.current = null;
+      }
     };
-  }, [path]);
+  }, [path, close]);
 
   return { data, status, error, close };
 }
