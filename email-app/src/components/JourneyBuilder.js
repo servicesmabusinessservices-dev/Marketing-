@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
@@ -31,6 +34,128 @@ const makeStep = (order) => ({
   toLeadStage: ''
 });
 
+const SortableStep = ({ step, index, stepsLength, updateStep, removeStep, templates }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step._id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 10 : 'auto',
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="jb-step-row">
+      <div className="jb-step-connector">
+        <div className={`jb-step-dot ${step.stepType}`} />
+        {index < stepsLength - 1 && <div className="jb-step-line" />}
+      </div>
+      <div className="jb-step-card">
+        <div className="jb-step-top">
+          <button className="jb-drag-handle" {...attributes} {...listeners} title="Drag to reorder" aria-label={`Drag step ${index + 1}`}>
+            <Icon name="grip" size={14} />
+          </button>
+          <span className="jb-step-num">#{index + 1}</span>
+          <select
+            className="form-input jb-step-type-select"
+            value={step.stepType}
+            onChange={(e) => updateStep(step._id, 'stepType', e.target.value)}
+          >
+            {STEP_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+          <span className={`jb-type-badge ${step.stepType}`}>
+            {STEP_TYPES.find((t) => t.value === step.stepType)?.label}
+          </span>
+          <button
+            className="jb-step-remove"
+            onClick={() => removeStep(step._id)}
+            title="Remove step"
+            aria-label={`Remove step ${index + 1}`}
+          >✕</button>
+        </div>
+
+        <div className="jb-step-fields">
+          <div className="form-group">
+            <label className="form-label">Delay (minutes)</label>
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              value={step.delayMinutes}
+              onChange={(e) => updateStep(step._id, 'delayMinutes', e.target.value)}
+              placeholder="0"
+            />
+          </div>
+
+          {step.stepType === 'send_email' && (
+            <div className="form-group">
+              <label className="form-label">Template</label>
+              <select
+                className="form-input"
+                value={step.templateId}
+                onChange={(e) => updateStep(step._id, 'templateId', e.target.value)}
+              >
+                <option value="">Select template</option>
+                {templates.map((t) => (
+                  <option key={t.templateId} value={t.templateId}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {step.stepType === 'advance_stage' && (
+            <div className="form-group">
+              <label className="form-label">Target Stage</label>
+              <select
+                className="form-input"
+                value={step.toLeadStage}
+                onChange={(e) => updateStep(step._id, 'toLeadStage', e.target.value)}
+              >
+                <option value="">Select stage</option>
+                {LEAD_STAGES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {step.stepType === 'emit_event' && (
+            <>
+              <div className="form-group">
+                <label className="form-label">Condition Event Type</label>
+                <select
+                  className="form-input"
+                  value={step.conditionEventType}
+                  onChange={(e) => updateStep(step._id, 'conditionEventType', e.target.value)}
+                >
+                  <option value="">No condition</option>
+                  {EVENT_TYPES.map((et) => (
+                    <option key={et} value={et}>{et}</option>
+                  ))}
+                </select>
+              </div>
+              {step.conditionEventType && (
+                <div className="form-group">
+                  <label className="form-label">Condition Window (hours)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    value={step.conditionWindowHours}
+                    onChange={(e) => updateStep(step._id, 'conditionWindowHours', e.target.value)}
+                    placeholder="e.g. 72"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const JourneyBuilder = () => {
   const { journeyId } = useParams();
   const navigate = useNavigate();
@@ -52,6 +177,24 @@ const JourneyBuilder = () => {
   const { isBlocked, confirmNavigation, cancelNavigation } = useUnsavedChangesWarning(isDirty);
 
   const autosaveKey = `jb_autosave_${journeyId}`;
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setSteps((prev) => {
+      const oldIndex = prev.findIndex((s) => s._id === active.id);
+      const newIndex = prev.findIndex((s) => s._id === over.id);
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      return reordered.map((s, i) => ({ ...s, stepOrder: i + 1 }));
+    });
+    setIsDirty(true);
+  };
 
   // Initialise steps from query data whenever the journey loads
   useEffect(() => {
@@ -239,116 +382,16 @@ const JourneyBuilder = () => {
           {steps.length === 0 ? (
             <div className="jb-empty">No steps yet. Add your first step below.</div>
           ) : (
-            <div className="jb-canvas">
-              {steps.map((step, index) => (
-                <div key={step._id} className="jb-step-row">
-                  <div className="jb-step-connector">
-                    <div className={`jb-step-dot ${step.stepType}`} />
-                    {index < steps.length - 1 && <div className="jb-step-line" />}
-                  </div>
-                  <div className="jb-step-card">
-                    <div className="jb-step-top">
-                      <span className="jb-step-num">#{index + 1}</span>
-                      <select
-                        className="form-input jb-step-type-select"
-                        value={step.stepType}
-                        onChange={(e) => updateStep(step._id, 'stepType', e.target.value)}
-                      >
-                        {STEP_TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
-                        ))}
-                      </select>
-                      <span className={`jb-type-badge ${step.stepType}`}>
-                        {STEP_TYPES.find((t) => t.value === step.stepType)?.label}
-                      </span>
-                      <button
-                        className="jb-step-remove"
-                        onClick={() => removeStep(step._id)}
-                        title="Remove step"
-                        aria-label={`Remove step ${index + 1}`}
-                      >✕</button>
-                    </div>
-
-                    <div className="jb-step-fields">
-                      <div className="form-group">
-                        <label className="form-label">Delay (minutes)</label>
-                        <input
-                          className="form-input"
-                          type="number"
-                          min="0"
-                          value={step.delayMinutes}
-                          onChange={(e) => updateStep(step._id, 'delayMinutes', e.target.value)}
-                          placeholder="0"
-                        />
-                      </div>
-
-                      {step.stepType === 'send_email' && (
-                        <div className="form-group">
-                          <label className="form-label">Template</label>
-                          <select
-                            className="form-input"
-                            value={step.templateId}
-                            onChange={(e) => updateStep(step._id, 'templateId', e.target.value)}
-                          >
-                            <option value="">Select template</option>
-                            {templates.map((t) => (
-                              <option key={t.templateId} value={t.templateId}>{t.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      {step.stepType === 'advance_stage' && (
-                        <div className="form-group">
-                          <label className="form-label">Target Stage</label>
-                          <select
-                            className="form-input"
-                            value={step.toLeadStage}
-                            onChange={(e) => updateStep(step._id, 'toLeadStage', e.target.value)}
-                          >
-                            <option value="">Select stage</option>
-                            {LEAD_STAGES.map((s) => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      {step.stepType === 'emit_event' && (
-                        <>
-                          <div className="form-group">
-                            <label className="form-label">Condition Event Type</label>
-                            <select
-                              className="form-input"
-                              value={step.conditionEventType}
-                              onChange={(e) => updateStep(step._id, 'conditionEventType', e.target.value)}
-                            >
-                              <option value="">No condition</option>
-                              {EVENT_TYPES.map((et) => (
-                                <option key={et} value={et}>{et}</option>
-                              ))}
-                            </select>
-                          </div>
-                          {step.conditionEventType && (
-                            <div className="form-group">
-                              <label className="form-label">Condition Window (hours)</label>
-                              <input
-                                className="form-input"
-                                type="number"
-                                min="1"
-                                value={step.conditionWindowHours}
-                                onChange={(e) => updateStep(step._id, 'conditionWindowHours', e.target.value)}
-                                placeholder="e.g. 72"
-                              />
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={steps.map((s) => s._id)} strategy={verticalListSortingStrategy}>
+                <div className="jb-canvas">
+                  {steps.map((step, index) => (
+                    <SortableStep key={step._id} step={step} index={index} stepsLength={steps.length}
+                      updateStep={updateStep} removeStep={removeStep} templates={templates} />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
 
           <button className="jb-add-btn" onClick={addStep}>

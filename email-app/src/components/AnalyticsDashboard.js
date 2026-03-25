@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -15,6 +15,7 @@ import ErrorState from './ui/ErrorState';
 import '../components/ui/DashboardCards.css';
 import { useAnalytics } from '../hooks/useApi';
 import { generateAnalyticsInsights } from '../utils/insightEngine';
+import { exportToCSV } from '../utils/exportData';
 import {
   STAGE_COLORS, CHART_COLORS, CHART_PALETTE, CHART_HEIGHT, DONUT_INNER_RATIO,
   getThemeStyles,
@@ -169,6 +170,26 @@ const AnalyticsDashboard = () => {
           <button type="button" className="refresh-btn" onClick={refetch}>
             <Icon name="refresh" size={14} color="currentColor" />
             Refresh
+          </button>
+          <button type="button" className="refresh-btn" onClick={() => {
+            const rows = [
+              { metric: 'Total Sent', value: engagement.sent ?? 0 },
+              { metric: 'Open Rate', value: `${engagement.openRate ?? 0}%` },
+              { metric: 'Click Rate', value: `${engagement.clickRate ?? 0}%` },
+              { metric: 'Reply Rate', value: `${engagement.replyRate ?? 0}%` },
+              { metric: 'Funnel: New', value: stageFunnel.New ?? 0 },
+              { metric: 'Funnel: Qualified', value: stageFunnel.Qualified ?? 0 },
+              { metric: 'Funnel: Proposal', value: stageFunnel.Proposal ?? 0 },
+              { metric: 'Funnel: Won', value: stageFunnel.Won ?? 0 },
+              { metric: 'Conversion: New→Qual', value: `${conversionRates.newToQualified ?? 0}%` },
+              { metric: 'Conversion: Qual→Prop', value: `${conversionRates.qualifiedToProposal ?? 0}%` },
+              { metric: 'Conversion: Prop→Won', value: `${conversionRates.proposalToWon ?? 0}%` },
+              { metric: 'Win Rate', value: `${conversionRates.overallWinRate ?? 0}%` },
+            ];
+            exportToCSV(rows, [{ key: 'metric', label: 'Metric' }, { key: 'value', label: 'Value' }], `analytics-${days}d.csv`);
+          }}>
+            <Icon name="download" size={14} color="currentColor" />
+            Export
           </button>
         </div>
       </div>

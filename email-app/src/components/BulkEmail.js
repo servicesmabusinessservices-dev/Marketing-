@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { gmailService } from '../services/gmailService';
+import { useSSE } from '../hooks/useSSE';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
 import ConfirmDialog from './ui/ConfirmDialog';
@@ -97,34 +98,42 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const [totalCount, setTotalCount] = useState(0);
   const feedbackShownRef = useRef(false);
 
-  //  React Query polling - replaces the 600x1.5s loop (no memory leak) 
+  //  SSE primary – falls back to React Query polling on error 
+  const ssePath = activeJobId && isScheduling
+    ? `/email/bulk-send/${activeJobId}/stream`
+    : null;
+  const { data: sseData, status: sseStatus } = useSSE(ssePath);
+  const usePollingFallback = sseStatus === 'error';
+
   const { data: polledStatus } = useQuery({
     queryKey: ['bulkJobStatus', activeJobId],
     queryFn: () => gmailService.getBulkEmailStatus(activeJobId),
-    enabled: !!activeJobId && isScheduling,
+    enabled: !!activeJobId && isScheduling && usePollingFallback,
     refetchInterval: (query) => {
       const s = query.state.data?.status;
       return (s === 'Completed' || s === 'Failed') ? false : 1500;
     },
   });
 
-  // Sync polling results into local state
+  const liveStatus = usePollingFallback ? polledStatus : sseData;
+
+  // Sync live results into local state
   useEffect(() => {
-    if (!polledStatus) return;
-    setProcessedCount(polledStatus.processedCount || 0);
-    setSuccessCount(polledStatus.successCount || 0);
-    setFailureCount(polledStatus.failureCount || 0);
-    setTotalCount((current) => polledStatus.totalRecipients || current);
-    const s = polledStatus.status?.toString() ?? 'Queued';
+    if (!liveStatus) return;
+    setProcessedCount(liveStatus.processedCount || 0);
+    setSuccessCount(liveStatus.successCount || 0);
+    setFailureCount(liveStatus.failureCount || 0);
+    setTotalCount((current) => liveStatus.totalRecipients || current);
+    const s = liveStatus.status?.toString() ?? 'Queued';
     if ((s === 'Completed' || s === 'Failed') && !feedbackShownRef.current) {
       feedbackShownRef.current = true;
       setIsScheduling(false);
       showFeedback(
-        `Bulk email finished. Success: ${polledStatus.successCount || 0}, Failed: ${polledStatus.failureCount || 0}.`,
+        `Bulk email finished. Success: ${liveStatus.successCount || 0}, Failed: ${liveStatus.failureCount || 0}.`,
         s === 'Completed' ? 'success' : 'warning'
       );
     }
-  }, [polledStatus, showFeedback]);
+  }, [liveStatus, showFeedback]);
 
   useEffect(() => {
     return () => {
@@ -134,7 +143,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     };
   }, []);
 
-  const jobStatus = polledStatus?.status?.toString() ?? (activeJobId ? 'Queued' : null);
+  const jobStatus = liveStatus?.status?.toString() ?? (activeJobId ? 'Queued' : null);
 
   //  Handlers 
   const handleClose = useCallback(() => {
@@ -252,6 +261,25 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     ? suppressionSummary.byReason.map((item) => `${item.reason}: ${item.count}`).join(' | ')
     : 'No suppressions yet.';
   const tokenList = tokens.map((token) => `{{${token}}}`);
+
+  const [previewHtml, setPreviewHtml] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const handlePreviewRendered = async () => {
+    setPreviewLoading(true);
+    try {
+      const result = await gmailService.previewTemplate({
+        subject,
+        body: content,
+        recipientEmail: recipientTags[0] || 'preview@example.com',
+      });
+      setPreviewHtml(result.html || result.body || content);
+    } catch {
+      showFeedback('Preview failed.', 'error');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const WIZARD_STEPS = ['Recipients', 'Content', 'Preview', 'Send'];
 
@@ -497,6 +525,30 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             <div className="bulk-preview-section">
               <div className="bulk-preview-label">Body Preview</div>
               <div className="bulk-preview-body">{content.slice(0, 500)}{content.length > 500 ? '...' : ''}</div>
+              <button
+                type="button"
+                className="topbar-btn"
+                onClick={handlePreviewRendered}
+                disabled={previewLoading}
+                style={{ marginTop: 'var(--space-2)' }}
+              >
+                {previewLoading ? 'Loading…' : previewHtml ? 'Refresh Preview' : 'Preview Rendered'}
+              </button>
+              {previewHtml && (
+                <iframe
+                  title="Email Preview"
+                  sandbox=""
+                  srcDoc={previewHtml}
+                  style={{
+                    width: '100%',
+                    minHeight: 300,
+                    border: '1px solid var(--panel-border)',
+                    borderRadius: 'var(--radius-sm, 4px)',
+                    marginTop: 'var(--space-2)',
+                    background: '#fff',
+                  }}
+                />
+              )}
             </div>
             <div className="bulk-preview-section">
               <div className="bulk-preview-label">Delay</div>
