@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<CrmNoteEntity> CrmNotes => Set<CrmNoteEntity>();
     public DbSet<CrmTaskEntity> CrmTasks => Set<CrmTaskEntity>();
     public DbSet<PlatformUpdateEntity> PlatformUpdates => Set<PlatformUpdateEntity>();
+    public DbSet<NotificationEntity> Notifications => Set<NotificationEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -196,5 +197,15 @@ public class AppDbContext : DbContext
         platformUpdates.Property(x => x.Severity).HasMaxLength(40).HasCharSet("ascii");
         platformUpdates.Property(x => x.Title).HasMaxLength(300);
         platformUpdates.Property(x => x.Url).HasMaxLength(500);
+
+        var notifications = modelBuilder.Entity<NotificationEntity>();
+        notifications.HasKey(x => x.NotificationId);
+        notifications.HasIndex(x => new { x.UserEmail, x.IsRead, x.CreatedAtUtc });
+        notifications.Property(x => x.NotificationId).HasMaxLength(32).HasCharSet("ascii");
+        notifications.Property(x => x.UserEmail).HasMaxLength(320).HasCharSet("ascii");
+        notifications.Property(x => x.Type).HasMaxLength(60).HasCharSet("ascii");
+        notifications.Property(x => x.Title).HasMaxLength(300);
+        notifications.Property(x => x.Message).HasMaxLength(1000);
+        notifications.Property(x => x.LinkUrl).HasMaxLength(500);
     }
 }

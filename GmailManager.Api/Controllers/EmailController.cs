@@ -626,6 +626,65 @@ public class EmailController : ControllerBase
         return Ok(MapBulkJobStatus(job, false));
     }
 
+    [HttpGet("bulk-send/{jobId}/stream")]
+    public async Task BulkSendStream(string jobId, CancellationToken cancellationToken)
+    {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            Response.StatusCode = 401;
+            return;
+        }
+
+        // Validate job ownership before starting the stream
+        var initialJob = await _bulkEmailJobStore.GetAsync(jobId, cancellationToken);
+        if (initialJob == null || !string.Equals(initialJob.UserEmail, userEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            Response.StatusCode = 404;
+            return;
+        }
+
+        Response.Headers["Content-Type"] = "text/event-stream";
+        Response.Headers["Cache-Control"] = "no-cache";
+        Response.Headers["Connection"] = "keep-alive";
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        var isDev = await ShouldUseDevelopmentEmailFallbackAsync(userEmail);
+        var lastSnapshot = string.Empty;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            BulkEmailJob? job;
+
+            if (isDev)
+            {
+                var demoJob = await _developmentDemoEmailStore.GetBulkSendJobAsync(userEmail, jobId);
+                job = demoJob;
+            }
+            else
+            {
+                job = await _bulkEmailJobStore.GetAsync(jobId, cancellationToken);
+            }
+
+            if (job == null) break;
+
+            var snapshot = System.Text.Json.JsonSerializer.Serialize(MapBulkJobStatus(job, isDev));
+            if (snapshot != lastSnapshot)
+            {
+                lastSnapshot = snapshot;
+                await Response.WriteAsync($"data: {snapshot}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+
+            if (job.Status == BulkEmailJobStatus.Completed || job.Status == BulkEmailJobStatus.Failed)
+            {
+                break;
+            }
+
+            await Task.Delay(1000, cancellationToken);
+        }
+    }
+
     private static EmailListItem MapDemoListItem(DevelopmentDemoEmail email)
         => new()
         {

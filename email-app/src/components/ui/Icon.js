@@ -217,6 +217,23 @@ const Icon = ({ name, size = 16, color = 'currentColor', title, ariaLabel, decor
         <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
       </>
     ),
+    grip: (
+      <>
+        <circle cx="9" cy="5" r="1.5" fill="currentColor" />
+        <circle cx="15" cy="5" r="1.5" fill="currentColor" />
+        <circle cx="9" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="15" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="9" cy="19" r="1.5" fill="currentColor" />
+        <circle cx="15" cy="19" r="1.5" fill="currentColor" />
+      </>
+    ),
+    download: (
+      <>
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </>
+    ),
   };
 
   const icon = icons[name];

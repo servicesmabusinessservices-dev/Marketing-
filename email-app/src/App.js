@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from './context/ThemeContext';
@@ -37,7 +37,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// ── Protected workspace guard ─────────────────────────────────────────────────
+// ── Route guards ──────────────────────────────────────────────────────────────
 const PublicWorkspace = () => {
   if (hasSession()) {
     return <Navigate to="/dashboard" replace />;
@@ -60,6 +60,42 @@ const ProtectedWorkspace = () => {
   );
 };
 
+const CatchAllRedirect = () => <Navigate to={hasSession() ? '/dashboard' : '/'} replace />;
+
+// ── Data router (required for useBlocker / useUnsavedChangesWarning) ──────────
+const router = createBrowserRouter([
+  {
+    element: <ErrorBoundary><Outlet /></ErrorBoundary>,
+    children: [
+      {
+        element: <PublicWorkspace />,
+        children: [
+          { path: '/', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
+          { path: '/auth-success', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
+          { path: '/auth-error', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
+        ],
+      },
+      {
+        element: <ProtectedWorkspace />,
+        children: [
+          { path: '/dashboard', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><Dashboard /></Suspense></ErrorBoundary> },
+          { path: '/emails', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><EmailList /></Suspense></ErrorBoundary> },
+          { path: '/emails/bulk', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><BulkEmail mode="page" /></Suspense></ErrorBoundary> },
+          { path: '/email/:emailId', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><EmailList /></Suspense></ErrorBoundary> },
+          { path: '/marketing', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><Marketing /></Suspense></ErrorBoundary> },
+          { path: '/marketing/template-editor', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><TemplateEditor /></Suspense></ErrorBoundary> },
+          { path: '/marketing/pipeline', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><PipelineBoard /></Suspense></ErrorBoundary> },
+          { path: '/marketing/analytics', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><AnalyticsDashboard /></Suspense></ErrorBoundary> },
+          { path: '/marketing/contacts/:contactId', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><ContactProfile /></Suspense></ErrorBoundary> },
+          { path: '/marketing/journeys/:journeyId', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><JourneyBuilder /></Suspense></ErrorBoundary> },
+          { path: '/marketing/suppression', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><SuppressionList /></Suspense></ErrorBoundary> },
+        ],
+      },
+      { path: '*', element: <CatchAllRedirect /> },
+    ],
+  },
+]);
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -67,153 +103,7 @@ function App() {
         <FeedbackProvider>
           <div className="app-shell">
             <GlobalCardEffects />
-            <BrowserRouter>
-              <ErrorBoundary>
-                <Routes>
-                  <Route element={<PublicWorkspace />}>
-                    <Route
-                      path="/"
-                      element={
-                        <Suspense fallback={<PageSkeleton />}>
-                          <AccountSelection />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/auth-success"
-                      element={
-                        <Suspense fallback={<PageSkeleton />}>
-                          <AccountSelection />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/auth-error"
-                      element={
-                        <Suspense fallback={<PageSkeleton />}>
-                          <AccountSelection />
-                        </Suspense>
-                      }
-                    />
-                  </Route>
-
-                  <Route element={<ProtectedWorkspace />}>
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <Dashboard />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/emails"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <EmailList />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/emails/bulk"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <BulkEmail mode="page" />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/email/:emailId"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <EmailList />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <Marketing />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing/template-editor"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <TemplateEditor />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing/pipeline"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <PipelineBoard />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing/analytics"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <AnalyticsDashboard />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing/contacts/:contactId"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <ContactProfile />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing/journeys/:journeyId"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <JourneyBuilder />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/marketing/suppression"
-                      element={
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageSkeleton />}>
-                            <SuppressionList />
-                          </Suspense>
-                        </ErrorBoundary>
-                      }
-                    />
-                  </Route>
-
-                  <Route path="*" element={<Navigate to={hasSession() ? '/dashboard' : '/'} replace />} />
-                </Routes>
-              </ErrorBoundary>
-            </BrowserRouter>
+            <RouterProvider router={router} />
           </div>
         </FeedbackProvider>
       </ThemeProvider>

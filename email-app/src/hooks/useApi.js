@@ -27,6 +27,7 @@ export const QueryKeys = {
   suppressionSummary: ()       => ['suppressionSummary'],
   leadStageHistory:   (id)     => ['leadStageHistory', id],
   tokens:             ()       => ['tokens'],
+  notifications:      ()       => ['notifications'],
 };
 
 // ── Email queries ─────────────────────────────────────────────────────────────
@@ -245,9 +246,37 @@ export const useUpdateContactLeadStage = () => {
   return useMutation({
     mutationFn: ({ contactId, toLeadStage, reason }) =>
       gmailService.updateContactLeadStage(contactId, toLeadStage, reason),
-    onSuccess: (_data, variables) => {
+    onMutate: async ({ contactId, toLeadStage }) => {
+      await qc.cancelQueries({ queryKey: ['pipeline'] });
+      const previousPipeline = qc.getQueriesData({ queryKey: ['pipeline'] });
+      qc.setQueriesData({ queryKey: ['pipeline'] }, (old) => {
+        if (!old?.columns) return old;
+        let movedContact = null;
+        const columns = old.columns.map((col) => {
+          const found = col.contacts?.find((c) => c.contactId === contactId);
+          if (found) movedContact = { ...found, leadStage: toLeadStage };
+          return { ...col, contacts: (col.contacts || []).filter((c) => c.contactId !== contactId) };
+        }).map((col) => {
+          if (col.stage === toLeadStage && movedContact) {
+            return { ...col, contacts: [...col.contacts, movedContact] };
+          }
+          return col;
+        });
+        return { ...old, columns };
+      });
+      return { previousPipeline };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousPipeline) {
+        context.previousPipeline.forEach(([key, data]) => {
+          qc.setQueryData(key, data);
+        });
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       qc.invalidateQueries({ queryKey: QueryKeys.contactById(variables.contactId) });
       qc.invalidateQueries({ queryKey: ['contacts'] });
+      qc.invalidateQueries({ queryKey: ['pipeline'] });
       qc.invalidateQueries({ queryKey: QueryKeys.leadStageHistory(variables.contactId) });
     },
   });
@@ -337,6 +366,35 @@ export const usePublishJourney = () => {
     onSuccess: (_data, journeyId) => {
       qc.invalidateQueries({ queryKey: QueryKeys.journeyById(journeyId) });
       qc.invalidateQueries({ queryKey: QueryKeys.journeys() });
+    },
+  });
+};
+
+// ── Notification queries ──────────────────────────────────────────────────────
+export const useNotifications = () =>
+  useQuery({
+    queryKey: QueryKeys.notifications(),
+    queryFn: () => gmailService.getNotifications(),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+export const useMarkNotificationRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => gmailService.markNotificationRead(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QueryKeys.notifications() });
+    },
+  });
+};
+
+export const useMarkAllNotificationsRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => gmailService.markAllNotificationsRead(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QueryKeys.notifications() });
     },
   });
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../ui/Icon';
+import NotificationPanel from '../ui/NotificationPanel';
 
 const getTitle = (location) => {
   const params = new URLSearchParams(location.search);
@@ -57,7 +58,7 @@ const getTitle = (location) => {
   return { crumb: 'Home', title: 'Workspace' };
 };
 
-const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = false, menuButtonRef }) => {
+const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = false, menuButtonRef, onOpenPalette }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const meta = getTitle(location);
@@ -85,10 +86,19 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
         <span className="current">{meta.title}</span>
       </nav>
       <div className="topbar-right">
-        <div className="search-box topbar-search" role="search" aria-label="Workspace search">
+        <button
+          type="button"
+          className="search-box topbar-search"
+          onClick={onOpenPalette}
+          aria-label="Open command palette (Ctrl+K)"
+          style={{ cursor: 'pointer' }}
+        >
           <Icon name="search" size={13} color="var(--text-3)" decorative />
           <input type="search" aria-label="Search contacts and emails" placeholder="Search contacts, emails" />
         </div>
+        <NotificationPanel />
+          <span style={{ color: 'var(--text-4)', fontSize: 'var(--text-sm)' }}>Search... ⌘K</span>
+        </button>
         <span className="topbar-btn topbar-btn-static icon-only" aria-hidden="true">
           <Icon name="bell" size={14} decorative />
         </span>

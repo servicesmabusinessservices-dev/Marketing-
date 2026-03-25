@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gmailService } from '../../services/gmailService';
 import { useFeedback } from '../../context/FeedbackContext';
 import Icon from '../ui/Icon';
 import EmptyState from '../ui/EmptyState';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import DataTable from '../ui/DataTable';
+import { exportToCSV, exportToExcel } from '../../utils/exportData';
 import { useContacts, useLists } from '../../hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -44,17 +46,17 @@ const ContactsTab = () => {
     return matchesSource && matchesSearch;
   }), [contacts, contactSearch, contactSourceFilter]);
 
-  const allFilteredSelected = filteredContacts.length > 0 && filteredContacts.every(c => selectedContactIds.has(c.contactId));
+  const handleSelectionChange = useCallback((sel) => {
+    setSelectedContactIds(sel);
+  }, []);
 
-  const toggleContact = (id) => setSelectedContactIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-  const toggleSelectAll = () => {
-    if (allFilteredSelected) {
-      setSelectedContactIds(prev => { const n = new Set(prev); filteredContacts.forEach(c => n.delete(c.contactId)); return n; });
-    } else {
-      setSelectedContactIds(prev => { const n = new Set(prev); filteredContacts.forEach(c => n.add(c.contactId)); return n; });
-    }
-  };
+  const contactColumns = useMemo(() => [
+    { key: 'name', label: 'Name', render: (_v, row) => `${row.firstName || ''} ${row.lastName || ''}`.trim() || '-' },
+    { key: 'email', label: 'Email' },
+    { key: 'company', label: 'Company', render: (v) => v || '-' },
+    { key: 'leadStage', label: 'Stage', render: (v) => <span className="marketing-stage-pill">{v || 'New'}</span> },
+    { key: 'source', label: 'Source', render: (_v, row) => (row.source || row.Source || '-') },
+  ], []);
 
   const handleCreateContact = async (event) => {
     event.preventDefault();
@@ -180,51 +182,25 @@ const ContactsTab = () => {
           </div>
         )}
 
-        <div className="table-wrap">
-          <table className="marketing-table">
-            <thead>
-              <tr>
-                <th className="marketing-th-check">
-                  <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} />
-                </th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Company</th>
-                <th>Stage</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContacts.length === 0 ? (
-                <tr><td colSpan={6} className="marketing-table-empty"><EmptyState icon="users" title="No contacts found" size="sm" /></td></tr>
-              ) : (
-                filteredContacts.slice(0, 200).map((contact) => (
-                  <tr
-                    key={contact.contactId}
-                    className={`marketing-row${selectedContactIds.has(contact.contactId) ? ' selected' : ''}`}
-                    onClick={() => navigate(`/marketing/contacts/${contact.contactId}`)}
-                  >
-                    <td className="marketing-td-check" onClick={(e) => { e.stopPropagation(); toggleContact(contact.contactId); }}>
-                      <input type="checkbox" checked={selectedContactIds.has(contact.contactId)} onChange={() => toggleContact(contact.contactId)} onClick={(e) => e.stopPropagation()} />
-                    </td>
-                    <td className="marketing-td-strong">{contact.firstName || ''} {contact.lastName || ''}</td>
-                    <td className="marketing-td-muted">{contact.email}</td>
-                    <td className="marketing-td-muted">{contact.company || '-'}</td>
-                    <td><span className="marketing-stage-pill">{contact.leadStage || 'New'}</span></td>
-                    <td className="marketing-td-dim">{contact.source || contact.Source || '-'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          {filteredContacts.length > 200 && (
-            <div className="marketing-table-note">
-              Showing 200 of {filteredContacts.length} - use search or source filter to narrow down.
-            </div>
-          )}
-        </div>
+        <DataTable
+          columns={contactColumns}
+          data={filteredContacts}
+          sortable
+          paginated
+          pageSize={25}
+          selectable
+          onSelectionChange={handleSelectionChange}
+          onRowClick={(row) => navigate(`/marketing/contacts/${row.contactId}`)}
+          emptyMessage="No contacts found."
+        />
 
         <div className="marketing-csv-area">
+          <button type="button" className="topbar-btn" onClick={() => exportToCSV(filteredContacts, contactColumns, 'contacts.csv')}>
+            <Icon name="download" size={13} /> Export CSV
+          </button>
+          <button type="button" className="topbar-btn" onClick={() => exportToExcel(filteredContacts, contactColumns, 'contacts.xlsx')}>
+            <Icon name="download" size={13} /> Export Excel
+          </button>
           <button type="button" className="topbar-btn" onClick={() => setShowCsvImport(!showCsvImport)}>
             <Icon name="upload" size={13} /> CSV Import
           </button>
