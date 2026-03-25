@@ -94,14 +94,9 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
           style={{ cursor: 'pointer' }}
         >
           <Icon name="search" size={13} color="var(--text-3)" decorative />
-          <input type="search" aria-label="Search contacts and emails" placeholder="Search contacts, emails" />
-        </div>
-        <NotificationPanel />
           <span style={{ color: 'var(--text-4)', fontSize: 'var(--text-sm)' }}>Search... ⌘K</span>
         </button>
-        <span className="topbar-btn topbar-btn-static icon-only" aria-hidden="true">
-          <Icon name="bell" size={14} decorative />
-        </span>
+        <NotificationPanel />
         {showInboxAction && (
           <button
             type="button"

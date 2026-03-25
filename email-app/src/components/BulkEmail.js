@@ -6,7 +6,7 @@ import { useSSE } from '../hooks/useSSE';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
 import ConfirmDialog from './ui/ConfirmDialog';
-import LoadingSpinner from './ui/LoadingSpinner';
+
 import { useLists, useTemplates, useSuppressionSummary, useTokens } from '../hooks/useApi';
 
 //  Progress panel (memoised to avoid re-rendering with parent state) 
@@ -66,12 +66,6 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const templates = useMemo(() => templatesQuery.data?.templates || [], [templatesQuery.data]);
   const suppressionSummary = suppressionQuery.data ?? null;
   const tokens = useMemo(() => tokensQuery.data?.tokens || [], [tokensQuery.data]);
-  const loadingMetadata =
-    listsQuery.isLoading ||
-    templatesQuery.isLoading ||
-    suppressionQuery.isLoading ||
-    tokensQuery.isLoading;
-
   //  Compose state 
   const [recipientTags, setRecipientTags] = useState([]);
   const [emailInput, setEmailInput] = useState('');

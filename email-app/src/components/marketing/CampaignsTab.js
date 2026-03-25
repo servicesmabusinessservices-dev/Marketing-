@@ -16,9 +16,9 @@ const CampaignsTab = () => {
   const campaignsQuery = useCampaigns();
   const listsQuery = useLists();
   const templatesQuery = useTemplates();
-  const campaigns = campaignsQuery.data?.campaigns || [];
-  const lists = listsQuery.data?.lists || [];
-  const templates = templatesQuery.data?.templates || [];
+  const campaigns = useMemo(() => campaignsQuery.data?.campaigns || [], [campaignsQuery.data]);
+  const lists = useMemo(() => listsQuery.data?.lists || [], [listsQuery.data]);
+  const templates = useMemo(() => templatesQuery.data?.templates || [], [templatesQuery.data]);
 
   const [campaignForm, setCampaignForm] = useState({
     name: '', description: '', listId: '', templateId: ''

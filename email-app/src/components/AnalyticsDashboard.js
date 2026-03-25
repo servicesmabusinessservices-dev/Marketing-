@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -17,7 +17,7 @@ import { useAnalytics } from '../hooks/useApi';
 import { generateAnalyticsInsights } from '../utils/insightEngine';
 import { exportToCSV } from '../utils/exportData';
 import {
-  STAGE_COLORS, CHART_COLORS, CHART_PALETTE, CHART_HEIGHT, DONUT_INNER_RATIO,
+  STAGE_COLORS, CHART_COLORS, CHART_HEIGHT, DONUT_INNER_RATIO,
   getThemeStyles,
 } from '../utils/chartTheme';
 
