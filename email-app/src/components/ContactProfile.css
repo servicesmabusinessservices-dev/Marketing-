@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
@@ -38,15 +38,15 @@
 .cp-tags-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .stage-badge {
   font-size: var(--fs-xs);
   font-weight: var(--font-bold);
-  padding: 3px 10px;
+  padding: 3px var(--space-3);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   letter-spacing: 0.03em;
@@ -60,15 +60,15 @@
 .stage-badge.stage-rose   { background: var(--status-error-surface);   color: var(--status-error-text);    border: 1px solid var(--status-error-border); }
 
 .cp-deal {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--emerald);
   font-family: 'DM Mono', monospace;
 }
 
 .cp-tag {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
   border-radius: 6px;
   background: var(--glass);
   border: 1px solid var(--border);
@@ -80,19 +80,19 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: flex-end;
   width: min(100%, 260px);
 }
 
 .cp-back-row {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .cp-stage-form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
   min-width: min(100%, 200px);
   width: min(100%, 240px);
 }
@@ -103,14 +103,14 @@
 
 .cp-stage-form-row {
   display: flex;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 /* Layout */
 .cp-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: start;
 }
 
@@ -147,12 +147,12 @@
 /* Tabs */
 .cp-tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
   background: var(--navy-2);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 4px;
+  padding: var(--space-1);
   overflow-x: auto;
 }
 
@@ -180,9 +180,9 @@
 .cp-note-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 
@@ -193,10 +193,10 @@
   max-height: min(48vh, 420px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 4px;
+  padding-right: var(--space-1);
 }
 
-.cp-notes-list { display: flex; flex-direction: column; gap: 8px; }
+.cp-notes-list { display: flex; flex-direction: column; gap: var(--space-2); }
 
 .cp-note {
   padding: var(--space-md);
@@ -212,15 +212,15 @@
 .cp-task-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 
 .cp-task-row {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
@@ -258,14 +258,14 @@
 .cp-history-stages {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
   flex-wrap: wrap;
 }
 
-.cp-history-arrow { color: var(--text-3); font-size: 12px; }
-.cp-history-reason { font-size: 12px; color: var(--text-2); margin-bottom: 2px; }
-.cp-history-date { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+.cp-history-arrow { color: var(--text-3); font-size: var(--text-sm); }
+.cp-history-reason { font-size: var(--text-sm); color: var(--text-2); margin-bottom: 2px; }
+.cp-history-date { font-size: var(--text-xs); color: var(--text-3); font-family: 'DM Mono', monospace; }
 
 /* Responsive */
 @media (max-width: 1024px) {
@@ -293,15 +293,15 @@
 
 @media (max-width: 640px) {
   .cp-header {
-    padding: 16px;
-    gap: 14px;
+    padding: var(--space-4);
+    gap: var(--space-4);
   }
   .cp-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
   .cp-tab {
-    padding: 9px 12px;
+    padding: 9px var(--space-3);
     min-height: 40px;
   }
   .cp-stage-form {

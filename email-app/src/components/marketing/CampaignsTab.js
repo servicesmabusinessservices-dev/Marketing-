@@ -72,7 +72,7 @@ const CampaignsTab = () => {
     return <LoadingSpinner label="Loading campaigns..." />;
   }
   if (campaignsQuery.isError) return (
-    <EmptyState icon="!" title="Failed to load campaigns" action={{ label: 'Retry', onClick: () => campaignsQuery.refetch() }} />
+    <EmptyState icon="campaign" title="Failed to load campaigns" action={{ label: 'Retry', onClick: () => campaignsQuery.refetch() }} />
   );
 
   return (
@@ -109,7 +109,7 @@ const CampaignsTab = () => {
         </form>
 
         {campaigns.length === 0 ? (
-          <EmptyState title="No campaign drafts yet" subtitle="Create one above." size="sm" />
+          <EmptyState icon="campaign" title="No campaign drafts yet" subtitle="Create one above." size="sm" />
         ) : (
           <div className="data-list marketing-list-gap">
             {campaigns.map((campaign) => {

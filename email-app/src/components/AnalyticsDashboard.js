@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, ResponsiveContainer, Legend,
@@ -51,7 +52,7 @@ const JourneyPieTooltip = ({ active, payload }) => {
 
 /* ── Pie Chart custom label ── */
 const renderPieCenter = (total) => ({ cx, cy }) => (
-  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Syne', sans-serif", fill: 'var(--text-primary)' }}>
+  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" style={{ fontSize: 'var(--text-xl)', fontWeight: 700, fontFamily: "'Syne', sans-serif", fill: 'var(--text-primary)' }}>
     {total}
   </text>
 );
@@ -60,8 +61,12 @@ const renderPieCenter = (total) => ({ cx, cy }) => (
 
 const AnalyticsDashboard = () => {
   const { showFeedback } = useFeedback();
-  const [days, setDays] = useState(30);
-  const [ownerEmail, setOwnerEmail] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const days = Number(searchParams.get('days')) || 30;
+  const ownerEmail = searchParams.get('owner') || '';
+
+  const setDays = (v) => setSearchParams((prev) => { prev.set('days', v); return prev; }, { replace: true });
+  const setOwnerEmail = (v) => setSearchParams((prev) => { if (v) prev.set('owner', v); else prev.delete('owner'); return prev; }, { replace: true });
 
   const { data, isLoading, isError, refetch } = useAnalytics({
     days,
@@ -253,7 +258,7 @@ const AnalyticsDashboard = () => {
                     <Legend
                       iconType="circle"
                       iconSize={8}
-                      formatter={(v) => <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{v}</span>}
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', fontFamily: "'DM Sans', sans-serif" }}>{v}</span>}
                     />
                   </PieChart>
                 </ResponsiveContainer>

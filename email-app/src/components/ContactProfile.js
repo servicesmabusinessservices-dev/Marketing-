@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
+import ConfirmDialog from './ui/ConfirmDialog';
 import {
   useContactById,
   useContactNotes,
@@ -310,6 +311,7 @@ const ContactProfile = () => {
   const [editingStage, setEditingStage] = useState(false);
   const [newStage, setNewStage] = useState('');
   const [stageReason, setStageReason] = useState('');
+  const [pendingStageConfirm, setPendingStageConfirm] = useState(null);
 
   const handleAddNote = useCallback(async (event) => {
     event.preventDefault();
@@ -354,14 +356,12 @@ const ContactProfile = () => {
     }
   }, [showFeedback, updateTaskMutation]);
 
-  const handleUpdateStage = useCallback(async (event) => {
-    event.preventDefault();
-    if (!newStage) return;
+  const executeStageUpdate = useCallback(async (stage, reason) => {
     try {
       await updateStageMutation.mutateAsync({
         contactId,
-        toLeadStage: newStage,
-        reason: stageReason || 'Manual update',
+        toLeadStage: stage,
+        reason: reason || 'Manual update',
       });
       setEditingStage(false);
       setNewStage('');
@@ -370,13 +370,35 @@ const ContactProfile = () => {
     } catch (error) {
       showFeedback(error.response?.data?.error || 'Failed to update stage.', 'error');
     }
-  }, [contactId, newStage, showFeedback, stageReason, updateStageMutation]);
+  }, [contactId, showFeedback, updateStageMutation]);
+
+  const handleUpdateStage = useCallback(async (event) => {
+    event.preventDefault();
+    if (!newStage) return;
+    if (newStage === 'Won' || newStage === 'Lost') {
+      setPendingStageConfirm({ stage: newStage, reason: stageReason });
+      return;
+    }
+    executeStageUpdate(newStage, stageReason);
+  }, [newStage, stageReason, executeStageUpdate]);
 
   if (isLoading) {
     return (
-      <div className="content fade-in">
-        <div className="empty-state empty-state-top">
-          <p>Loading contact...</p>
+      <div className="content fade-in" style={{ padding: 'var(--space-lg)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+          <div className="skeleton-block" style={{ width: 56, height: 56, borderRadius: '50%' }} />
+          <div>
+            <div className="skeleton-block" style={{ width: 180, height: 18, borderRadius: 6, marginBottom: 8 }} />
+            <div className="skeleton-block" style={{ width: 120, height: 14, borderRadius: 6 }} />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card" style={{ padding: 'var(--space-md)' }}>
+              <div className="skeleton-block" style={{ width: '50%', height: 12, borderRadius: 6, marginBottom: 12 }} />
+              <div className="skeleton-block" style={{ width: '80%', height: 14, borderRadius: 6 }} />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -534,6 +556,21 @@ const ContactProfile = () => {
           {tab === 'history' && <HistoryTab stageHistory={stageHistory} />}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!pendingStageConfirm}
+        title={`Move to ${pendingStageConfirm?.stage}?`}
+        message={`This will mark the contact as "${pendingStageConfirm?.stage}". This is a terminal stage and typically cannot be reversed.`}
+        confirmLabel={pendingStageConfirm?.stage === 'Won' ? 'Mark as Won' : 'Mark as Lost'}
+        cancelLabel="Cancel"
+        tone={pendingStageConfirm?.stage === 'Lost' ? 'error' : 'warning'}
+        onConfirm={() => {
+          if (pendingStageConfirm) {
+            executeStageUpdate(pendingStageConfirm.stage, pendingStageConfirm.reason);
+          }
+          setPendingStageConfirm(null);
+        }}
+        onCancel={() => setPendingStageConfirm(null)}
+      />
     </div>
   );
 };

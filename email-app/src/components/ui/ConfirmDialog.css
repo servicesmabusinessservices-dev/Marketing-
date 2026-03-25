@@ -1,0 +1,86 @@
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 22, 0.56);
+  backdrop-filter: var(--blur-md);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--z-modal);
+  animation: confirmFadeIn var(--duration-base) ease;
+}
+
+.confirm-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-xl);
+  width: 90%;
+  max-width: 440px;
+  animation: confirmSlideUp var(--duration-slow) ease;
+}
+
+.confirm-card-warning { border-color: var(--status-warning-border); }
+.confirm-card-error   { border-color: var(--status-error-border); }
+
+.confirm-title {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--h3);
+  color: var(--text-primary);
+}
+
+.confirm-message {
+  margin: 0 0 var(--space-xl);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  line-height: var(--line-relaxed);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.confirm-btn {
+  padding: var(--btn-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  border: 1px solid transparent;
+  min-width: 90px;
+}
+
+.confirm-btn-cancel {
+  background: var(--control-bg);
+  color: var(--text-secondary);
+  border-color: var(--control-border);
+}
+.confirm-btn-cancel:hover {
+  background: var(--control-bg-hover);
+  border-color: var(--control-border-hover);
+}
+
+.confirm-btn-warning {
+  background: var(--gradient-amber);
+  color: var(--navy);
+}
+.confirm-btn-warning:hover { filter: brightness(1.05); }
+
+.confirm-btn-error {
+  background: var(--rose);
+  color: var(--text-primary);
+}
+.confirm-btn-error:hover { filter: brightness(1.1); }
+
+@keyframes confirmFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes confirmSlideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

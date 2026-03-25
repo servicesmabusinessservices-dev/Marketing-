@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useFeedback } from '../../context/FeedbackContext';
 import { useEmailSummary, useJourneySummary } from '../../hooks/useApi';
-import { handleUnauthorized } from '../../utils/session';
 import Icon from '../ui/Icon';
 
 const NAV_ITEMS = [
@@ -48,14 +47,9 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, side
       return undefined;
     }
 
-    if (sidebarError.response?.status === 401) {
-      handleUnauthorized(navigate, showFeedback);
-      return undefined;
-    }
-
     showFeedback(sidebarError.response?.data?.error || 'Failed to load workspace metrics.', 'error');
     return undefined;
-  }, [navigate, showFeedback, sidebarError]);
+  }, [showFeedback, sidebarError]);
 
   const unreadCount = emailSummary?.unreadCount;
   const inboxBadge = unreadCount !== undefined && unreadCount !== null ? String(unreadCount) : null;

@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmailEditor from 'react-email-editor';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import ConfirmDialog from './ui/ConfirmDialog';
+import useUnsavedChangesWarning from '../hooks/useUnsavedChangesWarning';
 
 const TemplateEditor = () => {
   const navigate = useNavigate();
@@ -15,6 +16,10 @@ const TemplateEditor = () => {
   const [category, setCategory] = useState('welcome');
   const [subject, setSubject] = useState('Welcome {{firstName}}');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const { isBlocked, confirmNavigation, cancelNavigation } = useUnsavedChangesWarning(isDirty);
+
+  const markDirty = useCallback(() => { if (!isDirty) setIsDirty(true); }, [isDirty]);
 
   const saveTemplate = async () => {
     const editor = editorRef.current?.editor;
@@ -50,10 +55,6 @@ const TemplateEditor = () => {
           showFeedback('Template saved.', 'success');
           navigate('/marketing');
         } catch (error) {
-          if (error.response?.status === 401) {
-            handleUnauthorized(navigate, showFeedback);
-            return;
-          }
           showFeedback(error.response?.data?.error || 'Failed to save template.', 'error');
         } finally {
           setIsSaving(false);
@@ -88,11 +89,11 @@ const TemplateEditor = () => {
           <div className="card-form-grid">
             <div className="form-group">
               <label className="form-label">Template name</label>
-              <input className="form-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Template name" />
+              <input className="form-input" value={name} onChange={(e) => { setName(e.target.value); markDirty(); }} placeholder="Template name" />
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>
-              <select className="form-input" value={category} onChange={(e) => setCategory(e.target.value)}>
+              <select className="form-input" value={category} onChange={(e) => { setCategory(e.target.value); markDirty(); }}>
                 <option value="welcome">Welcome</option>
                 <option value="follow-up">Follow-up</option>
                 <option value="proposal">Proposal</option>
@@ -102,7 +103,7 @@ const TemplateEditor = () => {
           </div>
           <div className="form-group">
             <label className="form-label">Subject</label>
-            <input className="form-input" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject (supports {{firstName}}, {{company}})" />
+            <input className="form-input" value={subject} onChange={(e) => { setSubject(e.target.value); markDirty(); }} placeholder="Subject (supports {{firstName}}, {{company}})" />
           </div>
           <div className="helper-text">
             Use personalization tokens: {'{{firstName}}'}, {'{{lastName}}'}, {'{{company}}'}, {'{{email}}'}
@@ -116,9 +117,19 @@ const TemplateEditor = () => {
           <span className="card-title">Email Builder</span>
         </div>
         <div className="card-body card-body-flush">
-          <EmailEditor ref={editorRef} minHeight="70vh" />
+          <EmailEditor ref={editorRef} minHeight="70vh" onDesignUpdated={markDirty} />
         </div>
       </div>
+      <ConfirmDialog
+        open={isBlocked}
+        title="Unsaved Changes"
+        message="You have unsaved template changes. Are you sure you want to leave? Your changes will be lost."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        tone="warning"
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+      />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './styles/tokens.css';
 import './index.css';
 import './styles/maBusiness.css';
 import App from './App';

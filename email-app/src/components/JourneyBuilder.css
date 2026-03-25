@@ -29,18 +29,18 @@
 .jb-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .jb-trigger {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-2);
   font-family: 'DM Mono', monospace;
   background: var(--glass);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
 }
 
 .jb-status {
@@ -58,10 +58,26 @@
 
 .jb-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
   align-items: center;
   flex-shrink: 0;
+}
+
+.jb-dirty-indicator {
+  font-size: var(--fs-xs);
+  color: var(--amber);
+  font-weight: var(--font-semibold);
+  padding: var(--space-2xs) var(--space-sm);
+  background: var(--status-warning-surface);
+  border: 1px solid var(--status-warning-border);
+  border-radius: var(--radius-sm);
+  animation: dirtyPulse 2s ease-in-out infinite;
+}
+
+@keyframes dirtyPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* Canvas */
@@ -83,7 +99,7 @@
   align-items: center;
   width: 36px;
   flex-shrink: 0;
-  padding-top: 20px;
+  padding-top: var(--space-5);
 }
 
 .jb-step-dot {
@@ -104,7 +120,7 @@
   width: 2px;
   flex: 1;
   background: var(--border);
-  margin-top: 4px;
+  margin-top: var(--space-1);
   min-height: 20px;
 }
 
@@ -211,7 +227,7 @@
 
   .jb-step-connector {
     width: 24px;
-    padding-top: 18px;
+    padding-top: var(--space-5);
   }
 
   .jb-step-card {
@@ -256,17 +272,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   background: var(--glass);
   border: 1px dashed var(--border);
   border-radius: 10px;
   cursor: pointer;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
   width: 100%;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
@@ -278,7 +294,7 @@
 
 .jb-empty {
   text-align: center;
-  padding: 40px 20px;
+  padding: var(--space-10) var(--space-5);
   color: var(--text-3);
-  font-size: 14px;
+  font-size: var(--text-base);
 }

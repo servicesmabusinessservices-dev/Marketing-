@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import './EmailDetail.css';
 
 const EmailDetail = () => {
@@ -95,9 +94,6 @@ const EmailDetail = () => {
       setEmail(data);
     } catch (error) {
       console.error('Failed to fetch email:', error);
-      if (error.response?.status === 401) {
-        handleUnauthorized(navigate, showFeedback);
-      }
     } finally {
       setLoading(false);
     }

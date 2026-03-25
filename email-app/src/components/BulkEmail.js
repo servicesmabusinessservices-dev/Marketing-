@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 import Icon from './ui/Icon';
+import ConfirmDialog from './ui/ConfirmDialog';
 import LoadingSpinner from './ui/LoadingSpinner';
 import { useLists, useTemplates, useSuppressionSummary, useTokens } from '../hooks/useApi';
 
@@ -77,6 +77,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [delaySeconds, setDelaySeconds] = useState(3);
+  const [wizardStep, setWizardStep] = useState(0);
 
   //  Contact search state 
   const [contactSearch, setContactSearch] = useState('');
@@ -89,6 +90,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   //  Job / polling state 
   const [activeJobId, setActiveJobId] = useState(null);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [showSendConfirm, setShowSendConfirm] = useState(false);
   const [processedCount, setProcessedCount] = useState(0);
   const [successCount, setSuccessCount] = useState(0);
   const [failureCount, setFailureCount] = useState(0);
@@ -145,6 +147,11 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
       showFeedback('Please fill all fields and add at least one email.', 'warning');
       return;
     }
+    setShowSendConfirm(true);
+  };
+
+  const handleConfirmedSend = async () => {
+    setShowSendConfirm(false);
     feedbackShownRef.current = false;
     setIsScheduling(true);
     setProcessedCount(0);
@@ -155,11 +162,6 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
       const job = await gmailService.sendBulkEmail(recipientTags, subject, content, delaySeconds);
       setActiveJobId(job.jobId);
     } catch (error) {
-      if (error.response?.status === 401) {
-        setIsScheduling(false);
-        handleUnauthorized(navigate, showFeedback);
-        return;
-      }
       setIsScheduling(false);
       showFeedback(error.response?.data?.error || 'Failed to schedule bulk email.', 'error');
     }
@@ -251,234 +253,319 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     : 'No suppressions yet.';
   const tokenList = tokens.map((token) => `{{${token}}}`);
 
-  //  Render 
-  const bulkContent = (
-    <div className={isPageMode ? 'content fade-in' : 'fade-in'}>
-      <div className="bulk-layout">
-        <div>
-          <div className="card card-stack">
-            <div className="card-header">
-              <Icon name="bulk" size={14} color="var(--accent-primary)" />
-              <span className="card-title">Campaign Setup</span>
-              {isPageMode && (
-                <span className="ml-auto">
-                  <button type="button" className="close-btn" onClick={handleClose}>
-                    Back to Inbox
-                  </button>
-                </span>
-              )}
-            </div>
-            <div className="card-body">
-              {(lists.length > 0 || templates.length > 0) && (
-                <div className="bulk-source-row">
-                  {lists.length > 0 && (
-                    <div className="bulk-source-col">
-                      <label className="form-label">Load Recipients from List</label>
-                      <select
-                        className="form-input"
-                        defaultValue=""
-                        onChange={(e) => { if (e.target.value) { loadFromList(e.target.value); e.target.value = ''; } }}
-                        disabled={isScheduling || loadingFromList}
-                      >
-                        <option value="" disabled>{loadingFromList ? 'Loading...' : 'Pick a list...'}</option>
-                        {lists.map(l => (
-                          <option key={l.listId} value={l.listId}>{l.name} ({l.memberCount ?? 0})</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {templates.length > 0 && (
-                    <div className="bulk-source-col">
-                      <label className="form-label">Use Template</label>
-                      <select
-                        className="form-input"
-                        defaultValue=""
-                        onChange={(e) => { if (e.target.value) { loadTemplate(e.target.value); e.target.value = ''; } }}
-                        disabled={isScheduling}
-                      >
-                        <option value="" disabled>Pick a template...</option>
-                        {templates.map(t => (
-                          <option key={t.templateId} value={t.templateId}>{t.name} ({t.category})</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              )}
+  const WIZARD_STEPS = ['Recipients', 'Content', 'Preview', 'Send'];
 
-              <div className="form-group">
-                <label className="form-label">Pick from Contacts</label>
-                <div className="bulk-contact-search-row">
-                  <input
-                    className="form-input bulk-contact-search-input"
-                    type="text"
-                    value={contactSearch}
-                    onChange={handleContactSearchChange}
-                    placeholder="Search by name, email or company..."
-                    disabled={isScheduling}
-                  />
-                  <button
-                    type="button"
-                    className="send-btn bulk-add-selected-btn"
-                    onClick={addSelectedToList}
-                    disabled={!selectedContacts.size || isScheduling}
-                  >
-                    Add {selectedContacts.size > 0 ? `(${selectedContacts.size})` : ''}
-                  </button>
-                </div>
-                {loadingContacts && <div className="bulk-inline-note">Searching...</div>}
-                {contactResults.length > 0 && (
-                  <div className="bulk-contact-results">
-                    {contactResults.map((c) => {
-                      const email = c.email || c.Email || '';
-                      const name = [c.firstName || c.FirstName, c.lastName || c.LastName].filter(Boolean).join(' ') || email;
-                      const company = c.company || c.Company || '';
-                      const checked = selectedContacts.has(email);
-                      return (
-                        <div
-                          key={email}
-                          onClick={() => toggleContact(email)}
-                          className={`bulk-contact-result-row${checked ? ' selected' : ''}`}
-                        >
-                          <input type="checkbox" checked={checked} onChange={() => toggleContact(email)} onClick={e => e.stopPropagation()} />
-                          <div className="bulk-contact-result-info">
-                            <div className="bulk-contact-result-name">{name}</div>
-                            <div className="bulk-contact-result-meta">{email}{company ? ` - ${company}` : ''}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+  const canAdvance = wizardStep === 0
+    ? recipientTags.length > 0
+    : wizardStep === 1
+      ? subject.trim().length > 0 && content.trim().length > 0
+      : true;
 
-              <div className="form-group">
-                <label className="form-label">Recipients{recipientTags.length > 0 && <span className="recipient-count">{recipientTags.length} added</span>}</label>
-                <div className="recipient-editor" onClick={() => document.getElementById('email-tag-input').focus()}>
-                  {recipientTags.length > 20 ? (
-                    <div className="recipient-summary-wrap">
-                      <span className="recipient-summary-pill">Mail {recipientTags.length} recipients loaded</span>
-                      <div className="recipient-summary-preview">
-                        {recipientTags.slice(0, 5).map(email => (
-                          <span key={email} className="recipient-summary-chip">
-                            {email}
-                            <span onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }} className="recipient-chip-remove">x</span>
-                          </span>
-                        ))}
-                        {recipientTags.length > 5 && <span className="recipient-summary-more">+{recipientTags.length - 5} more</span>}
-                      </div>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setRecipientTags([]); }} className="recipient-clear-btn">Clear all</button>
-                    </div>
-                  ) : (
-                    <div className="recipient-tags-wrap">
-                      {recipientTags.map(email => (
-                        <span key={email} className="recipient-tag-chip">
-                          {email}
-                          <span onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }} className="recipient-chip-remove">x</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className={`recipient-input-row${recipientTags.length > 0 ? ' has-border' : ''}`}>
-                    <input
-                      id="email-tag-input"
-                      type="email"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      onKeyDown={handleEmailInputKey}
-                      onBlur={() => addEmailTag(emailInput)}
-                      placeholder={recipientTags.length ? 'Add another email...' : 'Type email and press Enter...'}
-                      disabled={isScheduling}
-                      className="recipient-input-field"
-                    />
-                    <button type="button" onClick={() => addEmailTag(emailInput)} disabled={!emailInput.trim() || isScheduling} className="recipient-add-btn">Add</button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Subject Line</label>
-                <input className="form-input" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter email subject" />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Email Body</label>
-                <textarea className="form-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Enter email content" rows="8" />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Delay Between Sends (seconds)</label>
-                <input
-                  className="form-input"
-                  type="number"
-                  value={delaySeconds}
-                  onChange={(e) => setDelaySeconds(Math.max(2, parseInt(e.target.value, 10) || 3))}
-                  min="2"
-                  max="300"
-                  disabled={isScheduling}
-                />
-              </div>
-            </div>
-          </div>
-
-          <button className="send-btn" onClick={handleSchedule} disabled={isScheduling}>
-            {isScheduling ? 'Scheduling...' : 'Send Campaign'}
-          </button>
-        </div>
-
-        <div className="bulk-side-stack">
-          <BulkEmailProgress
-            jobStatus={jobStatus}
-            progress={progress}
-            progressLabel={progressLabel}
-            processedCount={processedCount}
-            totalCount={totalCount}
-            successCount={successCount}
-            failureCount={failureCount}
-          />
-
-          <div className="card">
-            <div className="card-header">
-              <Icon name="filter" size={14} color="var(--accent-primary)" />
-              <span className="card-title">Suppression Check</span>
-            </div>
-            <div className="card-body">
-              {loadingMetadata ? (
-                <LoadingSpinner label="Loading suppression data..." />
-              ) : suppressionSummary ? (
-                <>
-                  <div className="bulk-suppression-summary">
-                    <span className="bulk-suppression-highlight">{suppressionTotal} emails suppressed</span> - automatically excluded from this send.
-                  </div>
-                  <div className="bulk-suppression-breakdown">{suppressionBreakdown}</div>
-                </>
-              ) : (
-                <div className="bulk-inline-note">Suppression data unavailable.</div>
-              )}
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <Icon name="tag" size={14} color="var(--accent-primary)" />
-              <span className="card-title">Personalization Tokens</span>
-            </div>
-            <div className="card-body">
-              {loadingMetadata ? (
-                <LoadingSpinner label="Loading tokens..." />
-              ) : tokenList.length ? (
-                tokenList.map((token) => <div key={token} className="bulk-token-item">{token}</div>)
-              ) : (
-                <div className="bulk-inline-note">No tokens available yet.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+  const wizardNav = (
+    <div className="bulk-wizard-nav">
+      {wizardStep > 0 && !isScheduling && (
+        <button type="button" className="topbar-btn" onClick={() => setWizardStep(s => s - 1)}>Back</button>
+      )}
+      <div style={{ flex: 1 }} />
+      {wizardStep < 3 && (
+        <button
+          type="button"
+          className="topbar-btn primary"
+          disabled={!canAdvance}
+          onClick={() => setWizardStep(s => s + 1)}
+        >
+          Next
+        </button>
+      )}
     </div>
   );
 
-  if (isPageMode) return bulkContent;
+  //  Render 
+  const bulkContent = (
+    <div className={isPageMode ? 'content fade-in' : 'fade-in'}>
+      {/* Stepper */}
+      <div className="bulk-wizard-stepper">
+        {WIZARD_STEPS.map((label, i) => (
+          <div key={label} className={`bulk-wizard-step${i === wizardStep ? ' active' : ''}${i < wizardStep ? ' done' : ''}`}>
+            <div className="bulk-wizard-dot">{i < wizardStep ? '✓' : i + 1}</div>
+            <span className="bulk-wizard-label">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Step 0 — Recipients */}
+      {wizardStep === 0 && (
+        <div className="card card-stack">
+          <div className="card-header">
+            <Icon name="users" size={14} color="var(--accent-primary)" />
+            <span className="card-title">Recipients</span>
+            {isPageMode && (
+              <span className="ml-auto">
+                <button type="button" className="close-btn" onClick={handleClose}>Back to Inbox</button>
+              </span>
+            )}
+          </div>
+          <div className="card-body">
+            {lists.length > 0 && (
+              <div className="bulk-source-row">
+                <div className="bulk-source-col">
+                  <label className="form-label">Load Recipients from List</label>
+                  <select
+                    className="form-input"
+                    defaultValue=""
+                    onChange={(e) => { if (e.target.value) { loadFromList(e.target.value); e.target.value = ''; } }}
+                    disabled={isScheduling || loadingFromList}
+                  >
+                    <option value="" disabled>{loadingFromList ? 'Loading...' : 'Pick a list...'}</option>
+                    {lists.map(l => (
+                      <option key={l.listId} value={l.listId}>{l.name} ({l.memberCount ?? 0})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">Pick from Contacts</label>
+              <div className="bulk-contact-search-row">
+                <input
+                  className="form-input bulk-contact-search-input"
+                  type="text"
+                  value={contactSearch}
+                  onChange={handleContactSearchChange}
+                  placeholder="Search by name, email or company..."
+                  disabled={isScheduling}
+                />
+                <button
+                  type="button"
+                  className="send-btn bulk-add-selected-btn"
+                  onClick={addSelectedToList}
+                  disabled={!selectedContacts.size || isScheduling}
+                >
+                  Add {selectedContacts.size > 0 ? `(${selectedContacts.size})` : ''}
+                </button>
+              </div>
+              {loadingContacts && <div className="bulk-inline-note">Searching...</div>}
+              {contactResults.length > 0 && (
+                <div className="bulk-contact-results">
+                  {contactResults.map((c) => {
+                    const email = c.email || c.Email || '';
+                    const name = [c.firstName || c.FirstName, c.lastName || c.LastName].filter(Boolean).join(' ') || email;
+                    const company = c.company || c.Company || '';
+                    const checked = selectedContacts.has(email);
+                    return (
+                      <div
+                        key={email}
+                        onClick={() => toggleContact(email)}
+                        className={`bulk-contact-result-row${checked ? ' selected' : ''}`}
+                      >
+                        <input type="checkbox" checked={checked} onChange={() => toggleContact(email)} onClick={e => e.stopPropagation()} />
+                        <div className="bulk-contact-result-info">
+                          <div className="bulk-contact-result-name">{name}</div>
+                          <div className="bulk-contact-result-meta">{email}{company ? ` - ${company}` : ''}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Recipients{recipientTags.length > 0 && <span className="recipient-count">{recipientTags.length} added</span>}</label>
+              <div className="recipient-editor" onClick={() => document.getElementById('email-tag-input').focus()}>
+                {recipientTags.length > 20 ? (
+                  <div className="recipient-summary-wrap">
+                    <span className="recipient-summary-pill">Mail {recipientTags.length} recipients loaded</span>
+                    <div className="recipient-summary-preview">
+                      {recipientTags.slice(0, 5).map(email => (
+                        <span key={email} className="recipient-summary-chip">
+                          {email}
+                          <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }} className="recipient-chip-remove" aria-label={`Remove ${email}`}>x</span>
+                        </span>
+                      ))}
+                      {recipientTags.length > 5 && <span className="recipient-summary-more">+{recipientTags.length - 5} more</span>}
+                    </div>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setRecipientTags([]); }} className="recipient-clear-btn">Clear all</button>
+                  </div>
+                ) : (
+                  <div className="recipient-tags-wrap">
+                    {recipientTags.map(email => (
+                      <span key={email} className="recipient-tag-chip">
+                        {email}
+                        <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); removeEmailTag(email); }} className="recipient-chip-remove" aria-label={`Remove ${email}`}>x</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className={`recipient-input-row${recipientTags.length > 0 ? ' has-border' : ''}`}>
+                  <input
+                    id="email-tag-input"
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    onKeyDown={handleEmailInputKey}
+                    onBlur={() => addEmailTag(emailInput)}
+                    placeholder={recipientTags.length ? 'Add another email...' : 'Type email and press Enter...'}
+                    disabled={isScheduling}
+                    className="recipient-input-field"
+                  />
+                  <button type="button" onClick={() => addEmailTag(emailInput)} disabled={!emailInput.trim() || isScheduling} className="recipient-add-btn">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 1 — Content */}
+      {wizardStep === 1 && (
+        <div className="card card-stack">
+          <div className="card-header">
+            <Icon name="mail" size={14} color="var(--accent-primary)" />
+            <span className="card-title">Email Content</span>
+          </div>
+          <div className="card-body">
+            {templates.length > 0 && (
+              <div className="bulk-source-row">
+                <div className="bulk-source-col">
+                  <label className="form-label">Use Template</label>
+                  <select
+                    className="form-input"
+                    defaultValue=""
+                    onChange={(e) => { if (e.target.value) { loadTemplate(e.target.value); e.target.value = ''; } }}
+                    disabled={isScheduling}
+                  >
+                    <option value="" disabled>Pick a template...</option>
+                    {templates.map(t => (
+                      <option key={t.templateId} value={t.templateId}>{t.name} ({t.category})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">Subject Line</label>
+              <input className="form-input" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter email subject" />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Email Body</label>
+              <textarea className="form-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Enter email content" rows="8" />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Delay Between Sends (seconds)</label>
+              <input
+                className="form-input"
+                type="number"
+                value={delaySeconds}
+                onChange={(e) => setDelaySeconds(Math.max(2, parseInt(e.target.value, 10) || 3))}
+                min="2"
+                max="300"
+                disabled={isScheduling}
+              />
+            </div>
+
+            {tokenList.length > 0 && (
+              <div className="form-group">
+                <label className="form-label">Available Tokens</label>
+                <div className="bulk-token-row">{tokenList.map(t => <span key={t} className="bulk-token-item">{t}</span>)}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 — Preview */}
+      {wizardStep === 2 && (
+        <div className="card card-stack">
+          <div className="card-header">
+            <Icon name="search" size={14} color="var(--accent-primary)" />
+            <span className="card-title">Preview</span>
+          </div>
+          <div className="card-body">
+            <div className="bulk-preview-section">
+              <div className="bulk-preview-label">Recipients</div>
+              <div className="bulk-preview-value">{recipientTags.length} email{recipientTags.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div className="bulk-preview-section">
+              <div className="bulk-preview-label">Subject</div>
+              <div className="bulk-preview-value">{subject}</div>
+            </div>
+            <div className="bulk-preview-section">
+              <div className="bulk-preview-label">Body Preview</div>
+              <div className="bulk-preview-body">{content.slice(0, 500)}{content.length > 500 ? '...' : ''}</div>
+            </div>
+            <div className="bulk-preview-section">
+              <div className="bulk-preview-label">Delay</div>
+              <div className="bulk-preview-value">{delaySeconds}s between sends</div>
+            </div>
+            {suppressionSummary && suppressionTotal > 0 && (
+              <div className="bulk-preview-section">
+                <div className="bulk-preview-label">Suppressions</div>
+                <div className="bulk-preview-value">{suppressionTotal} suppressed emails will be excluded</div>
+                <div className="bulk-suppression-breakdown">{suppressionBreakdown}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Step 3 — Send */}
+      {wizardStep === 3 && (
+        <div className="bulk-layout">
+          <div>
+            <div className="card card-stack">
+              <div className="card-header">
+                <Icon name="zap" size={14} color="var(--accent-primary)" />
+                <span className="card-title">Send Campaign</span>
+              </div>
+              <div className="card-body">
+                <p style={{ color: 'var(--text-2)', marginBottom: 'var(--space-md)' }}>
+                  Ready to send to <strong>{recipientTags.length}</strong> recipient{recipientTags.length !== 1 ? 's' : ''}
+                  {' '}with subject &ldquo;{subject}&rdquo;.
+                </p>
+                <button className="send-btn" onClick={handleSchedule} disabled={isScheduling}>
+                  {isScheduling ? 'Scheduling...' : 'Send Campaign'}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="bulk-side-stack">
+            <BulkEmailProgress
+              jobStatus={jobStatus}
+              progress={progress}
+              progressLabel={progressLabel}
+              processedCount={processedCount}
+              totalCount={totalCount}
+              successCount={successCount}
+              failureCount={failureCount}
+            />
+          </div>
+        </div>
+      )}
+
+      {wizardNav}
+    </div>
+  );
+
+  if (isPageMode) return (
+    <>
+      {bulkContent}
+      <ConfirmDialog
+        open={showSendConfirm}
+        title="Send Bulk Email?"
+        message={`You are about to send an email to ${recipientTags.length} recipient${recipientTags.length !== 1 ? 's' : ''} with subject "${subject}". This action cannot be undone.`}
+        confirmLabel="Send Now"
+        cancelLabel="Cancel"
+        tone="warning"
+        onConfirm={handleConfirmedSend}
+        onCancel={() => setShowSendConfirm(false)}
+      />
+    </>
+  );
 
   return (
     <div className="bulk-email-overlay">
@@ -489,6 +576,16 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
         </div>
         <div className="bulk-modal-content">{bulkContent}</div>
       </div>
+      <ConfirmDialog
+        open={showSendConfirm}
+        title="Send Bulk Email?"
+        message={`You are about to send an email to ${recipientTags.length} recipient${recipientTags.length !== 1 ? 's' : ''} with subject "${subject}". This action cannot be undone.`}
+        confirmLabel="Send Now"
+        cancelLabel="Cancel"
+        tone="warning"
+        onConfirm={handleConfirmedSend}
+        onCancel={() => setShowSendConfirm(false)}
+      />
     </div>
   );
 };

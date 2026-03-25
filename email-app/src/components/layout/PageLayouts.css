@@ -1,0 +1,84 @@
+/* ── Page Layout Components ───────────────────────────────────────────────── */
+
+/* Full-width page wrapper */
+.page-full {
+  width: 100%;
+  padding: var(--space-xl);
+}
+
+.page-full__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-base);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-lg);
+}
+
+.page-full__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  line-height: var(--line-tight);
+}
+
+.page-full__subtitle {
+  margin: var(--space-2xs) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+/* Two-column layout */
+.page-two-col {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--space-lg);
+  width: 100%;
+  padding: var(--space-xl);
+  min-height: 0;
+}
+
+.page-two-col__aside {
+  min-width: 0;
+}
+
+.page-two-col__main {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .page-two-col {
+    grid-template-columns: 1fr;
+    padding: var(--space-base);
+  }
+}
+
+/* Split page (50/50) */
+.page-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  width: 100%;
+  padding: var(--space-xl);
+  min-height: 0;
+}
+
+.page-split__left,
+.page-split__right {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .page-split {
+    grid-template-columns: 1fr;
+    padding: var(--space-base);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-full {
+    padding: var(--space-base);
+  }
+}

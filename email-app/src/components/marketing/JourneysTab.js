@@ -66,7 +66,7 @@ const JourneysTab = () => {
 
   if (journeysQuery.isLoading) return <LoadingSpinner label="Loading journeys..." />;
   if (journeysQuery.isError) return (
-    <EmptyState icon="!" title="Failed to load journeys" action={{ label: 'Retry', onClick: () => journeysQuery.refetch() }} />
+    <EmptyState icon="journey" title="Failed to load journeys" action={{ label: 'Retry', onClick: () => journeysQuery.refetch() }} />
   );
 
   return (
@@ -105,7 +105,7 @@ const JourneysTab = () => {
         </form>
 
         {journeys.length === 0 ? (
-          <EmptyState title="No journeys yet" subtitle="Create one above." size="sm" />
+          <EmptyState icon="journey" title="No journeys yet" subtitle="Create one above." size="sm" />
         ) : (
           <div className="data-list marketing-list-gap">
             {journeys.map((journey) => (

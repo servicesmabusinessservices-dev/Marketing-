@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
+import ConfirmDialog from './ui/ConfirmDialog';
+import useUnsavedChangesWarning from '../hooks/useUnsavedChangesWarning';
 import { useJourneyById, useTemplates } from '../hooks/useApi';
 import './JourneyBuilder.css';
 
@@ -44,6 +46,12 @@ const JourneyBuilder = () => {
   const [steps,   setSteps]   = useState([]);
   const [saving,  setSaving]  = useState(false);
   const [acting,  setActing]  = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const autosaveTimerRef = useRef(null);
+  const serverStepsRef = useRef(null);
+  const { isBlocked, confirmNavigation, cancelNavigation } = useUnsavedChangesWarning(isDirty);
+
+  const autosaveKey = `jb_autosave_${journeyId}`;
 
   // Initialise steps from query data whenever the journey loads
   useEffect(() => {
@@ -59,19 +67,55 @@ const JourneyBuilder = () => {
       conditionWindowHours: s.conditionWindowHours != null ? String(s.conditionWindowHours) : '',
       toLeadStage:          s.toLeadStage || ''
     }));
+
+    // Check for autosaved draft
+    const saved = localStorage.getItem(autosaveKey);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved);
+        if (Array.isArray(draft) && draft.length > 0) {
+          setSteps(draft.map((s) => ({ ...s, _id: ++_uid })));
+          setIsDirty(true);
+          serverStepsRef.current = loaded;
+          return;
+        }
+      } catch { /* ignore corrupt data */ }
+    }
+
+    serverStepsRef.current = loaded;
     setSteps(loaded.length > 0 ? loaded : [makeStep(1)]);
-  }, [journeyQuery.data]);
+    setIsDirty(false);
+  }, [journeyQuery.data, autosaveKey]);
 
-  const updateStep = (id, field, value) =>
+  // Debounced autosave to localStorage every 10s when dirty
+  useEffect(() => {
+    if (!isDirty || steps.length === 0) return;
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      localStorage.setItem(autosaveKey, JSON.stringify(steps));
+    }, 10000);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [steps, isDirty, autosaveKey]);
+
+  const updateStep = (id, field, value) => {
     setSteps((prev) => prev.map((s) => (s._id === id ? { ...s, [field]: value } : s)));
+    setIsDirty(true);
+  };
 
-  const addStep = () => setSteps((prev) => [...prev, makeStep(prev.length + 1)]);
+  const addStep = () => {
+    setSteps((prev) => [...prev, makeStep(prev.length + 1)]);
+    setIsDirty(true);
+  };
 
-  const removeStep = (id) =>
+  const removeStep = (id) => {
     setSteps((prev) => {
       const filtered = prev.filter((s) => s._id !== id);
       return filtered.map((s, i) => ({ ...s, stepOrder: i + 1 }));
     });
+    setIsDirty(true);
+  };
 
   const handleSaveSteps = async () => {
     if (steps.length === 0) {
@@ -90,6 +134,8 @@ const JourneyBuilder = () => {
         toLeadStage:         s.toLeadStage || null
       }));
       await gmailService.upsertJourneySteps(journeyId, payload);
+      localStorage.removeItem(autosaveKey);
+      setIsDirty(false);
       showFeedback('Steps saved.', 'success');
       journeyQuery.refetch();
     } catch (error) {
@@ -164,6 +210,7 @@ const JourneyBuilder = () => {
           </div>
         </div>
         <div className="jb-actions">
+          {isDirty && <span className="jb-dirty-indicator">Unsaved changes</span>}
           <button className="topbar-btn primary" onClick={handleSaveSteps} disabled={saving}>
             {saving ? 'Saving…' : 'Save Steps'}
           </button>
@@ -218,6 +265,7 @@ const JourneyBuilder = () => {
                         className="jb-step-remove"
                         onClick={() => removeStep(step._id)}
                         title="Remove step"
+                        aria-label={`Remove step ${index + 1}`}
                       >✕</button>
                     </div>
 
@@ -309,6 +357,16 @@ const JourneyBuilder = () => {
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={isBlocked}
+        title="Unsaved Changes"
+        message="You have unsaved changes in the journey builder. Are you sure you want to leave? Your changes will be preserved in a local draft."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        tone="warning"
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+      />
     </div>
   );
 };

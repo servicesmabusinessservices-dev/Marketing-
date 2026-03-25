@@ -4,14 +4,14 @@
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .template-editor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .template-editor-header h1 {
@@ -21,13 +21,13 @@
 
 .template-editor-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .template-editor-form {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr 1.4fr;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .template-editor-form input,
@@ -36,7 +36,7 @@
   color: var(--text-primary);
   border: 1px solid var(--control-border);
   border-radius: 8px;
-  padding: 10px;
+  padding: var(--space-3);
 }
 
 .template-editor-btn {
@@ -44,7 +44,7 @@
   color: var(--text-primary);
   border: 1px solid var(--control-border);
   border-radius: 8px;
-  padding: 9px 12px;
+  padding: 9px var(--space-3);
   cursor: pointer;
 }
 

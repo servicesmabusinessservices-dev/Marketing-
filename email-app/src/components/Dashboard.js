@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
@@ -9,6 +9,7 @@ import ChartCard from './ui/ChartCard';
 import InsightCard from './ui/InsightCard';
 import ErrorState from './ui/ErrorState';
 import { KPIRowSkeleton, ChartSkeleton, InsightSkeleton } from './ui/PageSkeleton';
+import WelcomeModal from './ui/WelcomeModal';
 import '../components/ui/DashboardCards.css';
 import {
   useAnalytics,
@@ -227,6 +228,13 @@ const Dashboard = () => {
   const journeySummaryQuery = useJourneySummary();
   const eventsQuery = useEvents({ limit: 6 });
 
+  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('ma_onboarding_done'));
+
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem('ma_onboarding_done', '1');
+  };
+
   const loading = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
     .some((q) => q.isLoading);
   const hasError = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
@@ -355,8 +363,20 @@ const Dashboard = () => {
 
   const theme = getThemeStyles();
 
+  const totalContacts = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
+  const shouldShowWelcome = showWelcome && !loading && totalContacts === 0;
+
+  const completedKeys = useMemo(() => {
+    const keys = [];
+    if (totalContacts > 0) keys.push('contact');
+    return keys;
+  }, [totalContacts]);
+
   return (
     <div className="content fade-in">
+      {shouldShowWelcome && (
+        <WelcomeModal completedKeys={completedKeys} onDismiss={dismissWelcome} />
+      )}
       {loading ? (
         <>
           <div className="dash-page-header">

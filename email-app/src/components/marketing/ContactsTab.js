@@ -102,7 +102,7 @@ const ContactsTab = () => {
 
   if (contactsQuery.isLoading) return <LoadingSpinner label="Loading contacts..." />;
   if (contactsQuery.isError) return (
-    <EmptyState icon="!" title="Failed to load contacts" subtitle={contactsQuery.error?.message} action={{ label: 'Retry', onClick: () => contactsQuery.refetch() }} />
+    <EmptyState icon="users" title="Failed to load contacts" subtitle={contactsQuery.error?.message} action={{ label: 'Retry', onClick: () => contactsQuery.refetch() }} />
   );
 
   return (
@@ -196,7 +196,7 @@ const ContactsTab = () => {
             </thead>
             <tbody>
               {filteredContacts.length === 0 ? (
-                <tr><td colSpan={6} className="marketing-table-empty">No contacts found</td></tr>
+                <tr><td colSpan={6} className="marketing-table-empty"><EmptyState icon="users" title="No contacts found" size="sm" /></td></tr>
               ) : (
                 filteredContacts.slice(0, 200).map((contact) => (
                   <tr

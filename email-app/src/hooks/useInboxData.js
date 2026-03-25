@@ -1,8 +1,6 @@
 import { useState, useEffect, useReducer, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { gmailService } from '../services/gmailService';
 import { useFeedback } from '../context/FeedbackContext';
-import { handleUnauthorized } from '../utils/session';
 
 // ─── Exported sender helpers ──────────────────────────────────────────────────
 
@@ -85,7 +83,6 @@ function panelReducer(state, action) {
 const PAGE_SIZE = 50;
 
 export function useInboxData(emailIdFromRoute) {
-  const navigate = useNavigate();
   const { showFeedback } = useFeedback();
 
   const [emails, setEmails] = useState([]);
@@ -142,12 +139,11 @@ export function useInboxData(emailIdFromRoute) {
       setNextPageToken(data.nextPageToken || null);
       setEmails(data.emails || []);
     } catch (error) {
-      if (error.response?.status === 401) { handleUnauthorized(navigate, showFeedback); return; }
       setListError('Failed to load emails. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [classificationFilter, searchTerm, navigate, showFeedback]);
+  }, [classificationFilter, searchTerm]);
 
   const loadMoreEmails = useCallback(async () => {
     if (!nextPageToken || loadingMore) return;
@@ -167,11 +163,10 @@ export function useInboxData(emailIdFromRoute) {
         return Array.from(new Map(merged.map((e) => [e.id, e])).values());
       });
     } catch (error) {
-      if (error.response?.status === 401) handleUnauthorized(navigate, showFeedback);
     } finally {
       setLoadingMore(false);
     }
-  }, [nextPageToken, loadingMore, classificationFilter, searchTerm, navigate, showFeedback]);
+  }, [nextPageToken, loadingMore, classificationFilter, searchTerm]);
 
   // ─── Effects ─────────────────────────────────────────────────────────────
 
@@ -193,9 +188,8 @@ export function useInboxData(emailIdFromRoute) {
       dispatch({ type: 'FETCH_SUCCESS', payload: data });
     } catch (error) {
       dispatch({ type: 'FETCH_ERROR', payload: 'Unable to load email.' });
-      if (error.response?.status === 401) handleUnauthorized(navigate, showFeedback);
     }
-  }, [navigate, showFeedback]);
+  }, []);
 
   useEffect(() => {
     if (!selectedEmailId) { dispatch({ type: 'RESET' }); return; }
@@ -218,13 +212,12 @@ export function useInboxData(emailIdFromRoute) {
       showFeedback('Classification updated.', 'success');
     } catch (error) {
       setEmails(previousEmails);
-      if (error.response?.status === 401) { handleUnauthorized(navigate, showFeedback); return; }
       if (error.response?.status === 404) { showFeedback('Classification API not found.', 'error'); return; }
       showFeedback(error.response?.data?.error || 'Failed to update classification.', 'error');
     } finally {
       setUpdatingClassification((curr) => { const n = new Set(curr); n.delete(targetId); return n; });
     }
-  }, [navigate, showFeedback]);
+  }, [showFeedback]);
 
   const handleSendReply = useCallback(async () => {
     const { data, replyText } = panelRef.current;
@@ -237,10 +230,9 @@ export function useInboxData(emailIdFromRoute) {
       dispatch({ type: 'REPLY_SENT' });
     } catch (error) {
       dispatch({ type: 'SEND_END' });
-      if (error.response?.status === 401) { handleUnauthorized(navigate, showFeedback); return; }
       showFeedback('Failed to send reply.', 'error');
     }
-  }, [navigate, showFeedback]);
+  }, [showFeedback]);
 
   const handleSendForward = useCallback(async () => {
     const { data, forwardTo, forwardNote } = panelRef.current;
@@ -254,10 +246,9 @@ export function useInboxData(emailIdFromRoute) {
       dispatch({ type: 'FORWARD_SENT' });
     } catch (error) {
       dispatch({ type: 'FORWARD_END' });
-      if (error.response?.status === 401) { handleUnauthorized(navigate, showFeedback); return; }
       showFeedback(error.response?.data?.error || 'Failed to forward email.', 'error');
     }
-  }, [selectedEmailId, navigate, showFeedback]);
+  }, [selectedEmailId, showFeedback]);
 
   const handleAddToCrm = useCallback(async () => {
     if (panelRef.current.addingContact) return;
@@ -281,12 +272,11 @@ export function useInboxData(emailIdFromRoute) {
       await gmailService.upsertContact(payload);
       showFeedback('Contact added to CRM.', 'success');
     } catch (error) {
-      if (error.response?.status === 401) { handleUnauthorized(navigate, showFeedback); return; }
       showFeedback(error.response?.data?.error || 'Failed to add contact.', 'error');
     } finally {
       dispatch({ type: 'SET_ADDING_CONTACT', payload: false });
     }
-  }, [selectedEmailId, navigate, showFeedback]);
+  }, [selectedEmailId, showFeedback]);
 
   // ─── Derived ─────────────────────────────────────────────────────────────
 

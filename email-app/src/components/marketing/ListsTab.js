@@ -48,7 +48,7 @@ const ListsTab = () => {
 
   if (listsQuery.isLoading) return <LoadingSpinner label="Loading lists..." />;
   if (listsQuery.isError) return (
-    <EmptyState icon="!" title="Failed to load lists" action={{ label: 'Retry', onClick: () => listsQuery.refetch() }} />
+    <EmptyState icon="list" title="Failed to load lists" action={{ label: 'Retry', onClick: () => listsQuery.refetch() }} />
   );
 
   return (
@@ -71,7 +71,7 @@ const ListsTab = () => {
         </form>
 
         {lists.length === 0 ? (
-          <EmptyState title="No lists yet" subtitle="Create one above." size="sm" />
+          <EmptyState icon="list" title="No lists yet" subtitle="Create one above." size="sm" />
         ) : (
           <div className="data-list marketing-list-gap">
             {lists.map((list) => {

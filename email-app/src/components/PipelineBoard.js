@@ -13,8 +13,35 @@ import {
 } from '../hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { getStageColorVar } from '../utils/uiColorMaps';
+import ConfirmDialog from './ui/ConfirmDialog';
+import Drawer from './ui/Drawer';
 
 const STAGES = ['New', 'Qualified', 'Proposal', 'Won', 'Lost'];
+
+const PipelineSkeleton = () => (
+  <div className="pipeline-shell">
+    <div className="pipeline-shell-main">
+      <div className="pipeline-board">
+        {STAGES.map((stage) => (
+          <div key={stage} className="pipeline-col">
+            <div className="pipeline-col-header">
+              <div className="skeleton-block" style={{ width: 10, height: 10, borderRadius: '50%' }} />
+              <div className="skeleton-block" style={{ width: 80, height: 14, borderRadius: 6 }} />
+            </div>
+            <div className="pipeline-col-body">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="pipeline-card" style={{ padding: 16 }}>
+                  <div className="skeleton-block" style={{ width: '60%', height: 14, borderRadius: 6, marginBottom: 8 }} />
+                  <div className="skeleton-block" style={{ width: '40%', height: 12, borderRadius: 6 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const formatDealValue = (contact) => {
   const value = contact?.dealValue || contact?.dealAmount || contact?.estimatedValue;
@@ -57,6 +84,7 @@ const PipelineBoard = () => {
   const [ownerDraft, setOwnerDraft] = useState('');
   const [newNote, setNewNote] = useState('');
   const [newTask, setNewTask] = useState({ title: '', dueAtUtc: '', priority: 'Medium', ownerEmail: '' });
+  const [pendingStageChange, setPendingStageChange] = useState(null);
 
   const pipelineParams = useMemo(() => ({
     ownerEmail: ownerFilter || null,
@@ -92,7 +120,7 @@ const PipelineBoard = () => {
     setSelectedContact(contact);
   }, []);
 
-  const handleStageMove = useCallback(async (contactId, toStage) => {
+  const executeStageMove = useCallback(async (contactId, toStage) => {
     try {
       await updateStageMutation.mutateAsync({
         contactId,
@@ -109,6 +137,14 @@ const PipelineBoard = () => {
       showFeedback(error.response?.data?.error || 'Failed to update stage.', 'error');
     }
   }, [invalidatePipeline, showFeedback, updateStageMutation]);
+
+  const handleStageMove = useCallback(async (contactId, toStage) => {
+    if (toStage === 'Won' || toStage === 'Lost') {
+      setPendingStageChange({ contactId, toStage });
+      return;
+    }
+    executeStageMove(contactId, toStage);
+  }, [executeStageMove]);
 
   const handleAssignOwner = useCallback(async () => {
     if (!selectedContact) return;
@@ -230,9 +266,7 @@ const PipelineBoard = () => {
       </div>
 
       {loading ? (
-        <div className="empty-state empty-state-top">
-          <p>Loading pipeline...</p>
-        </div>
+        <PipelineSkeleton />
       ) : (
         <div className="pipeline-shell">
           <div className="pipeline-shell-main">
@@ -273,21 +307,17 @@ const PipelineBoard = () => {
           </div>
 
           {selectedContact && (
-            <div className="pipeline-shell-sidepanel">
+            <Drawer
+              open={!!selectedContact}
+              onClose={() => setSelectedContact(null)}
+              title={selectedContact.firstName || selectedContact.email || 'Contact'}
+            >
               <div className="pipeline-contact-header">
                 <div className="avatar pipeline-contact-avatar">{(selectedContact.firstName || selectedContact.email || 'A')[0]}</div>
                 <div className="pipeline-contact-meta">
                   <div className="pipeline-contact-name">{selectedContact.firstName || selectedContact.email}</div>
                   <div className="pipeline-contact-company">{selectedContact.company || 'No company'}</div>
                 </div>
-                <button
-                  type="button"
-                  className="pipeline-close-btn ml-auto"
-                  aria-label="Close contact details"
-                  onClick={() => setSelectedContact(null)}
-                >
-                  x
-                </button>
               </div>
 
               <div className="pipeline-summary-card">
@@ -396,10 +426,25 @@ const PipelineBoard = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </Drawer>
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={!!pendingStageChange}
+        title={`Move to ${pendingStageChange?.toStage}?`}
+        message={`This will mark the contact as "${pendingStageChange?.toStage}". This is a terminal stage and typically cannot be reversed.`}
+        confirmLabel={pendingStageChange?.toStage === 'Won' ? 'Mark as Won' : 'Mark as Lost'}
+        cancelLabel="Cancel"
+        tone={pendingStageChange?.toStage === 'Lost' ? 'error' : 'warning'}
+        onConfirm={() => {
+          if (pendingStageChange) {
+            executeStageMove(pendingStageChange.contactId, pendingStageChange.toStage);
+          }
+          setPendingStageChange(null);
+        }}
+        onCancel={() => setPendingStageChange(null)}
+      />
     </div>
   );
 };

@@ -65,7 +65,7 @@ const TemplatesTab = () => {
 
   if (templatesQuery.isLoading) return <LoadingSpinner label="Loading templates..." />;
   if (templatesQuery.isError) return (
-    <EmptyState icon="!" title="Failed to load templates" action={{ label: 'Retry', onClick: () => templatesQuery.refetch() }} />
+    <EmptyState icon="template" title="Failed to load templates" action={{ label: 'Retry', onClick: () => templatesQuery.refetch() }} />
   );
 
   return (
@@ -113,7 +113,7 @@ const TemplatesTab = () => {
         {previewResult && <pre className="preview-box">{previewResult}</pre>}
 
         {templates.length === 0 ? (
-          <EmptyState title="No templates yet" subtitle="Create one above." size="sm" />
+          <EmptyState icon="template" title="No templates yet" subtitle="Create one above." size="sm" />
         ) : (
           <div className="data-list marketing-list-gap">
             {templates.map((template) => {

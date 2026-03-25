@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFeedback } from '../context/FeedbackContext';
 import Icon from './ui/Icon';
+import EmptyState from './ui/EmptyState';
 import { useSuppressions, useAddSuppression, useRemoveSuppression } from '../hooks/useApi';
 import './SuppressionList.css';
 
@@ -118,9 +119,7 @@ const SuppressionList = () => {
             {isLoading ? (
               <div className="empty-state"><p>Loading…</p></div>
             ) : filtered.length === 0 ? (
-              <div className="empty-state">
-                <p>{searchQuery ? 'No matching addresses.' : 'No suppressed addresses yet.'}</p>
-              </div>
+              <EmptyState icon="shield" title={searchQuery ? 'No matching addresses.' : 'No suppressed addresses yet.'} size="sm" />
             ) : (
               <div className="sl-table">
                 <div className="sl-row sl-header">

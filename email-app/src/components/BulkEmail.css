@@ -44,25 +44,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 20px;
+  padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--divider);
 }
 
 .modal-header h2 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: var(--h3);
+  font-weight: var(--font-bold);
 }
 
 .close-btn {
   background: var(--control-bg);
   border: 1px solid var(--control-border);
   color: var(--text-secondary);
-  font-size: 18px;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  font-size: var(--fs-md);
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  border-radius: var(--radius);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -77,36 +77,36 @@
 
 .close-btn-page {
   width: auto;
-  padding: 0 12px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  padding: 0 var(--space-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--font-bold);
 }
 
 .modal-content {
-  padding: 18px 20px 20px;
+  padding: var(--space-lg) var(--space-xl) var(--space-xl);
 }
 
 .form-group {
-  margin-bottom: 14px;
+  margin-bottom: var(--space-md);
 }
 
 .form-group label {
   display: block;
   color: var(--text-secondary);
-  font-weight: 600;
-  margin-bottom: 7px;
-  font-size: 0.86rem;
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--space-xs);
+  font-size: var(--fs-sm);
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--control-border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--control-bg);
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: var(--fs-sm);
   resize: vertical;
 }
 
@@ -124,25 +124,25 @@
 
 .modal-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--space-sm);
   justify-content: flex-end;
-  margin-top: 18px;
+  margin-top: var(--space-lg);
 }
 
 .schedule-btn,
 .cancel-btn {
-  padding: 9px 16px;
+  padding: var(--btn-md);
   border: 1px solid transparent;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  font-weight: var(--font-semibold);
   cursor: pointer;
   min-width: 128px;
 }
 
 .schedule-btn {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: white;
+  color: var(--text-primary);
 }
 
 .schedule-btn:hover:not(:disabled) {
@@ -196,85 +196,85 @@
 }
 
 .email-status-container {
-  margin: 18px 0;
+  margin: var(--space-lg) 0;
   max-height: 300px;
   overflow-y: auto;
 }
 
 .email-status-container h3 {
   color: var(--text-primary);
-  margin-bottom: 10px;
-  font-size: 0.96rem;
+  margin-bottom: var(--space-sm);
+  font-size: var(--fs-base);
 }
 
 .email-status-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .email-status-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
   background: var(--control-bg);
   border: 1px solid var(--control-border);
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
 }
 
 .email-status-item.success {
-  background: rgba(62, 175, 127, 0.16);
-  border-color: rgba(62, 175, 127, 0.34);
+  background: var(--status-success-surface);
+  border-color: var(--status-success-border);
 }
 
 .email-status-item.failed {
-  background: rgba(213, 68, 81, 0.14);
-  border-color: rgba(213, 68, 81, 0.3);
+  background: var(--status-error-surface);
+  border-color: var(--status-error-border);
 }
 
 .email-status-item.sending {
-  background: rgba(95, 125, 247, 0.14);
-  border-color: rgba(95, 125, 247, 0.36);
+  background: var(--status-info-surface);
+  border-color: var(--status-info-border);
   animation: pulse 1.5s infinite;
 }
 
 .email-status-item.waiting {
-  background: rgba(95, 125, 247, 0.1);
-  border-color: rgba(95, 125, 247, 0.28);
+  background: var(--status-info-surface);
+  border-color: var(--status-info-border);
 }
 
 .email-address {
   color: var(--text-primary);
-  font-weight: 600;
-  font-size: 0.82rem;
+  font-weight: var(--font-semibold);
+  font-size: var(--fs-xs);
 }
 
 .email-status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
+  gap: var(--space-xs);
+  font-size: var(--fs-xs);
 }
 
 .status-message {
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 }
 
 @media (max-width: 768px) {
   .bulk-email-modal {
     width: 95%;
-    margin: 10px;
+    margin: var(--space-3);
   }
   
   .modal-header {
-    padding: 14px;
+    padding: var(--space-md);
   }
   
   .modal-content {
-    padding: 14px;
+    padding: var(--space-md);
   }
   
   .modal-actions {
@@ -288,6 +288,6 @@
 
   .close-btn-page {
     width: 100%;
-    min-height: 34px;
+    min-height: var(--control-height-sm);
   }
 }
