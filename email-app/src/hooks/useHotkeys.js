@@ -1,8 +1,13 @@
+<<<<<<< Updated upstream
 ﻿import { useEffect, useRef, useCallback } from 'react';
+=======
+import { useEffect, useRef, useCallback } from 'react';
+>>>>>>> Stashed changes
 
 const MODIFIER_KEYS = new Set(['Control', 'Alt', 'Shift', 'Meta']);
 const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 
+<<<<<<< Updated upstream
 function parseShortcut(shortcut) {
   const parts = shortcut.split(' ').map(s => s.trim()).filter(Boolean);
   if (parts.length === 2) {
@@ -20,6 +25,44 @@ function parseShortcut(shortcut) {
     else if (k === 'meta') { modifiers.meta = true; }
     else { key = k; }
   }
+=======
+/**
+ * Parse a shortcut string into a normalized descriptor.
+ * Supports: "mod+k", "shift+mod+k", "g d" (two-key sequence), "j", "Escape"
+ * "mod" maps to Meta on Mac and Control elsewhere.
+ */
+function parseShortcut(shortcut) {
+  const parts = shortcut.split(' ').map(s => s.trim()).filter(Boolean);
+
+  if (parts.length === 2) {
+    // Two-key sequence like "g d"
+    return { type: 'sequence', first: parts[0].toLowerCase(), second: parts[1].toLowerCase() };
+  }
+
+  const keys = parts[0].split('+').map(k => k.trim().toLowerCase());
+  const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
+  const modifiers = { ctrl: false, alt: false, shift: false, meta: false };
+  let key = '';
+
+  for (const k of keys) {
+    if (k === 'mod') {
+      if (isMac) modifiers.meta = true;
+      else modifiers.ctrl = true;
+    } else if (k === 'ctrl' || k === 'control') {
+      modifiers.ctrl = true;
+    } else if (k === 'alt') {
+      modifiers.alt = true;
+    } else if (k === 'shift') {
+      modifiers.shift = true;
+    } else if (k === 'meta') {
+      modifiers.meta = true;
+    } else {
+      key = k;
+    }
+  }
+
+>>>>>>> Stashed changes
   return { type: 'single', key, ...modifiers };
 }
 
@@ -42,22 +85,51 @@ function isEditableTarget(event) {
   return false;
 }
 
+<<<<<<< Updated upstream
 export function useHotkeys(keyMap, { enableInInputs = false } = {}) {
   const keyMapRef = useRef(keyMap);
   keyMapRef.current = keyMap;
   const pendingRef = useRef(null);
+=======
+/**
+ * Register global keyboard shortcuts.
+ *
+ * @param {Record<string, () => void>} keyMap
+ *   e.g. { 'mod+k': openPalette, 'j': nextEmail, 'g d': gotoDashboard }
+ * @param {object} [options]
+ * @param {boolean} [options.enableInInputs=false] Fire even when focus is in an input/textarea
+ */
+export function useHotkeys(keyMap, { enableInInputs = false } = {}) {
+  const keyMapRef = useRef(keyMap);
+  keyMapRef.current = keyMap;
+
+  const pendingRef = useRef(null); // for two-key sequences
+>>>>>>> Stashed changes
   const timerRef = useRef(null);
 
   const handler = useCallback(
     (event) => {
       if (MODIFIER_KEYS.has(event.key)) return;
       if (!enableInInputs && isEditableTarget(event)) return;
+<<<<<<< Updated upstream
       const currentMap = keyMapRef.current;
       if (!currentMap) return;
 
       for (const [shortcut, callback] of Object.entries(currentMap)) {
         const desc = parseShortcut(shortcut);
         if (desc.type === 'sequence') {
+=======
+
+      const currentMap = keyMapRef.current;
+      if (!currentMap) return;
+
+      // Build parsed descriptors lazily on each event (small map — fast)
+      for (const [shortcut, callback] of Object.entries(currentMap)) {
+        const desc = parseShortcut(shortcut);
+
+        if (desc.type === 'sequence') {
+          // Two-key sequence handling
+>>>>>>> Stashed changes
           if (pendingRef.current === desc.first && event.key.toLowerCase() === desc.second &&
               !event.ctrlKey && !event.altKey && !event.metaKey) {
             event.preventDefault();
@@ -75,6 +147,10 @@ export function useHotkeys(keyMap, { enableInInputs = false } = {}) {
         }
       }
 
+<<<<<<< Updated upstream
+=======
+      // Track first key in sequences
+>>>>>>> Stashed changes
       const hasSequences = Object.keys(currentMap).some(s => s.includes(' '));
       if (hasSequences && !event.ctrlKey && !event.altKey && !event.metaKey) {
         pendingRef.current = event.key.toLowerCase();

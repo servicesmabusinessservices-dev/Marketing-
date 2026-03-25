@@ -146,6 +146,9 @@ public class BulkEmailWorker : BackgroundService
             job.Status = job.FailureCount == 0 ? BulkEmailJobStatus.Completed : BulkEmailJobStatus.Failed;
             job.CompletedAtUtc = DateTime.UtcNow;
             await _jobStore.UpsertAsync(job, cancellationToken);
+
+            // Write notification
+            await WriteJobNotificationAsync(job, cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -158,6 +161,35 @@ public class BulkEmailWorker : BackgroundService
             job.Error = ex.Message;
             job.CompletedAtUtc = DateTime.UtcNow;
             await _jobStore.UpsertAsync(job, cancellationToken);
+
+            // Write notification
+            await WriteJobNotificationAsync(job, cancellationToken);
+        }
+    }
+
+    private async Task WriteJobNotificationAsync(BulkEmailJob job, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            var isSuccess = job.Status == BulkEmailJobStatus.Completed;
+            db.Notifications.Add(new NotificationEntity
+            {
+                UserEmail = job.UserEmail,
+                Type = isSuccess ? "bulk_complete" : "bulk_failed",
+                Title = isSuccess
+                    ? $"Bulk send completed — {job.SuccessCount}/{job.Recipients.Count} sent"
+                    : $"Bulk send failed — {job.FailureCount} failures",
+                Message = isSuccess
+                    ? $"Successfully sent {job.SuccessCount} of {job.Recipients.Count} emails."
+                    : $"Job finished with {job.FailureCount} failures. {job.Error ?? string.Empty}".Trim(),
+                LinkUrl = "/emails/bulk",
+            });
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to write notification for bulk job {JobId}", job.JobId);
         }
     }
 
