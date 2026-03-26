@@ -17,9 +17,11 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet-build
 WORKDIR /src
 
+COPY backend/shared/GmailManager.Shared/GmailManager.Shared.csproj backend/shared/GmailManager.Shared/
 COPY backend/services/GmailManager.Api/GmailManager.Api.csproj backend/services/GmailManager.Api/
 RUN dotnet restore backend/services/GmailManager.Api/GmailManager.Api.csproj
 
+COPY backend/shared/GmailManager.Shared/ backend/shared/GmailManager.Shared/
 COPY backend/services/GmailManager.Api/ backend/services/GmailManager.Api/
 WORKDIR /src/backend/services/GmailManager.Api
 RUN dotnet publish -c Release -o /app/publish --no-restore

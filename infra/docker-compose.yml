@@ -1,5 +1,6 @@
 # docker-compose.yml  — local development stack
 # Usage:  docker compose up -d
+# Build context is the repo root (..) so Dockerfiles can reach shared/ + services/
 version: "3.9"
 
 services:
@@ -31,16 +32,35 @@ services:
       timeout: 3s
       retries: 5
 
+  # ── API Gateway (NGINX) ────────────────────────────────────────
+  gateway:
+    build:
+      context: gateway
+    environment:
+      AUTH_SERVICE_URL: auth:8080
+      EMAIL_SERVICE_URL: email:8080
+      MARKETING_SERVICE_URL: marketing:8080
+      NOTIFICATION_SERVICE_URL: notification:8080
+      ANALYTICS_SERVICE_URL: analytics:8080
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth
+      - email
+      - marketing
+      - notification
+      - analytics
+
   # ── Microservices ───────────────────────────────────────────────
   auth:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: backend/services/GmailManager.Auth/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__MySql: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__Redis: "redis:6379"
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
-      REDIS_CONNECTION: redis:6379
     ports:
       - "5010:8080"
     depends_on:
@@ -52,12 +72,12 @@ services:
   email:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: backend/services/GmailManager.Email/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__MySql: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__Redis: "redis:6379"
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
-      REDIS_CONNECTION: redis:6379
     ports:
       - "5020:8080"
     depends_on:
@@ -69,12 +89,12 @@ services:
   marketing:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: backend/services/GmailManager.Marketing/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__MySql: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__Redis: "redis:6379"
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
-      REDIS_CONNECTION: redis:6379
     ports:
       - "5030:8080"
     depends_on:
@@ -86,10 +106,10 @@ services:
   notification:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: backend/services/GmailManager.Notification/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__MySql: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
     ports:
       - "5040:8080"
@@ -100,10 +120,10 @@ services:
   analytics:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: backend/services/GmailManager.Analytics/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      ConnectionStrings__MySql: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
     ports:
       - "5050:8080"

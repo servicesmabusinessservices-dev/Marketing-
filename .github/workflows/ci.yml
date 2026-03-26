@@ -1,0 +1,76 @@
+name: CI — Build & Test
+
+on:
+  push:
+    branches: [main, deploy]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: "9.0.x"
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Backend build + test ───────────────────────────────────────
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore EmailMultiAccountApp.sln
+
+      - name: Build
+        run: dotnet build EmailMultiAccountApp.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test EmailMultiAccountApp.sln --no-build -c Release --verbosity normal
+        continue-on-error: true  # no test projects yet
+
+  # ── Frontend build ─────────────────────────────────────────────
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+        env:
+          REACT_APP_API_URL: https://api-gateway.onrender.com/api/v1
+
+  # ── Docker build validation (deploy branch only) ───────────────
+  docker:
+    if: github.ref == 'refs/heads/deploy'
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    strategy:
+      matrix:
+        service:
+          - { name: api,          dockerfile: backend/services/GmailManager.Api/Dockerfile }
+          - { name: auth,         dockerfile: backend/services/GmailManager.Auth/Dockerfile }
+          - { name: email,        dockerfile: backend/services/GmailManager.Email/Dockerfile }
+          - { name: marketing,    dockerfile: backend/services/GmailManager.Marketing/Dockerfile }
+          - { name: notification, dockerfile: backend/services/GmailManager.Notification/Dockerfile }
+          - { name: analytics,    dockerfile: backend/services/GmailManager.Analytics/Dockerfile }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.service.name }} image
+        run: docker build -f ${{ matrix.service.dockerfile }} -t gmailmanager-${{ matrix.service.name }}:ci .
