@@ -1,0 +1,115 @@
+# docker-compose.yml  — local development stack
+# Usage:  docker compose up -d
+version: "3.9"
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-localdev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gmailmanager}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Microservices ───────────────────────────────────────────────
+  auth:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
+      REDIS_CONNECTION: redis:6379
+    ports:
+      - "5010:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  email:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
+      REDIS_CONNECTION: redis:6379
+    ports:
+      - "5020:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  marketing:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
+      REDIS_CONNECTION: redis:6379
+    ports:
+      - "5030:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  notification:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
+    ports:
+      - "5040:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  analytics:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MYSQL_CONNECTION_STRING: "Server=mysql;Database=gmailmanager;User=root;Password=${MYSQL_ROOT_PASSWORD:-localdev};"
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_DEV_SECRET_32CHARS_MIN}
+    ports:
+      - "5050:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

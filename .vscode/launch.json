@@ -1,0 +1,38 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+        
+
+		{
+			"name": "Backend API",
+			"type": "coreclr",
+			"request": "launch",
+			"program": "${workspaceFolder}/backend/services/GmailManager.Api/bin/Debug/net9.0/GmailManager.Api.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/backend/services/GmailManager.Api",
+			"env": {
+				"ASPNETCORE_ENVIRONMENT": "Development",
+				"ASPNETCORE_URLS": "https://localhost:5001;http://localhost:5049"
+			},
+			"preLaunchTask": "build-api",
+			"console": "integratedTerminal",
+			"stopAtEntry": false
+		},
+		{
+			"name": "Full Stack (API + React)",
+			"type": "coreclr",
+			"request": "launch",
+			"program": "${workspaceFolder}/backend/services/GmailManager.Api/bin/Debug/net9.0/GmailManager.Api.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/backend/services/GmailManager.Api",
+			"env": {
+				"ASPNETCORE_ENVIRONMENT": "Development",
+				"ASPNETCORE_URLS": "https://localhost:5001;http://localhost:5049"
+			},
+			"preLaunchTask": "build-api",
+			"postDebugTask": "Frontend: React Dev Server",
+			"console": "integratedTerminal",
+			"stopAtEntry": false
+		}
+	]
+}

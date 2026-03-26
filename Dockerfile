@@ -2,10 +2,10 @@
 FROM node:20-alpine AS node-build
 WORKDIR /app
 
-COPY email-app/package.json email-app/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --prefer-offline || npm install
 
-COPY email-app/ .
+COPY frontend/ .
 
 # REACT_APP_API_URL is /api so all fetch calls resolve to the same container
 ARG REACT_APP_API_URL=/api
@@ -17,11 +17,11 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet-build
 WORKDIR /src
 
-COPY GmailManager.Api/GmailManager.Api.csproj GmailManager.Api/
-RUN dotnet restore GmailManager.Api/GmailManager.Api.csproj
+COPY backend/services/GmailManager.Api/GmailManager.Api.csproj backend/services/GmailManager.Api/
+RUN dotnet restore backend/services/GmailManager.Api/GmailManager.Api.csproj
 
-COPY GmailManager.Api/ GmailManager.Api/
-WORKDIR /src/GmailManager.Api
+COPY backend/services/GmailManager.Api/ backend/services/GmailManager.Api/
+WORKDIR /src/backend/services/GmailManager.Api
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # ─── Stage 3: Runtime image ───────────────────────────────────────────────────
