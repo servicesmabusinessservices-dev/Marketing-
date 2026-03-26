@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Auth.OAuth2;
@@ -19,6 +20,7 @@ using GmailManager.Api.Services;
 using GmailManager.Shared.Abstractions;
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Entities;
+using GmailManager.Shared.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
 
@@ -48,6 +50,7 @@ public class EmailController : ApiControllerBase
     private readonly IBulkEmailJobQueue _bulkEmailJobQueue;
     private readonly IBulkEmailJobStore _bulkEmailJobStore;
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly IEmailClassificationRepository _classificationRepo;
     private readonly ILogger<EmailController> _logger;
     private readonly IWebHostEnvironment _env;
 
@@ -58,6 +61,7 @@ public class EmailController : ApiControllerBase
         IBulkEmailJobQueue bulkEmailJobQueue,
         IBulkEmailJobStore bulkEmailJobStore,
         IDbContextFactory<AppDbContext> dbContextFactory,
+        IEmailClassificationRepository classificationRepo,
         ILogger<EmailController> logger,
         IWebHostEnvironment env)
     {
@@ -68,6 +72,7 @@ public class EmailController : ApiControllerBase
         _bulkEmailJobQueue = bulkEmailJobQueue;
         _bulkEmailJobStore = bulkEmailJobStore;
         _dbContextFactory = dbContextFactory;
+        _classificationRepo = classificationRepo;
         _env = env;
     }
 
@@ -181,9 +186,7 @@ public class EmailController : ApiControllerBase
             if (messageIds.Count > 0)
             {
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-                var classifications = await dbContext.EmailClassifications
-                    .Where(x => x.UserEmail == userEmail && messageIds.Contains(x.MessageId))
-                    .ToDictionaryAsync(x => x.MessageId, x => x.Classification);
+                var classifications = await _classificationRepo.GetClassificationsAsync(dbContext, userEmail, messageIds);
 
                 foreach (var email in pageItems)
                 {
@@ -263,25 +266,7 @@ public class EmailController : ApiControllerBase
         }
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-        var existing = await dbContext.EmailClassifications.FindAsync(userEmail, id);
-
-        if (existing == null)
-        {
-            existing = new EmailClassificationEntity
-            {
-                UserEmail = userEmail,
-                MessageId = id,
-                Classification = classification,
-                UpdatedAtUtc = DateTime.UtcNow
-            };
-            dbContext.EmailClassifications.Add(existing);
-        }
-        else
-        {
-            existing.Classification = classification;
-            existing.UpdatedAtUtc = DateTime.UtcNow;
-        }
-
+        await _classificationRepo.UpsertAsync(dbContext, userEmail, id, classification);
         await dbContext.SaveChangesAsync();
         return OkResponse(new { messageId = id, classification });
     }
@@ -306,13 +291,9 @@ public class EmailController : ApiControllerBase
         }
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-        var grouped = await dbContext.EmailClassifications
-            .Where(x => x.UserEmail == userEmail)
-            .GroupBy(x => x.Classification)
-            .Select(x => new { classification = x.Key, count = x.Count() })
-            .ToListAsync();
+        var grouped = await _classificationRepo.GetClassificationSummaryAsync(dbContext, userEmail);
 
-        return OkResponse(new { classifications = grouped });
+        return OkResponse(new { classifications = grouped.Select(x => new { classification = x.Classification, count = x.Count }) });
     }
 
     [HttpGet("summary")]
@@ -337,11 +318,7 @@ public class EmailController : ApiControllerBase
         }
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-        var grouped = await dbContext.EmailClassifications
-            .Where(x => x.UserEmail == userEmail)
-            .GroupBy(x => x.Classification)
-            .Select(x => new { classification = x.Key, count = x.Count() })
-            .ToListAsync();
+        var grouped = await _classificationRepo.GetClassificationSummaryAsync(dbContext, userEmail);
 
         var service = await GetGmailService();
         var totalRequest = service.Users.Messages.List("me");
@@ -357,7 +334,7 @@ public class EmailController : ApiControllerBase
         {
             totalCount = totalResponse.ResultSizeEstimate,
             unreadCount = unreadResponse.ResultSizeEstimate,
-            classificationSummary = grouped
+            classificationSummary = grouped.Select(x => new { classification = x.Classification, count = x.Count })
         });
     }
 
@@ -404,6 +381,7 @@ public class EmailController : ApiControllerBase
     }
 
     [HttpPost("send")]
+    [EnableRateLimiting("email-send")]
     public async Task<IActionResult> SendEmail([FromBody] SendEmailRequest request)
     {
         var userEmail = GetUserEmail();
@@ -450,6 +428,7 @@ public class EmailController : ApiControllerBase
     }
 
     [HttpPost("forward")]
+    [EnableRateLimiting("email-send")]
     public async Task<IActionResult> ForwardEmail([FromBody] ForwardEmailRequest request)
     {
         var userEmail = GetUserEmail();
@@ -551,6 +530,7 @@ public class EmailController : ApiControllerBase
     }
 
     [HttpPost("bulk-send")]
+    [EnableRateLimiting("email-send")]
     public async Task<IActionResult> BulkSendEmail([FromBody] BulkEmailRequest request)
     {
         var userEmail = GetUserEmail();

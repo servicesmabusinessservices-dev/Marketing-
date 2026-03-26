@@ -3,7 +3,9 @@ using System.Text.RegularExpressions;
 using GmailManager.Shared.Abstractions;
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Entities;
+using GmailManager.Shared.Infrastructure;
 using GmailManager.Shared.Models;
+using GmailManager.Shared.Repositories.Interfaces;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
@@ -22,6 +24,9 @@ public class BulkEmailWorker : BackgroundService
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly IConfiguration _config;
     private readonly ILogger<BulkEmailWorker> _logger;
+    private readonly IMarketingDataRepository _marketingDataRepo;
+    private readonly IContactRepository _contactRepo;
+    private readonly INotificationRepository _notificationRepo;
     private static readonly Regex TokenRegex = new(@"\{\{\s*(\w+)\s*\}\}", RegexOptions.Compiled);
 
     public BulkEmailWorker(
@@ -30,7 +35,10 @@ public class BulkEmailWorker : BackgroundService
         IUserTokenStore userTokenStore,
         IDbContextFactory<AppDbContext> dbContextFactory,
         IConfiguration config,
-        ILogger<BulkEmailWorker> logger)
+        ILogger<BulkEmailWorker> logger,
+        IMarketingDataRepository marketingDataRepo,
+        IContactRepository contactRepo,
+        INotificationRepository notificationRepo)
     {
         _queue = queue;
         _jobStore = jobStore;
@@ -38,6 +46,9 @@ public class BulkEmailWorker : BackgroundService
         _dbContextFactory = dbContextFactory;
         _config = config;
         _logger = logger;
+        _marketingDataRepo = marketingDataRepo;
+        _contactRepo = contactRepo;
+        _notificationRepo = notificationRepo;
     }
 
     private static string ApplyTokens(string template, ContactEntity? contact, string recipientEmail)
@@ -91,10 +102,7 @@ public class BulkEmailWorker : BackgroundService
             await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
             // Load suppression list once per job — avoids N+1 queries per recipient.
-            var suppressedEmails = await db.Suppressions
-                .Where(s => s.UserEmail == job.UserEmail)
-                .Select(s => s.EmailNormalized)
-                .ToHashSetAsync(cancellationToken);
+            var suppressedEmails = await _marketingDataRepo.GetSuppressedEmailsAsync(db, job.UserEmail);
 
             for (var i = 0; i < job.Recipients.Count; i++)
             {
@@ -115,12 +123,12 @@ public class BulkEmailWorker : BackgroundService
 
                 try
                 {
-                    var contact = await db.Contacts.FirstOrDefaultAsync(
-                        x => x.UserEmail == job.UserEmail && x.EmailNormalized == normalizedRecipient,
-                        cancellationToken);
+                    var contact = await _contactRepo.GetByNormalizedEmailAsync(
+                        db, job.UserEmail, normalizedRecipient);
 
                     var personalizedSubject = ApplyTokens(job.Subject, contact, recipient);
-                    var personalizedBody    = ApplyTokens(job.Body,    contact, recipient);
+                    var personalizedBody    = EmailBodySanitizer.Sanitize(
+                        ApplyTokens(job.Body,    contact, recipient));
 
                     var message = new StringBuilder();
                     message.AppendLine($"To: {recipient}");
@@ -183,7 +191,7 @@ public class BulkEmailWorker : BackgroundService
         {
             await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
             var isSuccess = job.Status == BulkEmailJobStatus.Completed;
-            db.Notifications.Add(new NotificationEntity
+            await _notificationRepo.AddAsync(db, new NotificationEntity
             {
                 UserEmail = job.UserEmail,
                 Type = isSuccess ? "bulk_complete" : "bulk_failed",

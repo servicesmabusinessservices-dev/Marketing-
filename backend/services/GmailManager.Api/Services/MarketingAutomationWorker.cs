@@ -1,5 +1,6 @@
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Entities;
+using GmailManager.Shared.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace GmailManager.Api.Services;
@@ -8,13 +9,25 @@ public class MarketingAutomationWorker : BackgroundService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly ILogger<MarketingAutomationWorker> _logger;
+    private readonly IMarketingDataRepository _marketingDataRepo;
+    private readonly IJourneyRepository _journeyRepo;
+    private readonly IContactRepository _contactRepo;
+    private readonly INotificationRepository _notificationRepo;
 
     public MarketingAutomationWorker(
         IDbContextFactory<AppDbContext> dbContextFactory,
-        ILogger<MarketingAutomationWorker> logger)
+        ILogger<MarketingAutomationWorker> logger,
+        IMarketingDataRepository marketingDataRepo,
+        IJourneyRepository journeyRepo,
+        IContactRepository contactRepo,
+        INotificationRepository notificationRepo)
     {
         _dbContextFactory = dbContextFactory;
         _logger = logger;
+        _marketingDataRepo = marketingDataRepo;
+        _journeyRepo = journeyRepo;
+        _contactRepo = contactRepo;
+        _notificationRepo = notificationRepo;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -60,31 +73,20 @@ public class MarketingAutomationWorker : BackgroundService
     {
         var threshold = now.AddHours(-72);
 
-        var proposalEvents = await db.MessageEvents
-            .Where(x => x.EventType == "proposal_sent" && x.OccurredAtUtc <= threshold)
-            .OrderBy(x => x.OccurredAtUtc)
-            .Take(500)
-            .ToListAsync(cancellationToken);
+        var proposalEvents = await _marketingDataRepo.GetEventsByTypeBeforeAsync(db, "proposal_sent", threshold, 500);
 
         foreach (var proposalEvent in proposalEvents)
         {
-            var alreadyMarked = await db.MessageEvents.AnyAsync(x =>
-                    x.UserEmail == proposalEvent.UserEmail
-                    && x.EventType == "no_reply_3d"
-                    && x.SourceEventId == proposalEvent.EventId,
-                cancellationToken);
+            var alreadyMarked = await _marketingDataRepo.HasEventBySourceAsync(
+                db, proposalEvent.UserEmail, "no_reply_3d", proposalEvent.EventId);
 
             if (alreadyMarked)
             {
                 continue;
             }
 
-            var replied = await db.MessageEvents.AnyAsync(x =>
-                    x.UserEmail == proposalEvent.UserEmail
-                    && x.ContactId == proposalEvent.ContactId
-                    && x.EventType == "replied"
-                    && x.OccurredAtUtc >= proposalEvent.OccurredAtUtc,
-                cancellationToken);
+            var replied = await _marketingDataRepo.HasContactEventSinceAsync(
+                db, proposalEvent.UserEmail, proposalEvent.ContactId, "replied", proposalEvent.OccurredAtUtc);
 
             if (replied)
             {
@@ -104,7 +106,7 @@ public class MarketingAutomationWorker : BackgroundService
                 CreatedAtUtc = now
             };
 
-            db.MessageEvents.Add(noReplyEvent);
+            await _marketingDataRepo.AddEventAsync(db, noReplyEvent);
 
             await EnrollForTriggerAsync(db, proposalEvent.UserEmail, "no_reply_3d", proposalEvent.ContactId, noReplyEvent.EventId, cancellationToken);
         }
@@ -112,15 +114,11 @@ public class MarketingAutomationWorker : BackgroundService
 
     private async Task ProcessActiveEnrollmentsAsync(AppDbContext db, DateTime now, CancellationToken cancellationToken)
     {
-        var enrollments = await db.JourneyEnrollments
-            .Where(x => x.Status == "Active" && (x.NextRunAtUtc == null || x.NextRunAtUtc <= now))
-            .OrderBy(x => x.NextRunAtUtc)
-            .Take(300)
-            .ToListAsync(cancellationToken);
+        var enrollments = await _journeyRepo.GetAllActiveEnrollmentsDueAsync(db, now, 300);
 
         foreach (var enrollment in enrollments)
         {
-            var journey = await db.Journeys.FirstOrDefaultAsync(x => x.JourneyId == enrollment.JourneyId && x.UserEmail == enrollment.UserEmail, cancellationToken);
+            var journey = await _journeyRepo.GetByIdAsync(db, enrollment.UserEmail, enrollment.JourneyId);
             if (journey == null || !string.Equals(journey.Status, "Published", StringComparison.OrdinalIgnoreCase))
             {
                 enrollment.Status = "Paused";
@@ -128,10 +126,7 @@ public class MarketingAutomationWorker : BackgroundService
                 continue;
             }
 
-            var steps = await db.JourneySteps
-                .Where(x => x.JourneyId == enrollment.JourneyId)
-                .OrderBy(x => x.StepOrder)
-                .ToListAsync(cancellationToken);
+            var steps = await _journeyRepo.GetStepsAsync(db, enrollment.JourneyId);
 
             var currentStep = steps.FirstOrDefault(x => x.StepOrder > enrollment.LastProcessedStepOrder);
             if (currentStep == null)
@@ -147,12 +142,9 @@ public class MarketingAutomationWorker : BackgroundService
                 var hours = Math.Clamp(currentStep.ConditionWindowHours ?? 72, 1, 720);
                 var conditionWindowStart = now.AddHours(-hours);
 
-                var conditionMet = await db.MessageEvents.AnyAsync(x =>
-                        x.UserEmail == enrollment.UserEmail
-                        && x.ContactId == enrollment.ContactId
-                        && x.EventType == currentStep.ConditionEventType
-                        && x.OccurredAtUtc >= conditionWindowStart,
-                    cancellationToken);
+                var conditionMet = await _marketingDataRepo.HasContactEventSinceAsync(
+                    db, enrollment.UserEmail, enrollment.ContactId,
+                    currentStep.ConditionEventType, conditionWindowStart);
 
                 if (!conditionMet)
                 {
@@ -174,7 +166,7 @@ public class MarketingAutomationWorker : BackgroundService
                 enrollment.NextRunAtUtc = null;
 
                 // Write notification for journey completion
-                db.Notifications.Add(new NotificationEntity
+                await _notificationRepo.AddAsync(db, new NotificationEntity
                 {
                     UserEmail = enrollment.UserEmail,
                     Type = "journey_complete",
@@ -197,7 +189,7 @@ public class MarketingAutomationWorker : BackgroundService
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var contact = await db.Contacts.FirstOrDefaultAsync(x => x.UserEmail == enrollment.UserEmail && x.ContactId == enrollment.ContactId, cancellationToken);
+        var contact = await _contactRepo.GetByIdAsync(db, enrollment.UserEmail, enrollment.ContactId);
         if (contact == null)
         {
             enrollment.Status = "Failed";
@@ -218,7 +210,7 @@ public class MarketingAutomationWorker : BackgroundService
                 contact.LeadStage = targetStage;
                 contact.UpdatedAtUtc = now;
 
-                db.LeadStageHistory.Add(new LeadStageHistoryEntity
+                await _contactRepo.AddLeadStageHistoryAsync(db, new LeadStageHistoryEntity
                 {
                     UserEmail = enrollment.UserEmail,
                     ContactId = contact.ContactId,
@@ -235,7 +227,7 @@ public class MarketingAutomationWorker : BackgroundService
         if (string.Equals(step.StepType, "emit_event", StringComparison.OrdinalIgnoreCase)
             && !string.IsNullOrWhiteSpace(step.ConditionEventType))
         {
-            db.MessageEvents.Add(new MessageEventEntity
+            await _marketingDataRepo.AddEventAsync(db, new MessageEventEntity
             {
                 UserEmail = enrollment.UserEmail,
                 ContactId = enrollment.ContactId,
@@ -257,24 +249,18 @@ public class MarketingAutomationWorker : BackgroundService
         string eventId,
         CancellationToken cancellationToken)
     {
-        var journeys = await db.Journeys
-            .Where(x => x.UserEmail == userEmail && x.Status == "Published" && x.TriggerType == triggerType)
-            .ToListAsync(cancellationToken);
+        var journeys = await _journeyRepo.GetPublishedByTriggerTypeAsync(db, userEmail, triggerType);
 
         foreach (var journey in journeys)
         {
-            var exists = await db.JourneyEnrollments.AnyAsync(x =>
-                x.UserEmail == userEmail
-                && x.JourneyId == journey.JourneyId
-                && x.ContactId == contactId
-                && x.Status == "Active", cancellationToken);
+            var exists = await _journeyRepo.HasActiveEnrollmentAsync(db, userEmail, journey.JourneyId, contactId);
 
             if (exists)
             {
                 continue;
             }
 
-            db.JourneyEnrollments.Add(new JourneyEnrollmentEntity
+            await _journeyRepo.AddEnrollmentAsync(db, new JourneyEnrollmentEntity
             {
                 UserEmail = userEmail,
                 JourneyId = journey.JourneyId,

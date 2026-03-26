@@ -1,7 +1,7 @@
 using Asp.Versioning;
 using GmailManager.Shared.Data;
-using GmailManager.Shared.Entities;
 using GmailManager.Shared.Infrastructure;
+using GmailManager.Shared.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +15,14 @@ namespace GmailManager.Api.Controllers;
 public class NotificationController : ApiControllerBase
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly INotificationRepository _notificationRepo;
 
-    public NotificationController(IDbContextFactory<AppDbContext> dbContextFactory)
+    public NotificationController(
+        IDbContextFactory<AppDbContext> dbContextFactory,
+        INotificationRepository notificationRepo)
     {
         _dbContextFactory = dbContextFactory;
+        _notificationRepo = notificationRepo;
     }
 
     [HttpGet]
@@ -30,14 +34,12 @@ public class NotificationController : ApiControllerBase
 
         await using var db = await _dbContextFactory.CreateDbContextAsync();
 
-        var query = db.Notifications.Where(x => x.UserEmail == userEmail);
-        if (unreadOnly)
-            query = query.Where(x => !x.IsRead);
+        var notifications = await _notificationRepo.GetNotificationsAsync(db, userEmail, unreadOnly);
+        var unreadCount = await _notificationRepo.GetUnreadCountAsync(db, userEmail);
 
-        var notifications = await query
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(50)
-            .Select(x => new
+        return OkResponse(new
+        {
+            notifications = notifications.Select(x => new
             {
                 x.NotificationId,
                 x.Type,
@@ -46,14 +48,9 @@ public class NotificationController : ApiControllerBase
                 x.LinkUrl,
                 x.IsRead,
                 x.CreatedAtUtc
-            })
-            .ToListAsync();
-
-        var unreadCount = await db.Notifications
-            .Where(x => x.UserEmail == userEmail && !x.IsRead)
-            .CountAsync();
-
-        return OkResponse(new { notifications, unreadCount });
+            }),
+            unreadCount
+        });
     }
 
     [HttpPost("{id}/read")]
@@ -65,15 +62,11 @@ public class NotificationController : ApiControllerBase
 
         await using var db = await _dbContextFactory.CreateDbContextAsync();
 
-        var notification = await db.Notifications
-            .FirstOrDefaultAsync(x => x.NotificationId == id && x.UserEmail == userEmail);
-
+        var notification = await _notificationRepo.GetByIdAsync(db, userEmail, id);
         if (notification == null)
             return NotFoundResponse("Notification not found");
 
-        notification.IsRead = true;
-        await db.SaveChangesAsync();
-
+        await _notificationRepo.MarkAsReadAsync(db, notification);
         return OkResponse(new { success = true });
     }
 
@@ -85,11 +78,7 @@ public class NotificationController : ApiControllerBase
             return UnauthorizedMissingEmail();
 
         await using var db = await _dbContextFactory.CreateDbContextAsync();
-
-        await db.Notifications
-            .Where(x => x.UserEmail == userEmail && !x.IsRead)
-            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
-
+        await _notificationRepo.MarkAllAsReadAsync(db, userEmail);
         return OkResponse(new { success = true });
     }
 }

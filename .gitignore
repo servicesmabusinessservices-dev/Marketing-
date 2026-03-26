@@ -33,4 +33,14 @@ backend/services/GmailManager.Email/App_Data/
 # Database files
 *.db
 *.sqlite
+*.sqlite3
+
+# Log files
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+!.env.example
 *.session.sql

@@ -4,6 +4,8 @@ using GmailManager.Api.Services;
 using GmailManager.Shared.Abstractions;
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Infrastructure;
+using GmailManager.Shared.Repositories;
+using GmailManager.Shared.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
@@ -56,7 +58,13 @@ try
 
     // ── CORS ──────────────────────────────────────────────────────────────────
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                         ?? new[] { "http://localhost:3000" };
+                         ?? Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                         ?? (builder.Environment.IsDevelopment() ? new[] { "http://localhost:3000" } : Array.Empty<string>());
+
+    if (allowedOrigins.Length == 0)
+    {
+        Log.Warning("No CORS origins configured — cross-origin requests will be rejected");
+    }
 
     builder.Services.AddCors(options =>
     {
@@ -186,6 +194,17 @@ try
     {
         builder.Services.AddDistributedMemoryCache();
     }
+
+    // ── Repositories ────────────────────────────────────────────────────────
+    builder.Services.AddScoped<IContactRepository, GmailManager.Api.Repositories.ContactRepository>();
+    builder.Services.AddScoped<IEmailClassificationRepository, GmailManager.Api.Repositories.EmailClassificationRepository>();
+    builder.Services.AddScoped<INotificationRepository, GmailManager.Api.Repositories.NotificationRepository>();
+    builder.Services.AddScoped<ICampaignRepository, GmailManager.Api.Repositories.CampaignRepository>();
+    builder.Services.AddScoped<ITemplateRepository, GmailManager.Api.Repositories.TemplateRepository>();
+    builder.Services.AddScoped<IJourneyRepository, GmailManager.Api.Repositories.JourneyRepository>();
+    builder.Services.AddScoped<IListRepository, GmailManager.Api.Repositories.ListRepository>();
+    builder.Services.AddScoped<IMarketingDataRepository, GmailManager.Api.Repositories.MarketingDataRepository>();
+    builder.Services.AddScoped<IUnitOfWork, GmailManager.Shared.Repositories.UnitOfWork>();
 
     // ── Application services ──────────────────────────────────────────────────
     builder.Services.AddSingleton<IUserTokenStore, SqlRedisUserTokenStore>();

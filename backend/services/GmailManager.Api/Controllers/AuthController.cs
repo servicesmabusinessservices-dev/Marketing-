@@ -2,6 +2,7 @@ using Asp.Versioning;
 using GmailManager.Shared.Infrastructure;
 using GmailManager.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -17,6 +18,7 @@ namespace GmailManager.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/auth")]
+[EnableRateLimiting("auth")]
 public class AuthController : ApiControllerBase
 {
     private readonly IConfiguration _config;
@@ -143,7 +145,8 @@ public class AuthController : ApiControllerBase
 
         return trimmed.Equals("CHANGE_ME", StringComparison.OrdinalIgnoreCase)
             || trimmed.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase)
-            || trimmed.EndsWith("_HERE", StringComparison.OrdinalIgnoreCase);
+            || trimmed.EndsWith("_HERE", StringComparison.OrdinalIgnoreCase)
+            || (trimmed.StartsWith("__") && trimmed.EndsWith("__"));
     }
 
     private async Task<string> GetUserEmail(string accessToken)
@@ -166,7 +169,7 @@ public class AuthController : ApiControllerBase
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: new[] { new Claim(ClaimTypes.Email, email) },
-            expires: DateTime.UtcNow.AddHours(8),
+            expires: DateTime.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
             signingCredentials: creds
         );
         
