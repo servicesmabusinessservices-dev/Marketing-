@@ -1,10 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gmailService } from '../../../services/gmailService';
 import { useFeedback } from '../../../context/FeedbackContext';
 import Icon from '../../../components/ui/Icon';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import useUnsavedChangesWarning from '../../../hooks/useUnsavedChangesWarning';
+
+const TEMPLATE_AUTOSAVE_KEY = 'template_editor_draft';
+const DRAFT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const TemplateEditor = () => {
   const navigate = useNavigate();
@@ -19,6 +22,35 @@ const TemplateEditor = () => {
   const { isBlocked, confirmNavigation, cancelNavigation } = useUnsavedChangesWarning(isDirty);
 
   const markDirty = useCallback(() => { if (!isDirty) setIsDirty(true); }, [isDirty]);
+
+  // Restore autosaved draft on mount (with 24h expiry)
+  useEffect(() => {
+    const saved = localStorage.getItem(TEMPLATE_AUTOSAVE_KEY);
+    if (!saved) return;
+    try {
+      const draft = JSON.parse(saved);
+      // Check if draft has expired
+      if (draft.savedAt && (Date.now() - draft.savedAt) > DRAFT_EXPIRY_MS) {
+        localStorage.removeItem(TEMPLATE_AUTOSAVE_KEY);
+        return;
+      }
+      setName(draft.name ?? '');
+      setCategory(draft.category ?? 'welcome');
+      setSubject(draft.subject ?? '');
+      setBodyHtml(draft.bodyHtml ?? '');
+    } catch {
+      // ignore malformed draft
+    }
+  }, []);
+
+  // Debounced autosave for template fields
+  useEffect(() => {
+    const payload = { name, category, subject, bodyHtml, savedAt: Date.now() };
+    const timer = setTimeout(() => {
+      localStorage.setItem(TEMPLATE_AUTOSAVE_KEY, JSON.stringify(payload));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [name, category, subject, bodyHtml]);
 
   const saveTemplate = async () => {
     if (!name.trim()) {
@@ -42,6 +74,7 @@ const TemplateEditor = () => {
       };
 
       await gmailService.createTemplate(payload);
+      localStorage.removeItem(TEMPLATE_AUTOSAVE_KEY);
       showFeedback('Template saved.', 'success');
       navigate('/marketing');
     } catch (error) {

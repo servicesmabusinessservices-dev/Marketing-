@@ -9,6 +9,9 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 
 import { useLists, useTemplates, useSuppressionSummary, useTokens } from '../../../hooks/useApi';
 
+const BULK_AUTOSAVE_KEY = 'bulk_email_draft';
+const DRAFT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 //  Progress panel (memoised to avoid re-rendering with parent state) 
 const BulkEmailProgress = React.memo(({ jobStatus, progress, progressLabel, processedCount, totalCount, successCount, failureCount }) => (
   <div className="card">
@@ -78,6 +81,35 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
   const [contactSearch, setContactSearch] = useState('');
   const [contactResults, setContactResults] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState(new Set());
+
+  // Restore autosaved draft on mount (with 24h expiry)
+  useEffect(() => {
+    const saved = localStorage.getItem(BULK_AUTOSAVE_KEY);
+    if (!saved) return;
+    try {
+      const draft = JSON.parse(saved);
+      // Check if draft has expired
+      if (draft.savedAt && (Date.now() - draft.savedAt) > DRAFT_EXPIRY_MS) {
+        localStorage.removeItem(BULK_AUTOSAVE_KEY);
+        return;
+      }
+      setRecipientTags(draft.recipientTags || []);
+      setEmailInput(draft.emailInput || '');
+      setSubject(draft.subject || '');
+      setContent(draft.content || '');
+    } catch {
+      // ignore corrupt drafts
+    }
+  }, []);
+
+  // Debounced autosave for compose fields
+  useEffect(() => {
+    const payload = { recipientTags, emailInput, subject, content, savedAt: Date.now() };
+    const timer = setTimeout(() => {
+      localStorage.setItem(BULK_AUTOSAVE_KEY, JSON.stringify(payload));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [recipientTags, emailInput, subject, content]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [loadingFromList, setLoadingFromList] = useState(false);
   const searchTimerRef = useRef(null);
@@ -164,6 +196,7 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
     try {
       const job = await gmailService.sendBulkEmail(recipientTags, subject, content, delaySeconds);
       setActiveJobId(job.jobId);
+      localStorage.removeItem(BULK_AUTOSAVE_KEY);
     } catch (error) {
       setIsScheduling(false);
       showFeedback(error.response?.data?.error || 'Failed to schedule bulk email.', 'error');

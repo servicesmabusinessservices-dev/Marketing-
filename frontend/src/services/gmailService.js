@@ -348,5 +348,22 @@ export const gmailService = {
     query.append('limit', String(limit));
     const response = await apiClient.get(`/search?${query.toString()}`);
     return response.data;
+  },
+
+  // Notification APIs
+  getNotifications: async (unreadOnly = false) => {
+    const suffix = unreadOnly ? '?unreadOnly=true' : '';
+    const response = await apiClient.get(`/notification${suffix}`);
+    return response.data;
+  },
+
+  markNotificationRead: async (notificationId) => {
+    const response = await apiClient.post(`/notification/${notificationId}/read`);
+    return response.data;
+  },
+
+  markAllNotificationsRead: async () => {
+    const response = await apiClient.post('/notification/read-all');
+    return response.data;
   }
 };

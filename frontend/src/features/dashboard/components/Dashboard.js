@@ -9,7 +9,7 @@ import ChartCard from '../../../components/ui/ChartCard';
 import InsightCard from '../../../components/ui/InsightCard';
 import ErrorState from '../../../components/ui/ErrorState';
 import { KPIRowSkeleton, ChartSkeleton, InsightSkeleton } from '../../../components/ui/PageSkeleton';
-import WelcomeModal from '../../../components/ui/WelcomeModal';
+import WelcomeModal, { shouldShowWelcomeModal } from '../../../components/ui/WelcomeModal';
 import '../../../components/ui/DashboardCards.css';
 import {
   useAnalytics,
@@ -18,6 +18,8 @@ import {
   useTasks,
   useJourneySummary,
   useEvents,
+  useTemplates,
+  useCampaigns,
 } from '../../../hooks/useApi';
 import { getEventTone, ON_SOLID_ICON_COLOR } from '../../../utils/uiColorMaps';
 import { generateDashboardInsights } from '../../../utils/insightEngine';
@@ -227,18 +229,35 @@ const Dashboard = () => {
   const tasksQuery = useTasks({ status: 'Open', limit: 50 });
   const journeySummaryQuery = useJourneySummary();
   const eventsQuery = useEvents({ limit: 6 });
+  const templatesQuery = useTemplates();
+  const campaignsQuery = useCampaigns();
 
-  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('ma_onboarding_done'));
+  const [showWelcome, setShowWelcome] = useState(() => shouldShowWelcomeModal());
 
   const dismissWelcome = () => {
     setShowWelcome(false);
-    localStorage.setItem('ma_onboarding_done', '1');
   };
 
-  const loading = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
-    .some((q) => q.isLoading);
-  const hasError = [analyticsQuery, contactsQuery, emailSummaryQuery, tasksQuery, journeySummaryQuery, eventsQuery]
-    .some((q) => q.isError);
+  const loading = [
+    analyticsQuery,
+    contactsQuery,
+    emailSummaryQuery,
+    tasksQuery,
+    journeySummaryQuery,
+    eventsQuery,
+    templatesQuery,
+    campaignsQuery,
+  ].some((q) => q.isLoading);
+  const hasError = [
+    analyticsQuery,
+    contactsQuery,
+    emailSummaryQuery,
+    tasksQuery,
+    journeySummaryQuery,
+    eventsQuery,
+    templatesQuery,
+    campaignsQuery,
+  ].some((q) => q.isError);
 
   const analytics = analyticsQuery.data;
   const contactsData = contactsQuery.data;
@@ -363,19 +382,12 @@ const Dashboard = () => {
 
   const theme = getThemeStyles();
 
-  const totalContacts = contactsData?.totalCount ?? (contactsData?.contacts || []).length;
-  const shouldShowWelcome = showWelcome && !loading && totalContacts === 0;
-
-  const completedKeys = useMemo(() => {
-    const keys = [];
-    if (totalContacts > 0) keys.push('contact');
-    return keys;
-  }, [totalContacts]);
+  const shouldShowWelcome = showWelcome && !loading;
 
   return (
     <div className="content fade-in">
       {shouldShowWelcome && (
-        <WelcomeModal completedKeys={completedKeys} onDismiss={dismissWelcome} />
+        <WelcomeModal onDismiss={dismissWelcome} />
       )}
       {loading ? (
         <>

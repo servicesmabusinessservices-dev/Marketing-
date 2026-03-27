@@ -7,6 +7,7 @@ import { clearSession } from '../../utils/session';
 import WorkspaceSidebar from './WorkspaceSidebar';
 import WorkspaceTopbar from './WorkspaceTopbar';
 import PageTransition from '../ui/PageTransition';
+import CommandPalette from '../ui/CommandPalette';
 
 const MOBILE_BREAKPOINT_QUERY = '(max-width: 768px)';
 
@@ -29,6 +30,7 @@ const WorkspaceLayout = () => {
   const { showFeedback } = useFeedback();
   const currentUserEmail = localStorage.getItem('user_email') || 'Signed in user';
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const sidebarRef = useRef(null);
   const menuButtonRef = useRef(null);
 
@@ -38,6 +40,24 @@ const WorkspaceLayout = () => {
   useEffect(() => {
     closeMobileSidebar();
   }, [closeMobileSidebar, location.pathname, location.search]);
+
+  // Global shortcut for command palette (Ctrl/Cmd + K)
+  useEffect(() => {
+    const handler = (event) => {
+      const isMetaK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+      if (!isMetaK) return;
+
+      const target = event.target;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || target?.isContentEditable) return;
+
+      event.preventDefault();
+      setPaletteOpen(true);
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -121,6 +141,11 @@ const WorkspaceLayout = () => {
     navigate('/', { replace: true });
   };
 
+  const handlePaletteNavigate = useCallback((path) => {
+    setPaletteOpen(false);
+    navigate(path);
+  }, [navigate]);
+
   return (
     <div className="app">
       {/* Mobile backdrop — closes sidebar when tapped */}
@@ -145,6 +170,7 @@ const WorkspaceLayout = () => {
           onMenuToggle={toggleMobileSidebar}
           mobileMenuOpen={mobileOpen}
           menuButtonRef={menuButtonRef}
+          onOpenPalette={() => setPaletteOpen(true)}
         />
         <div className="page-scroll-area">
           <AnimatePresence mode="wait">
@@ -154,6 +180,11 @@ const WorkspaceLayout = () => {
           </AnimatePresence>
         </div>
       </div>
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onNavigate={handlePaletteNavigate}
+      />
     </div>
   );
 };

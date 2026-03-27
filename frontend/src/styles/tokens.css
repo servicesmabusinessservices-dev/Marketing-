@@ -83,6 +83,7 @@
   --primary-color: var(--indigo);
   --accent-primary: #2f68ae;
   --accent-secondary: #2f4590;
+  --color-brand-primary: #4F46E5;
   --focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.24);
 
   /* ── Typography — 5-size canonical scale ─────────── */
@@ -190,6 +191,14 @@
   --feedback-warning-border: rgba(224, 170, 76, 0.45);
   --feedback-error-border: rgba(212, 61, 71, 0.45);
 
+  /* ── Component-specific ─────────────────────────── */
+  --email-frame-bg: var(--surface-2);
+  --card-surface: var(--background-card);
+  --card-border: var(--border);
+  --google-btn-bg: var(--navy-2);
+  --logo-bg: var(--gradient-cta);
+  --logo-text: var(--text-1);
+
   /* ── Navigation / Sidebar ────────────────────────── */
   --surface-sidebar-start: rgba(30, 41, 59, 0.98);
   --surface-sidebar-end: rgba(22, 32, 50, 0.98);
@@ -199,6 +208,10 @@
   --hero-accent-primary: rgba(47, 104, 174, 0.08);
   --hero-accent-secondary: rgba(47, 69, 144, 0.06);
   --grid-dot-color: rgba(255, 255, 255, 0.018);
+
+  /* ── Scrollbar ───────────────────────────────────── */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
 
   /* ── Z-Index Scale ───────────────────────────────── */
   --z-base: 1;
@@ -335,6 +348,18 @@
   --hero-accent-primary: rgba(47, 104, 174, 0.06);
   --hero-accent-secondary: rgba(47, 69, 144, 0.05);
   --grid-dot-color: rgba(15, 23, 42, 0.04);
+
+  /* ── Scrollbar (Light) ───────────────────────────── */
+  --scrollbar-thumb: rgba(15, 23, 42, 0.15);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.3);
+
+  /* ── Component-specific (Light) ───────────────────── */
+  --email-frame-bg: #eef4fb;
+  --card-surface: #ffffff;
+  --card-border: rgba(15, 23, 42, 0.08);
+  --google-btn-bg: #ffffff;
+  --logo-bg: var(--gradient-cta);
+  --logo-text: var(--text-1);
 }
 
 /* ── Dark Theme Overrides ────────────────────────────── */
@@ -428,6 +453,14 @@
   --hero-accent-primary: rgba(79, 70, 229, 0.08);
   --hero-accent-secondary: rgba(99, 102, 241, 0.06);
   --grid-dot-color: rgba(255, 255, 255, 0.018);
+
+  /* ── Component-specific (Dark) ───────────────────── */
+  --email-frame-bg: var(--surface-2);
+  --card-surface: var(--background-card);
+  --card-border: var(--border);
+  --google-btn-bg: var(--navy-2);
+  --logo-bg: var(--gradient-cta);
+  --logo-text: var(--text-1);
 }
 
 /* ═══════════════════════════════════════════════════════

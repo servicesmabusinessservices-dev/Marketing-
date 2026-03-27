@@ -79,14 +79,14 @@ body {
 .logo-icon {
   width: 34px;
   height: 34px;
-  background: var(--gradient-cta);
+  background: var(--logo-bg);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--fs-md);
   font-weight: var(--font-extrabold);
-  color: var(--text-primary);
+  color: var(--logo-text);
   font-family: var(--font-display);
   box-shadow: var(--glow-indigo);
 }
@@ -95,7 +95,7 @@ body {
   font-family: var(--font-display);
   font-weight: var(--font-bold);
   font-size: var(--fs-md);
-  color: var(--text-primary);
+  color: var(--logo-text);
   line-height: 1.1;
 }
 
@@ -915,7 +915,7 @@ body {
 .filter-chip.active {
   background: rgba(47, 104, 174, 0.12);
   border-color: rgba(47, 104, 174, 0.35);
-  color: #38bdf8;
+  color: var(--accent-primary);
 }
 
 .email-item {
@@ -1086,7 +1086,7 @@ body {
 
 .action-btn.primary {
   background: rgba(47, 104, 174, 0.12);
-  color: #38bdf8;
+  color: var(--accent-primary);
   border-color: rgba(47, 104, 174, 0.28);
 }
 
@@ -1115,7 +1115,7 @@ body {
   min-height: 320px;
   border: 0;
   border-radius: 14px;
-  background: #eef4fb;
+  background: var(--email-frame-bg);
   transition: height 0.18s ease;
 }
 
@@ -1123,15 +1123,14 @@ body {
   padding: var(--space-3);
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(238, 244, 251, 0.94), rgba(247, 249, 252, 0.98));
+  background: var(--surface-2);
 }
 
 .email-body-frame-shell {
   overflow: hidden;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: #f7f9fc;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--card-border);
+  background: var(--card-surface);
 }
 
 .inbox-load-more {
@@ -1572,15 +1571,15 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: var(--gradient-cta);
+  background: var(--logo-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--text-lg);
   font-weight: 800;
-  color: #fff;
+  color: var(--logo-text);
   font-family: 'Syne', sans-serif;
-  box-shadow: 0 18px 40px rgba(59, 130, 246, 0.34);
+  box-shadow: var(--shadow);
 }
 
 .login-logo-text {
@@ -1669,21 +1668,21 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   border-radius: 14px;
-  background: #ffffff;
-  color: var(--navy);
+  background: var(--google-btn-bg);
+  color: var(--text-primary);
   font-size: var(--text-base);
   font-weight: 700;
   cursor: pointer;
-  border: none;
+  border: 1px solid var(--card-border);
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   font-family: 'DM Sans', sans-serif;
-  box-shadow: 0 18px 36px rgba(2, 8, 23, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.4);
+  box-shadow: var(--shadow);
   margin-bottom: 0;
 }
 
 .google-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 22px 42px rgba(2, 8, 23, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-lg);
 }
 
 .google-btn:focus-visible {
@@ -1695,7 +1694,6 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   opacity: 0.68;
   cursor: wait;
   transform: none;
-  box-shadow: 0 14px 28px rgba(2, 8, 23, 0.18);
 }
 
 .google-btn-mark {
@@ -1705,7 +1703,7 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.05);
+  background: var(--surface-1);
   font-size: var(--text-lg);
   font-weight: 800;
   line-height: 1;
@@ -3817,8 +3815,8 @@ html.drawer-open body {
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Custom scrollbars (dark theme) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb, rgba(255, 255, 255, 0.1)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover, rgba(255, 255, 255, 0.2)); }
 
 /* Mobile: data lists fall back to natural scroll (handled in main 768px block above) */
 @media (max-width: 768px) {
