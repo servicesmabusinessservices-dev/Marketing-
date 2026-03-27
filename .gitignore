@@ -10,7 +10,7 @@
 
 # Node
 **/node_modules/
-email-app/build/
+frontend/build/
 
 # VS / Rider
 .vs/
@@ -27,4 +27,20 @@ Thumbs.db
 *.env.render
 
 # Local development demo inbox persistence
-GmailManager.Api/App_Data/
+backend/services/GmailManager.Api/App_Data/
+backend/services/GmailManager.Email/App_Data/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.session.sql
