@@ -1,0 +1,65 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Backend .dockerignore - Optimized for .NET builds
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ─── Build Artifacts ──────────────────────────────────────────────────────────
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# ─── IDE & Editor Files ───────────────────────────────────────────────────────
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+**/.DS_Store
+
+# ─── Configuration & Secrets ──────────────────────────────────────────────────
+# Exclude all appsettings except Example
+**/appsettings.*.json
+!**/appsettings.Example.json
+**/*.Development.json
+**/*.Local.json
+**/.env
+**/.env.*
+!**/.env.example
+
+# ─── Logs & Temporary Files ───────────────────────────────────────────────────
+**/logs/
+**/*.log
+**/tmp/
+**/temp/
+
+# ─── Version Control ──────────────────────────────────────────────────────────
+**/.git/
+**/.gitignore
+**/.gitattributes
+
+# ─── Package Management ───────────────────────────────────────────────────────
+**/packages/
+**/.nuget/
+
+# ─── Testing & Coverage ───────────────────────────────────────────────────────
+**/TestResults/
+**/coverage/
+**/*.trx
+
+# ─── Documentation ────────────────────────────────────────────────────────────
+**/*.md
+!**/README.md
+
+# ─── Docker Files ─────────────────────────────────────────────────────────────
+**/.dockerignore
+**/Dockerfile
+**/docker-compose*.yml
+
+# ─── Other Services (if building single service) ──────────────────────────────
+# Uncomment if you want to exclude other services when building individually
+# services/GmailManager.Auth/
+# services/GmailManager.Email/
+# services/GmailManager.Analytics/
+# services/GmailManager.Notification/
