@@ -1,0 +1,161 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { gmailService } from '../../../services/gmailService';
+import { useFeedback } from '../../../context/FeedbackContext';
+import Icon from '../../../components/ui/Icon';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import useUnsavedChangesWarning from '../../../hooks/useUnsavedChangesWarning';
+
+const TEMPLATE_AUTOSAVE_KEY = 'template_editor_draft';
+const DRAFT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const TemplateEditor = () => {
+  const navigate = useNavigate();
+  const { showFeedback } = useFeedback();
+
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('welcome');
+  const [subject, setSubject] = useState('Welcome {{firstName}}');
+  const [bodyHtml, setBodyHtml] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const { isBlocked, confirmNavigation, cancelNavigation } = useUnsavedChangesWarning(isDirty);
+
+  const markDirty = useCallback(() => { if (!isDirty) setIsDirty(true); }, [isDirty]);
+
+  // Restore autosaved draft on mount (with 24h expiry)
+  useEffect(() => {
+    const saved = localStorage.getItem(TEMPLATE_AUTOSAVE_KEY);
+    if (!saved) return;
+    try {
+      const draft = JSON.parse(saved);
+      // Check if draft has expired
+      if (draft.savedAt && (Date.now() - draft.savedAt) > DRAFT_EXPIRY_MS) {
+        localStorage.removeItem(TEMPLATE_AUTOSAVE_KEY);
+        return;
+      }
+      setName(draft.name ?? '');
+      setCategory(draft.category ?? 'welcome');
+      setSubject(draft.subject ?? '');
+      setBodyHtml(draft.bodyHtml ?? '');
+    } catch {
+      // ignore malformed draft
+    }
+  }, []);
+
+  // Debounced autosave for template fields
+  useEffect(() => {
+    const payload = { name, category, subject, bodyHtml, savedAt: Date.now() };
+    const timer = setTimeout(() => {
+      localStorage.setItem(TEMPLATE_AUTOSAVE_KEY, JSON.stringify(payload));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [name, category, subject, bodyHtml]);
+
+  const saveTemplate = async () => {
+    if (!name.trim()) {
+      showFeedback('Template name is required.', 'warning');
+      return;
+    }
+
+    if (!subject.trim()) {
+      showFeedback('Template subject is required.', 'warning');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        name,
+        category,
+        subject,
+        bodyHtml: bodyHtml,
+      };
+
+      await gmailService.createTemplate(payload);
+      localStorage.removeItem(TEMPLATE_AUTOSAVE_KEY);
+      showFeedback('Template saved.', 'success');
+      navigate('/marketing');
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to save template.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="content fade-in">
+      <div className="page-header-row">
+        <div className="page-header-copy">
+          <h1 className="page-title-inline">Template Block Editor</h1>
+        </div>
+        <div className="inline-actions">
+          <button className="topbar-btn" onClick={() => navigate('/marketing')}>Back</button>
+          <button className="topbar-btn primary" onClick={saveTemplate} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Template'}
+          </button>
+        </div>
+      </div>
+
+      <div className="card page-card-stack">
+        <div className="card-header">
+          <Icon name="template" size={14} color="var(--accent-primary)" />
+          <span className="card-title">Template Details</span>
+        </div>
+        <div className="card-body">
+          <div className="card-form-grid">
+            <div className="form-group">
+              <label className="form-label">Template name</label>
+              <input className="form-input" value={name} onChange={(e) => { setName(e.target.value); markDirty(); }} placeholder="Template name" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select className="form-input" value={category} onChange={(e) => { setCategory(e.target.value); markDirty(); }}>
+                <option value="welcome">Welcome</option>
+                <option value="follow-up">Follow-up</option>
+                <option value="proposal">Proposal</option>
+                <option value="reminder">Reminder</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Subject</label>
+            <input className="form-input" value={subject} onChange={(e) => { setSubject(e.target.value); markDirty(); }} placeholder="Subject (supports {{firstName}}, {{company}})" />
+          </div>
+          <div className="helper-text">
+            Use personalization tokens: {'{{firstName}}'}, {'{{lastName}}'}, {'{{company}}'}, {'{{email}}'}
+          </div>
+        </div>
+      </div>
+
+      <div className="card page-card-stack">
+        <div className="card-header">
+          <Icon name="mail" size={14} color="var(--accent-primary)" />
+          <span className="card-title">Email Builder</span>
+        </div>
+        <div className="card-body card-body-flush">
+          <textarea
+            className="form-input"
+            style={{ minHeight: '70vh', fontFamily: 'monospace', width: '100%' }}
+            value={bodyHtml}
+            onChange={(e) => { setBodyHtml(e.target.value); markDirty(); }}
+            placeholder="Paste or write your email HTML here..."
+          />
+        </div>
+      </div>
+      <ConfirmDialog
+        open={isBlocked}
+        title="Unsaved Changes"
+        message="You have unsaved template changes. Are you sure you want to leave? Your changes will be lost."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        tone="warning"
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+      />
+    </div>
+  );
+};
+
+export default TemplateEditor;

@@ -1,20 +1,37 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "run GmailManager.Api",
-			"type": "shell",
-			"command": "dotnet",
-			"args": [
-				"run",
-				"--project",
-				"GmailManager.Api/GmailManager.Api.csproj"
-			],
-			"isBackground": false,
-			"problemMatcher": [
-				"$msCompile"
-			],
-			"group": "build"
-		}
-	]
+"version": "2.0.0",
+"tasks": [
+{
+"label": "build-api",
+"type": "shell",
+"command": "dotnet",
+"args": ["build", "backend/services/GmailManager.Api/GmailManager.Api.csproj"],
+"problemMatcher": ["$msCompile"],
+"group": "build"
+},
+{
+"label": "Backend: GmailManager.Api",
+"type": "shell",
+"command": "dotnet",
+"args": ["run", "--project", "backend/services/GmailManager.Api/GmailManager.Api.csproj"],
+"isBackground": true,
+"problemMatcher": ["$msCompile"],
+"group": "build"
+},
+{
+"label": "Frontend: React Dev Server",
+"type": "shell",
+"command": "npm",
+"args": ["start"],
+"options": { "cwd": "${workspaceFolder}/frontend" },
+"isBackground": true,
+"problemMatcher": []
+},
+{
+"label": "Run Full Stack",
+"dependsOn": ["Backend: GmailManager.Api", "Frontend: React Dev Server"],
+"dependsOrder": "parallel",
+"problemMatcher": []
+}
+]
 }

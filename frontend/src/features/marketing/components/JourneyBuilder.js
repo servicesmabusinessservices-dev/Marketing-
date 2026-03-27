@@ -1,0 +1,417 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { gmailService } from '../../../services/gmailService';
+import { useFeedback } from '../../../context/FeedbackContext';
+import Icon from '../../../components/ui/Icon';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import useUnsavedChangesWarning from '../../../hooks/useUnsavedChangesWarning';
+import { useJourneyById, useTemplates } from '../../../hooks/useApi';
+import './JourneyBuilder.css';
+
+const STEP_TYPES = [
+  { value: 'send_email',    label: 'Send Email' },
+  { value: 'advance_stage', label: 'Advance Stage' },
+  { value: 'mark_client',   label: 'Mark as Client' },
+  { value: 'emit_event',    label: 'Emit Event' }
+];
+
+const LEAD_STAGES = ['New', 'Qualified', 'Proposal', 'Won', 'Lost'];
+
+const EVENT_TYPES = ['proposal_sent', 'opened', 'clicked', 'replied', 'bounced', 'unsubscribed'];
+
+let _uid = 0;
+const makeStep = (order) => ({
+  _id: ++_uid,
+  stepOrder: order,
+  stepType: 'send_email',
+  delayMinutes: 0,
+  templateId: '',
+  conditionEventType: '',
+  conditionWindowHours: '',
+  toLeadStage: ''
+});
+
+const SortableStep = ({ step, index, stepsLength, updateStep, removeStep, templates }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step._id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 10 : 'auto',
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="jb-step-row">
+      <div className="jb-step-connector">
+        <div className={`jb-step-dot ${step.stepType}`} />
+        {index < stepsLength - 1 && <div className="jb-step-line" />}
+      </div>
+      <div className="jb-step-card">
+        <div className="jb-step-top">
+          <button className="jb-drag-handle" {...attributes} {...listeners} title="Drag to reorder" aria-label={`Drag step ${index + 1}`}>
+            <Icon name="grip" size={14} />
+          </button>
+          <span className="jb-step-num">#{index + 1}</span>
+          <select
+            className="form-input jb-step-type-select"
+            value={step.stepType}
+            onChange={(e) => updateStep(step._id, 'stepType', e.target.value)}
+          >
+            {STEP_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+          <span className={`jb-type-badge ${step.stepType}`}>
+            {STEP_TYPES.find((t) => t.value === step.stepType)?.label}
+          </span>
+          <button
+            className="jb-step-remove"
+            onClick={() => removeStep(step._id)}
+            title="Remove step"
+            aria-label={`Remove step ${index + 1}`}
+          >✕</button>
+        </div>
+
+        <div className="jb-step-fields">
+          <div className="form-group">
+            <label className="form-label">Delay (minutes)</label>
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              value={step.delayMinutes}
+              onChange={(e) => updateStep(step._id, 'delayMinutes', e.target.value)}
+              placeholder="0"
+            />
+          </div>
+
+          {step.stepType === 'send_email' && (
+            <div className="form-group">
+              <label className="form-label">Template</label>
+              <select
+                className="form-input"
+                value={step.templateId}
+                onChange={(e) => updateStep(step._id, 'templateId', e.target.value)}
+              >
+                <option value="">Select template</option>
+                {templates.map((t) => (
+                  <option key={t.templateId} value={t.templateId}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {step.stepType === 'advance_stage' && (
+            <div className="form-group">
+              <label className="form-label">Target Stage</label>
+              <select
+                className="form-input"
+                value={step.toLeadStage}
+                onChange={(e) => updateStep(step._id, 'toLeadStage', e.target.value)}
+              >
+                <option value="">Select stage</option>
+                {LEAD_STAGES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {step.stepType === 'emit_event' && (
+            <>
+              <div className="form-group">
+                <label className="form-label">Condition Event Type</label>
+                <select
+                  className="form-input"
+                  value={step.conditionEventType}
+                  onChange={(e) => updateStep(step._id, 'conditionEventType', e.target.value)}
+                >
+                  <option value="">No condition</option>
+                  {EVENT_TYPES.map((et) => (
+                    <option key={et} value={et}>{et}</option>
+                  ))}
+                </select>
+              </div>
+              {step.conditionEventType && (
+                <div className="form-group">
+                  <label className="form-label">Condition Window (hours)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    value={step.conditionWindowHours}
+                    onChange={(e) => updateStep(step._id, 'conditionWindowHours', e.target.value)}
+                    placeholder="e.g. 72"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const JourneyBuilder = () => {
+  const { journeyId } = useParams();
+  const navigate = useNavigate();
+  const { showFeedback } = useFeedback();
+
+  const journeyQuery   = useJourneyById(journeyId);
+  const templatesQuery = useTemplates();
+
+  const templates = templatesQuery.data?.templates || [];
+  const loading   = journeyQuery.isLoading;
+
+  const [journey, setJourney] = useState(null);
+  const [steps,   setSteps]   = useState([]);
+  const [saving,  setSaving]  = useState(false);
+  const [acting,  setActing]  = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const autosaveTimerRef = useRef(null);
+  const serverStepsRef = useRef(null);
+  const { isBlocked, confirmNavigation, cancelNavigation } = useUnsavedChangesWarning(isDirty);
+
+  const autosaveKey = `jb_autosave_${journeyId}`;
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setSteps((prev) => {
+      const oldIndex = prev.findIndex((s) => s._id === active.id);
+      const newIndex = prev.findIndex((s) => s._id === over.id);
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      return reordered.map((s, i) => ({ ...s, stepOrder: i + 1 }));
+    });
+    setIsDirty(true);
+  };
+
+  // Initialise steps from query data whenever the journey loads
+  useEffect(() => {
+    if (!journeyQuery.data) return;
+    setJourney(journeyQuery.data.journey);
+    const loaded = (journeyQuery.data.steps || []).map((s) => ({
+      _id:                  ++_uid,
+      stepOrder:            s.stepOrder,
+      stepType:             s.stepType,
+      delayMinutes:         s.delayMinutes ?? 0,
+      templateId:           s.templateId || '',
+      conditionEventType:   s.conditionEventType || '',
+      conditionWindowHours: s.conditionWindowHours != null ? String(s.conditionWindowHours) : '',
+      toLeadStage:          s.toLeadStage || ''
+    }));
+
+    // Check for autosaved draft
+    const saved = localStorage.getItem(autosaveKey);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved);
+        if (Array.isArray(draft) && draft.length > 0) {
+          setSteps(draft.map((s) => ({ ...s, _id: ++_uid })));
+          setIsDirty(true);
+          serverStepsRef.current = loaded;
+          return;
+        }
+      } catch { /* ignore corrupt data */ }
+    }
+
+    serverStepsRef.current = loaded;
+    setSteps(loaded.length > 0 ? loaded : [makeStep(1)]);
+    setIsDirty(false);
+  }, [journeyQuery.data, autosaveKey]);
+
+  // Debounced autosave to localStorage every 10s when dirty
+  useEffect(() => {
+    if (!isDirty || steps.length === 0) return;
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      localStorage.setItem(autosaveKey, JSON.stringify(steps));
+    }, 10000);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [steps, isDirty, autosaveKey]);
+
+  const updateStep = (id, field, value) => {
+    setSteps((prev) => prev.map((s) => (s._id === id ? { ...s, [field]: value } : s)));
+    setIsDirty(true);
+  };
+
+  const addStep = () => {
+    setSteps((prev) => [...prev, makeStep(prev.length + 1)]);
+    setIsDirty(true);
+  };
+
+  const removeStep = (id) => {
+    setSteps((prev) => {
+      const filtered = prev.filter((s) => s._id !== id);
+      return filtered.map((s, i) => ({ ...s, stepOrder: i + 1 }));
+    });
+    setIsDirty(true);
+  };
+
+  const handleSaveSteps = async () => {
+    if (steps.length === 0) {
+      showFeedback('Add at least one step before saving.', 'warning');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = steps.map((s, i) => ({
+        stepOrder:           i + 1,
+        stepType:            s.stepType,
+        delayMinutes:        parseInt(s.delayMinutes, 10) || 0,
+        templateId:          s.templateId || null,
+        conditionEventType:  s.conditionEventType || null,
+        conditionWindowHours: s.conditionWindowHours ? parseInt(s.conditionWindowHours, 10) : null,
+        toLeadStage:         s.toLeadStage || null
+      }));
+      await gmailService.upsertJourneySteps(journeyId, payload);
+      localStorage.removeItem(autosaveKey);
+      setIsDirty(false);
+      showFeedback('Steps saved.', 'success');
+      journeyQuery.refetch();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to save steps.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    setActing(true);
+    try {
+      await gmailService.publishJourney(journeyId);
+      showFeedback('Journey published.', 'success');
+      journeyQuery.refetch();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to publish journey.', 'error');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handlePause = async () => {
+    setActing(true);
+    try {
+      await gmailService.pauseJourney(journeyId);
+      showFeedback('Journey paused.', 'success');
+      journeyQuery.refetch();
+    } catch (error) {
+      showFeedback(error.response?.data?.error || 'Failed to pause journey.', 'error');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const statusClass = journey?.status === 'active' ? 'active'
+    : journey?.status === 'paused' ? 'paused' : 'draft';
+
+  if (loading) {
+    return (
+      <div className="content fade-in">
+        <div className="empty-state empty-state-top"><p>Loading journey…</p></div>
+      </div>
+    );
+  }
+
+  if (!journey) {
+    return (
+      <div className="content fade-in">
+        <div className="empty-state empty-state-top">
+          <p>Journey not found.</p>
+          <button className="topbar-btn topbar-btn-spaced" onClick={() => navigate('/marketing?tab=journeys')}>
+            ← Back to Journeys
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="content fade-in">
+      {/* Header */}
+      <div className="jb-header">
+        <button className="topbar-btn jb-back-btn" onClick={() => navigate('/marketing?tab=journeys')}>
+          ← Journeys
+        </button>
+        <div className="jb-title-group">
+          <div className="jb-name syne">{journey.name}</div>
+          <div className="jb-meta">
+            <span className="jb-trigger">{journey.triggerType}</span>
+            <span className={`jb-status ${statusClass}`}>{journey.status || 'draft'}</span>
+          </div>
+        </div>
+        <div className="jb-actions">
+          {isDirty && <span className="jb-dirty-indicator">Unsaved changes</span>}
+          <button className="topbar-btn primary" onClick={handleSaveSteps} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Steps'}
+          </button>
+          {journey.status !== 'active' ? (
+            <button className="topbar-btn" onClick={handlePublish} disabled={acting}>
+              {acting ? '…' : 'Publish'}
+            </button>
+          ) : (
+            <button className="topbar-btn" onClick={handlePause} disabled={acting}>
+              {acting ? '…' : 'Pause'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Steps card */}
+      <div className="card">
+        <div className="card-header">
+          <Icon name="journey" size={14} color="var(--accent-primary)" />
+          <span className="card-title">Steps ({steps.length})</span>
+          <span className="helper-text card-header-meta">
+            Configure the sequence of actions for each enrolled contact.
+          </span>
+        </div>
+        <div className="card-body">
+          {steps.length === 0 ? (
+            <div className="jb-empty">No steps yet. Add your first step below.</div>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={steps.map((s) => s._id)} strategy={verticalListSortingStrategy}>
+                <div className="jb-canvas">
+                  {steps.map((step, index) => (
+                    <SortableStep key={step._id} step={step} index={index} stepsLength={steps.length}
+                      updateStep={updateStep} removeStep={removeStep} templates={templates} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+
+          <button className="jb-add-btn" onClick={addStep}>
+            <Icon name="plus" size={14} />
+            Add Step
+          </button>
+        </div>
+      </div>
+      <ConfirmDialog
+        open={isBlocked}
+        title="Unsaved Changes"
+        message="You have unsaved changes in the journey builder. Are you sure you want to leave? Your changes will be preserved in a local draft."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        tone="warning"
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+      />
+    </div>
+  );
+};
+
+export default JourneyBuilder;

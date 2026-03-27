@@ -1,0 +1,43 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [deploy]
+
+jobs:
+  # ── Render auto-deploys via webhook — this job notifies ────────
+  # Render's GitHub integration auto-deploys when the deploy branch
+  # is pushed. This workflow just validates the build first.
+  #
+  # If you want manual webhook triggers instead of Render's GitHub
+  # integration, uncomment the deploy-render job below.
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Build solution
+        run: dotnet build EmailMultiAccountApp.sln -c Release
+
+  # ── Optional: trigger Render deploys via webhook ───────────────
+  # deploy-render:
+  #   needs: validate
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       service:
+  #         - RENDER_AUTH_DEPLOY_HOOK
+  #         - RENDER_EMAIL_DEPLOY_HOOK
+  #         - RENDER_MARKETING_DEPLOY_HOOK
+  #         - RENDER_NOTIFICATION_DEPLOY_HOOK
+  #         - RENDER_ANALYTICS_DEPLOY_HOOK
+  #         - RENDER_GATEWAY_DEPLOY_HOOK
+  #   steps:
+  #     - name: Trigger Render deploy
+  #       run: curl -s "${{ secrets[matrix.service] }}"
