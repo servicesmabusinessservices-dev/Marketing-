@@ -147,13 +147,37 @@ Full email view with reply functionality
 
 ## 🚀 Deployment
 
-### Backend (Azure App Service)
+### Production Deployment (Docker)
+
+**Complete deployment solution with Docker + Render + Vercel:**
+
+📚 **[Complete Deployment Guide](docs/DOCKER_DEPLOYMENT_GUIDE.md)** - Full step-by-step instructions  
+⚡ **[Quick Reference](docs/RENDER_CONFIG_REFERENCE.md)** - Fast configuration reference  
+📋 **[Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)** - Overview and checklist
+
+**Quick Start:**
+- **Backend**: Deploy to Render using [`backend/Dockerfile`](backend/Dockerfile)
+- **Frontend**: Deploy to Vercel (recommended) or Docker
+- **Database**: PlanetScale (MySQL) or Railway
+- **Cache**: Upstash Redis
+
+**Key Files:**
+- [`backend/Dockerfile`](backend/Dockerfile) - Production-ready backend image
+- [`frontend/Dockerfile`](frontend/Dockerfile) - Nginx-based frontend image
+- [`backend/.env.production.example`](backend/.env.production.example) - Environment variables template
+
+### Legacy Deployment
+
+<details>
+<summary>Click to expand legacy deployment instructions</summary>
+
+#### Backend (Azure App Service)
 ```bash
 cd GmailManager.Api
 dotnet publish -c Release
 ```
 
-### Frontend (Static Hosting)
+#### Frontend (Static Hosting)
 ```bash
 cd email-app
 npm run build
@@ -163,6 +187,8 @@ npm run build
 - Update redirect URI in Google Console
 - Update `API_BASE_URL` in frontend
 - Use environment variables for secrets
+
+</details>
 
 ## 📝 Environment Variables
 
