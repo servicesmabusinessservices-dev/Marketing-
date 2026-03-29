@@ -7,9 +7,9 @@ RUN npm ci --prefer-offline || npm install
 
 COPY frontend/ .
 
-# REACT_APP_API_URL is /api so all fetch calls resolve to the same container
-ARG REACT_APP_API_URL=/api
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
+# VITE_API_URL is /api so all fetch calls resolve to the same container
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
 
@@ -32,7 +32,7 @@ WORKDIR /app
 
 COPY --from=dotnet-build /app/publish .
 # Place the React build into wwwroot so ASP.NET Core serves it as static files
-COPY --from=node-build /app/build wwwroot/
+COPY --from=node-build /app/dist wwwroot/
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080

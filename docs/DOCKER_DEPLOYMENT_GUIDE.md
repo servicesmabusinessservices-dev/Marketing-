@@ -181,11 +181,9 @@ curl https://gmailmanager-api.onrender.com/api/v1/info
 
    | Setting | Value |
    |---------|-------|
-   | **Framework Preset** | Create React App |
-   | **Root Directory** | `frontend` |
+   | **Framework Preset** | rontend` |
    | **Build Command** | `npm run build` |
-   | **Output Directory** | `build` |
-   | **Install Command** | `npm ci` |
+   | **Output Directory** | `dist`pm ci` |
 
 4. **Environment Variables**
 

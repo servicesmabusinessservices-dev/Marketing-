@@ -20,9 +20,9 @@ RUN npm ci --prefer-offline --no-audit
 COPY . .
 
 # Build-time environment variable for API URL
-# Override with: docker build --build-arg REACT_APP_API_URL=https://api.example.com
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+# Override with: docker build --build-arg VITE_API_URL=https://api.example.com
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Build the React application
 RUN npm run build
@@ -73,7 +73,7 @@ server {
 EOF
 
 # Copy built React app from build stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Create non-root user for security
 RUN addgroup -g 101 -S nginx-app && \
