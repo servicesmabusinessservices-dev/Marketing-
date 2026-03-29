@@ -190,7 +190,7 @@ curl https://gmailmanager-api.onrender.com/api/v1/info
 4. **Environment Variables**
 
    ```bash
-   REACT_APP_API_URL=https://gmailmanager-api.onrender.com
+   VITE_API_URL=https://gmailmanager-api.onrender.com
    ```
 
 5. **Deploy**
@@ -228,7 +228,7 @@ curl https://gmailmanager-api.onrender.com/api/v1/info
 3. **Environment Variables**
 
    ```bash
-   REACT_APP_API_URL=https://gmailmanager-api.onrender.com
+   VITE_API_URL=https://gmailmanager-api.onrender.com
    ```
 
    **Note:** Build-time variable, requires rebuild to change
@@ -261,11 +261,11 @@ curl https://gmailmanager-api.onrender.com/api/v1/info
 
 | Variable | Purpose | Example | Required |
 |----------|---------|---------|----------|
-| `REACT_APP_API_URL` | Backend API URL | `https://api.example.com` | ✅ |
+| `VITE_API_URL` | Backend API URL | `https://api.example.com` | ✅ |
 
 **Important Notes:**
 - Frontend env vars are **build-time** only
-- Must start with `REACT_APP_`
+- Must start with `VITE_`
 - Embedded in JavaScript bundle
 - Requires rebuild to change
 
@@ -298,7 +298,7 @@ curl http://localhost:8080/health
 ```bash
 # Build frontend image
 docker build -t gmailmanager-frontend \
-  --build-arg REACT_APP_API_URL=http://localhost:8080 \
+  --build-arg VITE_API_URL=http://localhost:8080 \
   -f frontend/Dockerfile frontend/
 
 # Run
@@ -335,7 +335,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_URL=http://localhost:8080
+        - VITE_API_URL=http://localhost:8080
     ports:
       - "3000:80"
     depends_on:
@@ -409,8 +409,8 @@ COPY services/GmailManager.Marketing/ services/GmailManager.Marketing/
 **Problem:** Environment variable not set during build
 
 **Solution:**
-- Vercel: Set `REACT_APP_API_URL` in project settings
-- Docker: Pass `--build-arg REACT_APP_API_URL=...`
+- Vercel: Set `VITE_API_URL` in project settings
+- Docker: Pass `--build-arg VITE_API_URL=...`
 - Rebuild/redeploy frontend
 
 #### 6. **Health Check Fails**

@@ -51,7 +51,7 @@
 
 2. **Add Environment Variable**
    ```
-   REACT_APP_API_URL=https://your-backend.onrender.com
+   VITE_API_URL=https://your-backend.onrender.com
    ```
 
 3. **Deploy** - Vercel builds automatically
@@ -101,7 +101,7 @@ curl http://localhost:8080/health
 ```bash
 # From project root
 docker build -t gmailmanager-frontend \
-  --build-arg REACT_APP_API_URL=http://localhost:8080 \
+  --build-arg VITE_API_URL=http://localhost:8080 \
   -f frontend/Dockerfile frontend/
 
 # Run
@@ -146,7 +146,7 @@ http://localhost:3000
 ### Frontend
 - [ ] Vercel project created
 - [ ] Root directory set to `frontend`
-- [ ] `REACT_APP_API_URL` configured
+- [ ] `VITE_API_URL` configured
 - [ ] Deployment successful
 - [ ] Frontend loads correctly
 - [ ] API calls working
@@ -175,7 +175,7 @@ http://localhost:3000
 
 ### Frontend shows "undefined" for API URL
 **Cause:** Build-time env var not set  
-**Solution:** Set `REACT_APP_API_URL` in Vercel/Docker build args
+**Solution:** Set `VITE_API_URL` in Vercel/Docker build args
 
 ---
 
