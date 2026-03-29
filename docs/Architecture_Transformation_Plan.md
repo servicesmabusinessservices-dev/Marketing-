@@ -626,7 +626,8 @@ Before any structural refactoring, these security and hygiene issues must be add
 4. **🔴 HIGH** — Remove the dev JWT secret fallback from `Program.cs`.
 5. **🟡 HIGH** — Delete the 3 unused npm packages and rebuild to reduce bundle size (~180 KB savings).
 6. **🟡 MEDIUM** — Add `/api/v1/` versioning prefix to all routes.
-
+7. **🟡 MEDIUM** — Run `npm audit` and address high-severity vulnerabilities linked to deprecated CRA dependencies.
+8. **🔵 NOTICE** — Deprecation warnings during Vercel build (rimraf, workbox, etc.) confirm the urgent need for Vite migration (Step 7.2).
 ---
 
 > **Summary**: The codebase is functionally complete and has good infrastructure foundations (Serilog, rate limiting, health checks, JWT, EF Core migrations). The primary issues are architectural — a God-Object controller, missing service layer, and monolith deployment — rather than fundamental code quality problems. The refactoring path is well-defined and can be executed incrementally over **2–3 weeks** without breaking existing functionality.

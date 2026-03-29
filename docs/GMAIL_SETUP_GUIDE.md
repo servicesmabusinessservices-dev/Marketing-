@@ -231,7 +231,7 @@ EmailMultiAccountApp/
 
 4. Update frontend `authConfig.js`:
    ```javascript
-   export const API_BASE_URL = 'https://your-app.azurewebsites.net/api';
+   export const API_BASE_URL = import.meta.env.VITE_API_URL;
    ```
 
 ---

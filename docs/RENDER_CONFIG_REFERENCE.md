@@ -131,7 +131,7 @@ Docker Build Context: frontend
 
 ```bash
 # Build-time variable (embedded in bundle)
-REACT_APP_API_URL=https://gmailmanager-api.onrender.com
+VITE_API_URL=https://gmailmanager-api.onrender.com
 ```
 
 **⚠️ Important:** Changing this requires a rebuild!
