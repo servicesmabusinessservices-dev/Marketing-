@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MySqlConnector;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -39,6 +40,10 @@ try
     // ── Controllers + API explorer ────────────────────────────────────────────
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "GmailManager API", Version = "v1" });
+    });
 
     // ── API Versioning ────────────────────────────────────────────────────────
     builder.Services.AddApiVersioning(options =>
@@ -70,10 +75,21 @@ try
     {
         options.AddPolicy("AllowReact", policy =>
         {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            }
+            else
+            {
+                // Safe fallback: allow any origin (no credentials) to avoid blocking deployments when CORS is unset
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+                Log.Warning("CORS_ALLOWED_ORIGINS not set and not in Development. Falling back to AllowAnyOrigin.");
+            }
         });
     });
 
@@ -277,6 +293,14 @@ try
                 http.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "anon");
             diag.Set("ClientIp", http.Connection.RemoteIpAddress?.ToString() ?? "unknown");
         };
+    });
+
+    // Swagger (enabled in all environments for easy access)
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GmailManager API v1");
+        c.RoutePrefix = "swagger";
     });
 
     app.UseDefaultFiles();
