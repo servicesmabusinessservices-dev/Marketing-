@@ -119,7 +119,7 @@ const AccountSelection = () => {
     gmailService.devLogin();
   };
 
-  const showDevLoginBtn = process.env.NODE_ENV === 'development' && isOnLocalhost && loginError.toLowerCase().includes('google oauth credentials are not configured');
+  const showDevLoginBtn = import.meta.env.DEV && isOnLocalhost && loginError.toLowerCase().includes('google oauth credentials are not configured');
 
   const animClass = prefersReducedMotion ? '' : 'login-animate';
 

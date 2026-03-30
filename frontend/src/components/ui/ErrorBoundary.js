@@ -37,7 +37,7 @@ export default class ErrorBoundary extends Component {
           <p className="error-boundary__message">
             {this.props.message || 'An unexpected error occurred while loading this page.'}
           </p>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {import.meta.env.DEV && this.state.error && (
             <pre className="error-boundary__detail">
               {this.state.error.toString()}
             </pre>
