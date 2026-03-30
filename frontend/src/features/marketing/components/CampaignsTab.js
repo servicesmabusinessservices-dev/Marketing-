@@ -109,7 +109,7 @@ const CampaignsTab = () => {
         );
       }
     },
-  ], [sendingCampaignId, deletingId]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [sendingCampaignId, deletingId]);
 
   if (campaignsQuery.isLoading || listsQuery.isLoading || templatesQuery.isLoading) {
     return <LoadingSpinner label="Loading campaigns..." />;

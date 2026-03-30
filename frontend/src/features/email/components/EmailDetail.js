@@ -85,7 +85,6 @@ const EmailDetail = () => {
 
   useEffect(() => {
     fetchEmailDetail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailId]);
 
   const fetchEmailDetail = async () => {

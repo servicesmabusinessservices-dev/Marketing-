@@ -178,7 +178,6 @@ export function useInboxData(emailIdFromRoute) {
     } else if (!selectedEmailId && emailsRef.current.length > 0) {
       setSelectedEmailId(emailsRef.current[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailIdFromRoute, loading]);
 
   const fetchEmailDetail = useCallback(async (id) => {

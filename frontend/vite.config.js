@@ -10,5 +10,15 @@ export default defineConfig({
     exclude: /node_modules/,
     loader: 'jsx',
     jsx: 'automatic'
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          excel: ['exceljs'],
+          charts: ['recharts', 'framer-motion', 'gsap', '@gsap/react']
+        }
+      }
+    }
   }
 });
