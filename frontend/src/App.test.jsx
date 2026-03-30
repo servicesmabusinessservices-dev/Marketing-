@@ -16,7 +16,7 @@ jest.mock('react-router-dom', () => {
   };
 }, { virtual: true });
 
-import App from './App';
+import App from './App.jsx';
 
 test('renders initial app shell', () => {
   render(<App />);
