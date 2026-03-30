@@ -13,7 +13,7 @@ export const gmailService = {
     } catch (error) {
       if (!error.response) {
         throw new Error(
-          'Unable to reach backend. Start the API and make sure it is listening on http://localhost:5049.'
+          `Unable to reach backend. Check API at ${API_BASE_URL || '<<missing API URL>>'}.`
         );
       }
 

@@ -107,7 +107,7 @@ function App() {
           </div>
         </FeedbackProvider>
       </ThemeProvider>
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
       )}
     </QueryClientProvider>
