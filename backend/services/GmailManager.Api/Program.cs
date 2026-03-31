@@ -62,9 +62,10 @@ try
     });
 
     // ── CORS ──────────────────────────────────────────────────────────────────
-    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                         ?? Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                         ?? (builder.Environment.IsDevelopment() ? new[] { "http://localhost:3000" } : Array.Empty<string>());
+    var allowedOrigins = BuildAllowedOrigins(
+        builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>(),
+        Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
+        builder.Environment.IsDevelopment());
 
     if (allowedOrigins.Length == 0)
     {
@@ -75,7 +76,8 @@ try
     {
         options.AddPolicy("AllowReact", policy =>
         {
-            if (allowedOrigins.Length > 0)
+            var containsWildcard = allowedOrigins.Any(o => o == "*");
+            if (allowedOrigins.Length > 0 && !containsWildcard)
             {
                 policy.WithOrigins(allowedOrigins)
                       .AllowAnyHeader()
@@ -88,7 +90,7 @@ try
                 policy.AllowAnyOrigin()
                       .AllowAnyHeader()
                       .AllowAnyMethod();
-                Log.Warning("CORS_ALLOWED_ORIGINS not set and not in Development. Falling back to AllowAnyOrigin.");
+                Log.Warning("CORS origins are empty or wildcard. Falling back to AllowAnyOrigin without credentials.");
             }
         });
     });
@@ -418,4 +420,32 @@ static (bool UseInMemory, string? ConnectionString, ServerVersion? ServerVersion
             null,
             $"Falling back to in-memory database for local development because MySQL is unavailable: {ex.Message}");
     }
+}
+
+static string[] BuildAllowedOrigins(string[]? configuredOrigins, string? envOriginsCsv, bool isDevelopment)
+{
+    var envOrigins = string.IsNullOrWhiteSpace(envOriginsCsv)
+        ? Array.Empty<string>()
+        : envOriginsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    var merged = (configuredOrigins ?? Array.Empty<string>())
+        .Concat(envOrigins)
+        .Select(NormalizeOrigin)
+        .Where(static o => !string.IsNullOrWhiteSpace(o))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    if (merged.Length > 0)
+        return merged;
+
+    return isDevelopment ? new[] { "http://localhost:3000" } : Array.Empty<string>();
+}
+
+static string NormalizeOrigin(string origin)
+{
+    var trimmed = origin.Trim();
+    if (trimmed == "*")
+        return trimmed;
+
+    return trimmed.TrimEnd('/');
 }
