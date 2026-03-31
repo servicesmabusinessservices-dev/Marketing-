@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import Icon from './Icon';
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '../../hooks/useApi';
@@ -20,7 +21,9 @@ const formatRelativeTime = (dateString) => {
 const NotificationPanel = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const panelRef = useRef(null);
+  const anchorRef = useRef(null);
+  const panelContentRef = useRef(null);
+  const [panelStyle, setPanelStyle] = useState({});
 
   const { data } = useNotifications();
   const markRead = useMarkNotificationRead();
@@ -33,12 +36,47 @@ const NotificationPanel = () => {
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
+      const inAnchor = anchorRef.current?.contains(e.target);
+      const inPanel = panelContentRef.current?.contains(e.target);
+      if (!inAnchor && !inPanel) {
         setOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Position panel using viewport coordinates so it never clips in scroll containers.
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return;
+
+    const updatePosition = () => {
+      const rect = anchorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const viewportPadding = 8;
+      const panelWidth = Math.min(360, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(
+        viewportPadding,
+        Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - viewportPadding)
+      );
+      const top = rect.bottom + 8;
+
+      setPanelStyle({
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${panelWidth}px`
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
   }, [open]);
 
   const handleItemClick = useCallback((notification) => {
@@ -55,8 +93,47 @@ const NotificationPanel = () => {
     markAllRead.mutate();
   }, [markAllRead]);
 
+  const panelNode = open ? (
+    <div
+      ref={panelContentRef}
+      className="notification-panel"
+      style={panelStyle}
+      role="dialog"
+      aria-label="Notifications"
+    >
+      <div className="np-header">
+        <h3>Notifications</h3>
+        {unreadCount > 0 && (
+          <button type="button" className="np-mark-all" onClick={handleMarkAllRead}>
+            Mark all as read
+          </button>
+        )}
+      </div>
+
+      {notifications.length === 0 ? (
+        <div className="np-empty">No notifications yet</div>
+      ) : (
+        <ul className="np-list">
+          {notifications.map((n) => (
+            <li
+              key={n.notificationId}
+              className={`np-item${!n.isRead ? ' unread' : ''}`}
+              onClick={() => handleItemClick(n)}
+            >
+              <div className="np-item-body">
+                <div className="np-item-title">{n.title}</div>
+                <div className="np-item-message">{n.message}</div>
+              </div>
+              <span className="np-item-time">{formatRelativeTime(n.createdAtUtc)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  ) : null;
+
   return (
-    <div className="notification-bell-wrap" ref={panelRef}>
+    <div className="notification-bell-wrap" ref={anchorRef}>
       <button
         type="button"
         className="topbar-btn icon-only"
@@ -72,38 +149,7 @@ const NotificationPanel = () => {
         )}
       </button>
 
-      {open && (
-        <div className="notification-panel" role="dialog" aria-label="Notifications">
-          <div className="np-header">
-            <h3>Notifications</h3>
-            {unreadCount > 0 && (
-              <button type="button" className="np-mark-all" onClick={handleMarkAllRead}>
-                Mark all as read
-              </button>
-            )}
-          </div>
-
-          {notifications.length === 0 ? (
-            <div className="np-empty">No notifications yet</div>
-          ) : (
-            <ul className="np-list">
-              {notifications.map((n) => (
-                <li
-                  key={n.notificationId}
-                  className={`np-item${!n.isRead ? ' unread' : ''}`}
-                  onClick={() => handleItemClick(n)}
-                >
-                  <div className="np-item-body">
-                    <div className="np-item-title">{n.title}</div>
-                    <div className="np-item-message">{n.message}</div>
-                  </div>
-                  <span className="np-item-time">{formatRelativeTime(n.createdAtUtc)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {typeof document !== 'undefined' ? createPortal(panelNode, document.body) : panelNode}
     </div>
   );
 };

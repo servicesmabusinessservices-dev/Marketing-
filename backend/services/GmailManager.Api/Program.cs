@@ -283,6 +283,8 @@ try
     }
 
     // ── Middleware pipeline ───────────────────────────────────────────────────
+    // Run CORS early so error responses still include CORS headers.
+    app.UseCors("AllowReact");
     app.UseMiddleware<GlobalExceptionMiddleware>(); // Always first
 
     app.UseSerilogRequestLogging(opts =>
@@ -312,7 +314,6 @@ try
         app.UseHttpsRedirection();
 
     app.UseRateLimiter();
-    app.UseCors("AllowReact");
     app.UseAuthentication();
     app.UseAuthorization();
 
