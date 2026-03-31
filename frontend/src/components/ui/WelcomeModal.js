@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from './Icon';
@@ -84,7 +85,7 @@ const WelcomeModal = ({ completedKeys = [], onDismiss }) => {
     };
   }, [isVisible, handleKeyDown]);
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isVisible && (
         <motion.div
@@ -205,6 +206,12 @@ const WelcomeModal = ({ completedKeys = [], onDismiss }) => {
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') {
+    return modalContent;
+  }
+
+  return createPortal(modalContent, document.body);
 };
 
 // Helper to check if welcome modal should show

@@ -227,11 +227,11 @@ const AccountSelection = () => {
         <div className="login-right-glow" aria-hidden="true" />
         <div className="feature-list">
           {featureItems.map((feature) => (
-            <div key={feature.title} className="feature-item">
-              <div className="feature-icon-wrap feature-icon-wrap-cta">
-                <Icon name={feature.icon} size={18} color="var(--text-primary)" />
-              </div>
-              <div className="feature-text">
+              <div key={feature.title} className="feature-item">
+                <div className="feature-icon-wrap feature-icon-wrap-cta">
+                <Icon name={feature.icon} size={18} color="var(--login-text-primary)" />
+                </div>
+                <div className="feature-text">
                 <div className="feat-title">{feature.title}</div>
                 <div className="feat-desc">{feature.desc}</div>
               </div>
