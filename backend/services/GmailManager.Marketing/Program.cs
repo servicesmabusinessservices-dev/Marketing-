@@ -107,8 +107,9 @@ builder.Services.AddHostedService<MarketingAutomationWorker>();
 
 var app = builder.Build();
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
+// Run CORS early so error responses still include CORS headers.
 app.UseCors("AllowReact");
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

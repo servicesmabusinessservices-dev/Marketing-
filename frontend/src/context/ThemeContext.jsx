@@ -3,19 +3,18 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved) setIsDark(saved === 'dark');
+    // Enforce dark theme globally for consistent contrast across all screens.
+    setIsDark(true);
+    localStorage.setItem('theme', 'dark');
   }, []);
 
   const toggleTheme = () => {
-    setIsDark(prev => {
-      const newTheme = !prev;
-      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-      return newTheme;
-    });
+    // Keep dark mode locked to avoid low-contrast light variants.
+    setIsDark(true);
+    localStorage.setItem('theme', 'dark');
   };
 
   return (
