@@ -1,10 +1,10 @@
-// API base URL for all frontend calls.
+// API base URL for all frontend calls (include /api/v1).
 // Prefer build-time env var; fall back to the live Render API for safety.
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://marketing-api-38a1.onrender.com';
+  import.meta.env.VITE_API_URL || 'https://marketing-api-38a1.onrender.com/api/v1';
 
 if (!import.meta.env.VITE_API_URL && import.meta.env.PROD) {
-  console.warn('VITE_API_URL is not set — using https://marketing-api-38a1.onrender.com');
+  console.warn('VITE_API_URL is not set — using https://marketing-api-38a1.onrender.com/api/v1');
 }
 
 export const getAuthHeaders = () => {

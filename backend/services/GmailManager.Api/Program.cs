@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MySqlConnector;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -39,6 +40,10 @@ try
     // ── Controllers + API explorer ────────────────────────────────────────────
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "GmailManager API", Version = "v1" });
+    });
 
     // ── API Versioning ────────────────────────────────────────────────────────
     builder.Services.AddApiVersioning(options =>
@@ -57,9 +62,10 @@ try
     });
 
     // ── CORS ──────────────────────────────────────────────────────────────────
-    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                         ?? Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                         ?? (builder.Environment.IsDevelopment() ? new[] { "http://localhost:3000" } : Array.Empty<string>());
+    var allowedOrigins = BuildAllowedOrigins(
+        builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>(),
+        Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
+        builder.Environment.IsDevelopment());
 
     if (allowedOrigins.Length == 0)
     {
@@ -70,10 +76,22 @@ try
     {
         options.AddPolicy("AllowReact", policy =>
         {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            var containsWildcard = allowedOrigins.Any(o => o == "*");
+            if (allowedOrigins.Length > 0 && !containsWildcard)
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            }
+            else
+            {
+                // Safe fallback: allow any origin (no credentials) to avoid blocking deployments when CORS is unset
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+                Log.Warning("CORS origins are empty or wildcard. Falling back to AllowAnyOrigin without credentials.");
+            }
         });
     });
 
@@ -279,6 +297,14 @@ try
         };
     });
 
+    // Swagger (enabled in all environments for easy access)
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GmailManager API v1");
+        c.RoutePrefix = "swagger";
+    });
+
     app.UseDefaultFiles();
     app.UseStaticFiles();
 
@@ -394,4 +420,32 @@ static (bool UseInMemory, string? ConnectionString, ServerVersion? ServerVersion
             null,
             $"Falling back to in-memory database for local development because MySQL is unavailable: {ex.Message}");
     }
+}
+
+static string[] BuildAllowedOrigins(string[]? configuredOrigins, string? envOriginsCsv, bool isDevelopment)
+{
+    var envOrigins = string.IsNullOrWhiteSpace(envOriginsCsv)
+        ? Array.Empty<string>()
+        : envOriginsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    var merged = (configuredOrigins ?? Array.Empty<string>())
+        .Concat(envOrigins)
+        .Select(NormalizeOrigin)
+        .Where(static o => !string.IsNullOrWhiteSpace(o))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    if (merged.Length > 0)
+        return merged;
+
+    return isDevelopment ? new[] { "http://localhost:3000" } : Array.Empty<string>();
+}
+
+static string NormalizeOrigin(string origin)
+{
+    var trimmed = origin.Trim();
+    if (trimmed == "*")
+        return trimmed;
+
+    return trimmed.TrimEnd('/');
 }

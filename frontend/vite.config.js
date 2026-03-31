@@ -11,6 +11,13 @@ export default defineConfig({
     loader: 'jsx',
     jsx: 'automatic'
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx'
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {
