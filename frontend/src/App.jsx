@@ -22,6 +22,10 @@ const BulkEmail         = lazy(() => import('./features/email/components/BulkEma
 const ContactProfile    = lazy(() => import('./features/marketing/components/ContactProfile'));
 const JourneyBuilder    = lazy(() => import('./features/marketing/components/JourneyBuilder'));
 const SuppressionList   = lazy(() => import('./features/marketing/components/SuppressionList'));
+const PrivacyPolicy     = lazy(() => import('./features/legal/PrivacyPolicy'));
+const TermsOfService    = lazy(() => import('./features/legal/TermsOfService'));
+const SecurityOverview  = lazy(() => import('./features/legal/SecurityOverview'));
+const NotFound          = lazy(() => import('./features/legal/NotFound'));
 const AuthLayout        = lazy(() => import('./components/layout/AuthLayout'));
 const WorkspaceLayout   = lazy(() => import('./components/layout/WorkspaceLayout'));
 
@@ -60,8 +64,6 @@ const ProtectedWorkspace = () => {
   );
 };
 
-const CatchAllRedirect = () => <Navigate to={hasSession() ? '/dashboard' : '/'} replace />;
-
 // ── Data router (required for useBlocker / useUnsavedChangesWarning) ──────────
 const router = createBrowserRouter([
   {
@@ -91,7 +93,10 @@ const router = createBrowserRouter([
           { path: '/marketing/suppression', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><SuppressionList /></Suspense></ErrorBoundary> },
         ],
       },
-      { path: '*', element: <CatchAllRedirect /> },
+      { path: '/privacy', element: <Suspense fallback={<PageSkeleton />}><PrivacyPolicy /></Suspense> },
+      { path: '/terms', element: <Suspense fallback={<PageSkeleton />}><TermsOfService /></Suspense> },
+      { path: '/security', element: <Suspense fallback={<PageSkeleton />}><SecurityOverview /></Suspense> },
+      { path: '*', element: <Suspense fallback={<PageSkeleton />}><NotFound /></Suspense> },
     ],
   },
 ]);
@@ -101,6 +106,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <FeedbackProvider>
+          <a className="skip-link" href="#main-content">Skip to main content</a>
           <div className="app-shell">
             <GlobalCardEffects />
             <RouterProvider router={router} />

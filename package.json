@@ -6,7 +6,10 @@
     "build": "npm --prefix frontend run build",
     "frontend:dev": "npm --prefix frontend run dev",
     "frontend:build": "npm --prefix frontend run build",
-    "frontend:preview": "npm --prefix frontend run preview"
+    "frontend:preview": "npm --prefix frontend run preview",
+    "next:dev": "npm --prefix next run dev",
+    "next:build": "npm --prefix next run build",
+    "next:lint": "npm --prefix next run lint"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1"
