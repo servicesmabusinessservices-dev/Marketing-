@@ -1,7 +1,7 @@
 {
-  "short_name": "MA CRM",
-  "name": "MA Business CRM Workspace",
-  "description": "Gmail outreach, CRM pipeline tracking, and marketing automation in one workspace.",
+  "short_name": "Gmail Manager",
+  "name": "Gmail Manager",
+  "description": "Manage multiple Gmail inboxes with compliant OAuth, outreach, and automation in one workspace.",
   "icons": [
     {
       "src": "favicon.ico",

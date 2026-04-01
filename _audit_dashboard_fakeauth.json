@@ -1,0 +1,2130 @@
+{
+  "console": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to XMLHttpRequest at 'https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30' from origin 'https://marketing-zeta-flame.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "pageErrors": [],
+  "badResponses": [
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET"
+    },
+    {
+      "status": 401,
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET"
+    }
+  ],
+  "requestFailed": [
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/journeys/summary",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/email/summary",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/notification",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/contacts?limit=200",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/templates",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/campaigns",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/tasks?status=Open&limit=50",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-zeta-flame.vercel.app/",
+      "method": "GET",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/events?limit=6",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://marketing-api-38a1.onrender.com/api/v1/marketing/analytics?days=30",
+      "method": "GET",
+      "error": "net::ERR_FAILED"
+    }
+  ],
+  "url": "https://marketing-zeta-flame.vercel.app/dashboard",
+  "title": "Gmail Manager",
+  "h1": [],
+  "alerts": [],
+  "visibleTexts": [
+    "MA",
+    "MA Business",
+    "CRM Workspace",
+    "‹",
+    "Dashboard",
+    "Inbox",
+    "Bulk Email",
+    "Contacts",
+    "Pipeline",
+    "Campaigns",
+    "Templates",
+    "Journeys",
+    "Analytics",
+    "Suppression",
+    "Q",
+    "Admin User",
+    "qa@example.com",
+    "Sign out",
+    "Home",
+    "/",
+    "Dashboard",
+    "Search... ⌘K",
+    "Quick Add"
+  ]
+}

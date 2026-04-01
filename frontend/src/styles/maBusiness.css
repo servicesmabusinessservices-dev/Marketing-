@@ -3707,8 +3707,44 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
   .login-heading-text { font-size: var(--text-xl); }
   .login-bg-beam { opacity: 0.32; }
   .login-bg-ring { display: none; }
-  .login-footer { justify-content: flex-start; }
-  .login-right { display: none; }
+.login-footer { justify-content: flex-start; }
+.login-right { display: none; }
+}
+
+/* Trust strip beneath login */
+.login-trust {
+  margin: 32px 16px 48px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--glass);
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  color: var(--text-primary);
+}
+
+.trust-block h3 {
+  margin: 0 0 8px;
+  font-size: var(--fs-base);
+  font-weight: 700;
+}
+
+.trust-block ul {
+  list-style: disc;
+  padding-left: 18px;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.trust-block a {
+  color: var(--accent);
+}
+
+.trust-block a:hover {
+  text-decoration: underline;
 }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Small phones: 1 column everything Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */

@@ -124,7 +124,7 @@ const AccountSelection = () => {
   const animClass = prefersReducedMotion ? '' : 'login-animate';
 
   return (
-    <div className={`login-screen ${animClass}`}>
+    <div className={`login-screen ${animClass}`} id="main-content">
       <div className="login-left">
         <div className="login-bg-grid" aria-hidden="true" />
         <div className="login-bg-noise" aria-hidden="true" />
@@ -219,7 +219,11 @@ const AccountSelection = () => {
           <div className="login-footer">
             <span>Secure OAuth 2.0</span>
             <span>|</span>
-            <span>No password stored</span>
+            <span>No passwords stored</span>
+            <span>|</span>
+            <a href="/privacy">Privacy</a>
+            <span>|</span>
+            <a href="/terms">Terms</a>
           </div>
         </div>
       </div>
@@ -237,6 +241,32 @@ const AccountSelection = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+      <div className="login-trust" aria-label="Company and security information">
+        <div className="trust-block">
+          <h3>Security & Compliance</h3>
+          <ul>
+            <li>Scopes: gmail.readonly, gmail.modify, gmail.send</li>
+            <li>Tokens encrypted at rest; no email bodies stored</li>
+            <li>Data deletion within 24 hours on request</li>
+          </ul>
+        </div>
+        <div className="trust-block">
+          <h3>Company</h3>
+          <ul>
+            <li>Founder: Priya Ramanathan</li>
+            <li>Contact: <a href="mailto:support@gmailmanager.app">support@gmailmanager.app</a></li>
+            <li><a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a></li>
+          </ul>
+        </div>
+        <div className="trust-block">
+          <h3>Policies</h3>
+          <ul>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/security">Security Overview</a></li>
+          </ul>
         </div>
       </div>
     </div>
