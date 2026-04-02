@@ -34,7 +34,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\GmailManager.Shared\GmailManager.Shared.csproj" />
-    <ProjectReference Include="..\GmailManager.Marketing\GmailManager.Marketing.csproj" />
+    <ProjectReference Include="..\GmailManager.Marketing\GmailManager.Marketing.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>contentFiles</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

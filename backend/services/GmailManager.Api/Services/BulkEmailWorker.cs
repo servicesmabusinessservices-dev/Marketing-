@@ -24,9 +24,7 @@ public class BulkEmailWorker : BackgroundService
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly IConfiguration _config;
     private readonly ILogger<BulkEmailWorker> _logger;
-    private readonly IMarketingDataRepository _marketingDataRepo;
-    private readonly IContactRepository _contactRepo;
-    private readonly INotificationRepository _notificationRepo;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private static readonly Regex TokenRegex = new(@"\{\{\s*(\w+)\s*\}\}", RegexOptions.Compiled);
 
     public BulkEmailWorker(
@@ -36,9 +34,7 @@ public class BulkEmailWorker : BackgroundService
         IDbContextFactory<AppDbContext> dbContextFactory,
         IConfiguration config,
         ILogger<BulkEmailWorker> logger,
-        IMarketingDataRepository marketingDataRepo,
-        IContactRepository contactRepo,
-        INotificationRepository notificationRepo)
+        IServiceScopeFactory serviceScopeFactory)
     {
         _queue = queue;
         _jobStore = jobStore;
@@ -46,9 +42,7 @@ public class BulkEmailWorker : BackgroundService
         _dbContextFactory = dbContextFactory;
         _config = config;
         _logger = logger;
-        _marketingDataRepo = marketingDataRepo;
-        _contactRepo = contactRepo;
-        _notificationRepo = notificationRepo;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     private static string ApplyTokens(string template, ContactEntity? contact, string recipientEmail)
@@ -101,8 +95,13 @@ public class BulkEmailWorker : BackgroundService
             var gmailService = await BuildGmailServiceAsync(job.UserEmail, cancellationToken);
             await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
+            // Create a scope to resolve scoped services
+            using var scope = _serviceScopeFactory.CreateScope();
+            var marketingDataRepo = scope.ServiceProvider.GetRequiredService<IMarketingDataRepository>();
+            var contactRepo = scope.ServiceProvider.GetRequiredService<IContactRepository>();
+
             // Load suppression list once per job — avoids N+1 queries per recipient.
-            var suppressedEmails = await _marketingDataRepo.GetSuppressedEmailsAsync(db, job.UserEmail);
+            var suppressedEmails = await marketingDataRepo.GetSuppressedEmailsAsync(db, job.UserEmail);
 
             for (var i = 0; i < job.Recipients.Count; i++)
             {
@@ -123,7 +122,7 @@ public class BulkEmailWorker : BackgroundService
 
                 try
                 {
-                    var contact = await _contactRepo.GetByNormalizedEmailAsync(
+                    var contact = await contactRepo.GetByNormalizedEmailAsync(
                         db, job.UserEmail, normalizedRecipient);
 
                     var personalizedSubject = ApplyTokens(job.Subject, contact, recipient);
@@ -190,8 +189,13 @@ public class BulkEmailWorker : BackgroundService
         try
         {
             await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            
+            // Create a scope to resolve scoped services
+            using var scope = _serviceScopeFactory.CreateScope();
+            var notificationRepo = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
+            
             var isSuccess = job.Status == BulkEmailJobStatus.Completed;
-            await _notificationRepo.AddAsync(db, new NotificationEntity
+            await notificationRepo.AddAsync(db, new NotificationEntity
             {
                 UserEmail = job.UserEmail,
                 Type = isSuccess ? "bulk_complete" : "bulk_failed",

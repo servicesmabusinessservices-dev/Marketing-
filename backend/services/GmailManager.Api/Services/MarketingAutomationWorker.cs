@@ -31,16 +31,25 @@ public class MarketingAutomationWorker : BackgroundService
 
                 await db.SaveChangesAsync(stoppingToken);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                throw;
+                // Normal shutdown - exit gracefully
+                break;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Marketing automation worker cycle failed");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            try
+            {
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Normal shutdown - exit gracefully
+                break;
+            }
         }
     }
 

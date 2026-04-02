@@ -67,9 +67,15 @@ try
         Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
         builder.Environment.IsDevelopment());
 
+    if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException(
+            "CORS AllowedOrigins must be configured in production. Set Cors:AllowedOrigins in appsettings or CORS_ALLOWED_ORIGINS environment variable.");
+    }
+
     if (allowedOrigins.Length == 0)
     {
-        Log.Warning("No CORS origins configured — cross-origin requests will be rejected");
+        Log.Warning("No CORS origins configured in Development mode — using default localhost:3000");
     }
 
     builder.Services.AddCors(options =>
@@ -84,13 +90,30 @@ try
                       .AllowAnyMethod()
                       .AllowCredentials();
             }
-            else
+            else if (containsWildcard)
             {
-                // Safe fallback: allow any origin (no credentials) to avoid blocking deployments when CORS is unset
+                // Wildcard support for development/testing only
                 policy.AllowAnyOrigin()
                       .AllowAnyHeader()
                       .AllowAnyMethod();
-                Log.Warning("CORS origins are empty or wildcard. Falling back to AllowAnyOrigin without credentials.");
+                Log.Warning("CORS wildcard (*) detected. This should only be used in development.");
+            }
+            else
+            {
+                // Development fallback only
+                if (builder.Environment.IsDevelopment())
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                    Log.Information("CORS: Using development fallback to localhost:3000");
+                }
+                else
+                {
+                    // This should never be reached due to earlier validation, but adding for safety
+                    throw new InvalidOperationException("CORS origins must be explicitly configured in production");
+                }
             }
         });
     });
