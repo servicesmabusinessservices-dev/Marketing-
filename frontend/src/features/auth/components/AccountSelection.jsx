@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gmailService } from '../../../services/gmailService';
-import Icon from '../../../components/ui/Icon';
-import SplitText from '../../../components/ui/SplitText';
+import Icon from '../../../components/ui/Icon.jsx';
+import SplitText from '../../../components/ui/SplitText.jsx';
+import '../../../styles/maBusiness.css';
+import './AccountSelection.css';
 
 const featureItems = [
   {
@@ -90,25 +92,28 @@ const AccountSelection = () => {
     try {
       const result = await gmailService.login();
 
-      if (result?.mode === 'development-bypass' && result?.token && result?.email) {
-        localStorage.setItem('jwt_token', result.token);
-        localStorage.setItem('user_email', result.email);
-        navigate('/dashboard');
-        return;
-      }
+      // DISABLED: Development bypass auto-login to allow viewing /connect page
+      // if (result?.mode === 'development-bypass' && result?.token && result?.email) {
+      //   localStorage.setItem('jwt_token', result.token);
+      //   localStorage.setItem('user_email', result.email);
+      //   navigate('/dashboard');
+      //   return;
+      // }
 
       if (result?.authUrl) {
         window.location.assign(result.authUrl);
         return;
       }
 
+      // If development-bypass mode, show error with dev login option
+      if (result?.mode === 'development-bypass') {
+        throw new Error('Google OAuth not configured. Click "Dev Login" below to proceed with demo data.');
+      }
+
       throw new Error('Login did not return a valid authentication flow.');
     } catch (error) {
       const raw = error?.message || 'Login failed. Please try again.';
-      const isConfigError = raw.toLowerCase().includes('google oauth configuration is missing');
-      setLoginError(isConfigError
-        ? 'Google OAuth credentials are not configured. Run SETUP_LOCAL.ps1 to set them up.'
-        : raw);
+      setLoginError(raw);
     } finally {
       setIsLoggingIn(false);
     }
@@ -119,12 +124,12 @@ const AccountSelection = () => {
     gmailService.devLogin();
   };
 
-  const showDevLoginBtn = import.meta.env.DEV && isOnLocalhost && loginError.toLowerCase().includes('google oauth credentials are not configured');
+  const showDevLoginBtn = import.meta.env.DEV && isOnLocalhost;
 
   const animClass = prefersReducedMotion ? '' : 'login-animate';
 
   return (
-    <div className={`login-screen ${animClass}`}>
+    <div className={`login-screen ${animClass}`} id="main-content">
       <div className="login-left">
         <div className="login-bg-grid" aria-hidden="true" />
         <div className="login-bg-noise" aria-hidden="true" />
@@ -219,7 +224,11 @@ const AccountSelection = () => {
           <div className="login-footer">
             <span>Secure OAuth 2.0</span>
             <span>|</span>
-            <span>No password stored</span>
+            <span>No passwords stored</span>
+            <span>|</span>
+            <a href="/privacy">Privacy</a>
+            <span>|</span>
+            <a href="/terms">Terms</a>
           </div>
         </div>
       </div>
@@ -237,6 +246,32 @@ const AccountSelection = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+      <div className="login-trust" aria-label="Company and security information">
+        <div className="trust-block">
+          <h3>Security & Compliance</h3>
+          <ul>
+            <li>Scopes: gmail.readonly, gmail.modify, gmail.send</li>
+            <li>Tokens encrypted at rest; no email bodies stored</li>
+            <li>Data deletion within 24 hours on request</li>
+          </ul>
+        </div>
+        <div className="trust-block">
+          <h3>Company</h3>
+          <ul>
+            <li>Founder: Priya Ramanathan</li>
+            <li>Contact: <a href="mailto:services@mabusinessservices.com">services@mabusinessservices.com</a></li>
+            <li><a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a></li>
+          </ul>
+        </div>
+        <div className="trust-block">
+          <h3>Policies</h3>
+          <ul>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/security">Security Overview</a></li>
+          </ul>
         </div>
       </div>
     </div>

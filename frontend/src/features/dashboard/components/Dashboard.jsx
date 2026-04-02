@@ -9,7 +9,7 @@ import ChartCard from '../../../components/ui/ChartCard';
 import InsightCard from '../../../components/ui/InsightCard';
 import ErrorState from '../../../components/ui/ErrorState';
 import { KPIRowSkeleton, ChartSkeleton, InsightSkeleton } from '../../../components/ui/PageSkeleton';
-import WelcomeModal, { shouldShowWelcomeModal } from '../../../components/ui/WelcomeModal';
+import WelcomeModal, { shouldShowWelcomeModal } from '../../../components/ui/WelcomeModal.jsx';
 import '../../../components/ui/DashboardCards.css';
 import {
   useAnalytics,

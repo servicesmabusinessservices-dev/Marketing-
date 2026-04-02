@@ -39,9 +39,15 @@ var allowedOrigins = BuildAllowedOrigins(
     Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
     builder.Environment.IsDevelopment());
 
+if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "CORS AllowedOrigins must be configured in production. Set Cors:AllowedOrigins in appsettings or CORS_ALLOWED_ORIGINS environment variable.");
+}
+
 if (allowedOrigins.Length == 0)
 {
-    Log.Warning("No CORS origins configured; using AllowAnyOrigin fallback.");
+    Log.Warning("No CORS origins configured in Development mode — using default localhost:3000");
 }
 
 builder.Services.AddCors(options =>
@@ -53,10 +59,19 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
         }
-        else
+        else if (containsWildcard)
         {
             policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-            Log.Warning("CORS origins are empty or wildcard. Falling back to AllowAnyOrigin without credentials.");
+            Log.Warning("CORS wildcard (*) detected. This should only be used in development.");
+        }
+        else if (builder.Environment.IsDevelopment())
+        {
+            policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+            Log.Information("CORS: Using development fallback to localhost:3000");
+        }
+        else
+        {
+            throw new InvalidOperationException("CORS origins must be explicitly configured in production");
         }
     });
 });

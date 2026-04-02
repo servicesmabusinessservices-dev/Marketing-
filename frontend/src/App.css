@@ -1,5 +1,24 @@
 .app-shell {
   min-height: 100vh;
+  width: 100%;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 8px;
+  padding: 10px 14px;
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 6px;
+  z-index: 1300;
+  transition: left 0.15s ease, top 0.15s ease;
+}
+
+.skip-link:focus {
+  left: 10px;
+  top: 10px;
+  outline: 3px solid #38bdf8;
 }
 
 .app-feedback-stack {

@@ -1,0 +1,30 @@
+.legal-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  line-height: 1.65;
+}
+
+.legal-page section + section {
+  margin-top: 1.5rem;
+}
+
+.legal-page h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
+.legal-page ul {
+  margin: 0.35rem 0 0.35rem 1.25rem;
+  padding: 0;
+  list-style: disc;
+}
+
+.legal-page code {
+  background: #0f172a0d;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.95em;
+}
