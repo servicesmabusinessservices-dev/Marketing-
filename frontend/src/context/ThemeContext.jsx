@@ -9,19 +9,24 @@ export const ThemeProvider = ({ children }) => {
     // Enforce dark theme globally for consistent contrast across all screens.
     setIsDark(true);
     localStorage.setItem('theme', 'dark');
+    
+    // Apply theme class directly to document element to avoid wrapper div issues
+    document.documentElement.classList.remove('light-theme');
+    document.documentElement.classList.add('dark-theme');
   }, []);
 
   const toggleTheme = () => {
     // Keep dark mode locked to avoid low-contrast light variants.
     setIsDark(true);
     localStorage.setItem('theme', 'dark');
+    
+    document.documentElement.classList.remove('light-theme');
+    document.documentElement.classList.add('dark-theme');
   };
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      <div className={isDark ? 'dark-theme' : 'light-theme'}>
-        {children}
-      </div>
+      {children}
     </ThemeContext.Provider>
   );
 };

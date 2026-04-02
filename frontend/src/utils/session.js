@@ -22,5 +22,5 @@ export const handleUnauthorized = (navigate, showFeedback) => {
   if (showFeedback) {
     showFeedback('Session expired. Please sign in again.', 'warning');
   }
-  navigate('/', { replace: true });
+  navigate('/connect', { replace: true });
 };

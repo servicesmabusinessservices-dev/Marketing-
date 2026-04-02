@@ -5,29 +5,30 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from './context/ThemeContext';
 import { FeedbackProvider } from './context/FeedbackContext';
 import { hasSession } from './utils/session';
-import ErrorBoundary from './components/ui/ErrorBoundary';
-import PageSkeleton from './components/ui/PageSkeleton';
-import GlobalCardEffects from './components/ui/GlobalCardEffects';
+import ErrorBoundary from './components/ui/ErrorBoundary.jsx';
+import PageSkeleton from './components/ui/PageSkeleton.jsx';
+import GlobalCardEffects from './components/ui/GlobalCardEffects.jsx';
 import './App.css';
 
 // ── Lazy-loaded page components (code-split per route) ────────────────────────
-const AccountSelection  = lazy(() => import('./features/auth/components/AccountSelection'));
-const EmailList         = lazy(() => import('./features/email/components/EmailList'));
-const Dashboard         = lazy(() => import('./features/dashboard/components/Dashboard'));
-const Marketing         = lazy(() => import('./features/marketing/components/Marketing'));
-const TemplateEditor    = lazy(() => import('./features/marketing/components/TemplateEditor'));
-const PipelineBoard     = lazy(() => import('./features/pipeline/components/PipelineBoard'));
-const AnalyticsDashboard = lazy(() => import('./features/analytics/components/AnalyticsDashboard'));
-const BulkEmail         = lazy(() => import('./features/email/components/BulkEmail'));
-const ContactProfile    = lazy(() => import('./features/marketing/components/ContactProfile'));
-const JourneyBuilder    = lazy(() => import('./features/marketing/components/JourneyBuilder'));
-const SuppressionList   = lazy(() => import('./features/marketing/components/SuppressionList'));
-const PrivacyPolicy     = lazy(() => import('./features/legal/PrivacyPolicy'));
-const TermsOfService    = lazy(() => import('./features/legal/TermsOfService'));
-const SecurityOverview  = lazy(() => import('./features/legal/SecurityOverview'));
-const NotFound          = lazy(() => import('./features/legal/NotFound'));
-const AuthLayout        = lazy(() => import('./components/layout/AuthLayout'));
-const WorkspaceLayout   = lazy(() => import('./components/layout/WorkspaceLayout'));
+const LandingPage       = lazy(() => import('./features/marketing/components/LandingPage.jsx'));
+const AccountSelection  = lazy(() => import('./features/auth/components/AccountSelection.jsx'));
+const EmailList         = lazy(() => import('./features/email/components/EmailList.jsx'));
+const Dashboard         = lazy(() => import('./features/dashboard/components/Dashboard.jsx'));
+const Marketing         = lazy(() => import('./features/marketing/components/Marketing.jsx'));
+const TemplateEditor    = lazy(() => import('./features/marketing/components/TemplateEditor.jsx'));
+const PipelineBoard     = lazy(() => import('./features/pipeline/components/PipelineBoard.jsx'));
+const AnalyticsDashboard = lazy(() => import('./features/analytics/components/AnalyticsDashboard.jsx'));
+const BulkEmail         = lazy(() => import('./features/email/components/BulkEmail.jsx'));
+const ContactProfile    = lazy(() => import('./features/marketing/components/ContactProfile.jsx'));
+const JourneyBuilder    = lazy(() => import('./features/marketing/components/JourneyBuilder.jsx'));
+const SuppressionList   = lazy(() => import('./features/marketing/components/SuppressionList.jsx'));
+const PrivacyPolicy     = lazy(() => import('./features/legal/PrivacyPolicy.jsx'));
+const TermsOfService    = lazy(() => import('./features/legal/TermsOfService.jsx'));
+const SecurityOverview  = lazy(() => import('./features/legal/SecurityOverview.jsx'));
+const NotFound          = lazy(() => import('./features/legal/NotFound.jsx'));
+const WorkspaceLayout   = lazy(() => import('./components/layout/WorkspaceLayout.jsx'));
+const Footer            = lazy(() => import('./components/layout/Footer.jsx'));
 
 // ── React Query client ────────────────────────────────────────────────────────
 const queryClient = new QueryClient({
@@ -46,16 +47,12 @@ const PublicWorkspace = () => {
   if (hasSession()) {
     return <Navigate to="/dashboard" replace />;
   }
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <AuthLayout />
-    </Suspense>
-  );
+  return <Outlet />;
 };
 
 const ProtectedWorkspace = () => {
   if (!hasSession()) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/connect" replace />;
   }
   return (
     <Suspense fallback={<PageSkeleton />}>
@@ -64,19 +61,41 @@ const ProtectedWorkspace = () => {
   );
 };
 
+// Public layout with footer for marketing pages
+const PublicLayout = () => (
+  <>
+    <Outlet />
+    <Suspense fallback={null}>
+      <Footer />
+    </Suspense>
+  </>
+);
+
 // ── Data router (required for useBlocker / useUnsavedChangesWarning) ──────────
 const router = createBrowserRouter([
   {
     element: <ErrorBoundary><Outlet /></ErrorBoundary>,
     children: [
+      // Public marketing pages with footer
+      {
+        element: <PublicLayout />,
+        children: [
+          { path: '/', element: <Suspense fallback={<PageSkeleton />}><LandingPage /></Suspense> },
+          { path: '/privacy', element: <Suspense fallback={<PageSkeleton />}><PrivacyPolicy /></Suspense> },
+          { path: '/terms', element: <Suspense fallback={<PageSkeleton />}><TermsOfService /></Suspense> },
+          { path: '/security', element: <Suspense fallback={<PageSkeleton />}><SecurityOverview /></Suspense> },
+        ],
+      },
+      // Auth pages (no footer)
       {
         element: <PublicWorkspace />,
         children: [
-          { path: '/', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
+          { path: '/connect', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
           { path: '/auth-success', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
           { path: '/auth-error', element: <Suspense fallback={<PageSkeleton />}><AccountSelection /></Suspense> },
         ],
       },
+      // Protected workspace pages
       {
         element: <ProtectedWorkspace />,
         children: [
@@ -93,9 +112,7 @@ const router = createBrowserRouter([
           { path: '/marketing/suppression', element: <ErrorBoundary><Suspense fallback={<PageSkeleton />}><SuppressionList /></Suspense></ErrorBoundary> },
         ],
       },
-      { path: '/privacy', element: <Suspense fallback={<PageSkeleton />}><PrivacyPolicy /></Suspense> },
-      { path: '/terms', element: <Suspense fallback={<PageSkeleton />}><TermsOfService /></Suspense> },
-      { path: '/security', element: <Suspense fallback={<PageSkeleton />}><SecurityOverview /></Suspense> },
+      // 404 page
       { path: '*', element: <Suspense fallback={<PageSkeleton />}><NotFound /></Suspense> },
     ],
   },

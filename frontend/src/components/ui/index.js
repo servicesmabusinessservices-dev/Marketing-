@@ -30,7 +30,7 @@ export { default as Textarea } from './Textarea';
 export { default as CommandPalette } from './CommandPalette';
 export { default as Drawer } from './Drawer';
 export { default as PageTransition } from './PageTransition';
-export { default as WelcomeModal, shouldShowWelcomeModal, resetWelcomeModal } from './WelcomeModal';
+export { default as WelcomeModal, shouldShowWelcomeModal, resetWelcomeModal } from './WelcomeModal.jsx';
 
 // Utilities
 export { default as ErrorBoundary } from './ErrorBoundary';
