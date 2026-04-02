@@ -5,11 +5,13 @@ WORKDIR /src
 
 # Copy project files for restore
 COPY backend/shared/GmailManager.Shared/GmailManager.Shared.csproj backend/shared/GmailManager.Shared/
+COPY backend/services/GmailManager.Marketing/GmailManager.Marketing.csproj backend/services/GmailManager.Marketing/
 COPY backend/services/GmailManager.Api/GmailManager.Api.csproj backend/services/GmailManager.Api/
 RUN dotnet restore backend/services/GmailManager.Api/GmailManager.Api.csproj
 
 # Copy source and publish
 COPY backend/shared/GmailManager.Shared/ backend/shared/GmailManager.Shared/
+COPY backend/services/GmailManager.Marketing/ backend/services/GmailManager.Marketing/
 COPY backend/services/GmailManager.Api/ backend/services/GmailManager.Api/
 RUN dotnet publish backend/services/GmailManager.Api/GmailManager.Api.csproj -c Release -o /app/publish --no-restore
 
