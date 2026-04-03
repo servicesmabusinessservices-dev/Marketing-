@@ -66,8 +66,10 @@ const SuppressionList = () => {
           <div className="card-body">
             <form onSubmit={handleAdd}>
               <div className="form-group">
-                <label className="form-label">Email address</label>
+                <label className="form-label" htmlFor="suppression-email-add">Email address</label>
                 <input
+                  id="suppression-email-add"
+                  name="email"
                   className="form-input"
                   type="email"
                   placeholder="contact@example.com"
@@ -86,8 +88,10 @@ const SuppressionList = () => {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Notes (optional)</label>
+                <label className="form-label" htmlFor="suppression-notes">Notes (optional)</label>
                 <input
+                  id="suppression-notes"
+                  name="notes"
                   className="form-input"
                   placeholder="Optional notes"
                   value={form.notes}
@@ -107,6 +111,8 @@ const SuppressionList = () => {
             <Icon name="shield" size={14} color="var(--rose)" />
             <span className="card-title">Suppressed Addresses ({filtered.length})</span>
             <input
+              id="suppression-search"
+              name="search"
               className="form-input inline-search-field"
               type="search"
               aria-label="Search suppressed email addresses"

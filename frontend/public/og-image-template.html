@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OG Image Template - Gmail Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    
+    .og-card {
+      width: 1200px;
+      height: 630px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .og-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 800px;
+      height: 800px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 50%;
+      filter: blur(80px);
+    }
+    
+    .og-card::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 600px;
+      height: 600px;
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 50%;
+      filter: blur(80px);
+    }
+    
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .logo-text {
+      font-size: 28px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    
+    h1 {
+      font-size: 72px;
+      font-weight: 800;
+      color: white;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      max-width: 900px;
+      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    p {
+      font-size: 32px;
+      color: #94a3b8;
+      line-height: 1.5;
+      max-width: 800px;
+      margin-bottom: 48px;
+    }
+    
+    .features {
+      display: flex;
+      gap: 32px;
+    }
+    
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 16px 24px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .feature-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    }
+    
+    .feature-text {
+      font-size: 20px;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="og-card">
+    <div class="content">
+      <div class="logo">
+        <div class="logo-icon">MA</div>
+        <div class="logo-text">MA Business Services</div>
+      </div>
+      
+      <h1>Multi-Account Email Management</h1>
+      
+      <p>Manage multiple Gmail inboxes, automate workflows, and run compliant campaigns from one powerful dashboard.</p>
+      
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon"></div>
+          <div class="feature-text">Verified OAuth</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"></div>
+          <div class="feature-text">Automation</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"></div>
+          <div class="feature-text">Analytics</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Instructions for creating the OG image:
+    // 1. Open this file in a browser (Chrome recommended)
+    // 2. Press F12 to open DevTools
+    // 3. Press Ctrl+Shift+P and search for "Capture full size screenshot"
+    // 4. OR use browser extensions like "GoFullPage" or "Awesome Screenshot"
+    // 5. Save the screenshot as og-image.png
+    // 6. Optimize it with tinypng.com (should be under 500KB)
+    // 7. Move it to /frontend/public/og-image.png
+    console.log('OG Image dimensions: 1200x630px');
+    console.log('To capture: Use browser screenshot tools or press Ctrl+Shift+P > "Capture screenshot"');
+  </script>
+</body>
+</html>

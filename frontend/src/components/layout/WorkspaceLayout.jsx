@@ -172,13 +172,13 @@ const WorkspaceLayout = () => {
           menuButtonRef={menuButtonRef}
           onOpenPalette={() => setPaletteOpen(true)}
         />
-        <div className="page-scroll-area">
+        <main role="main" id="main-content" className="page-scroll-area">
           <AnimatePresence mode="wait">
             <PageTransition key={location.pathname}>
               <Outlet />
             </PageTransition>
           </AnimatePresence>
-        </div>
+        </main>
       </div>
       <CommandPalette
         open={paletteOpen}

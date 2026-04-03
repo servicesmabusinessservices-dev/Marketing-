@@ -1,12 +1,22 @@
+import { Helmet } from 'react-helmet-async';
 import FullWidthPage from '../../components/layout/FullWidthPage';
 import '../../styles/legal.css';
 
 const SecurityOverview = () => (
-  <FullWidthPage
-    title="Security & Compliance"
-    subtitle="Our commitments for handling Gmail data safely."
-    className="legal-page"
-  >
+  <>
+    <Helmet>
+      <title>Security & Compliance - Gmail Manager</title>
+      <meta name="description" content="Learn about Gmail Manager's security practices and compliance commitments for safely handling your email data." />
+      <meta property="og:title" content="Security & Compliance - Gmail Manager" />
+      <meta property="og:description" content="Our security practices and compliance commitments for safely handling your Gmail data." />
+      <meta property="og:url" content="https://marketing-zeta-flame.vercel.app/security" />
+      <link rel="canonical" href="https://marketing-zeta-flame.vercel.app/security" />
+    </Helmet>
+    <FullWidthPage
+      title="Security & Compliance"
+      subtitle="Our commitments for handling Gmail data safely."
+      className="legal-page"
+    >
     <section>
       <h2>Security Principles</h2>
       <ul>
@@ -41,7 +51,12 @@ const SecurityOverview = () => (
         remediation steps, and required user actions.
       </p>
     </section>
+
+    <section className="legal-meta">
+      <p><strong>Last Updated:</strong> April 2, 2026</p>
+    </section>
   </FullWidthPage>
+  </>
 );
 
 export default SecurityOverview;

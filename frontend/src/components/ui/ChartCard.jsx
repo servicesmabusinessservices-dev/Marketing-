@@ -4,7 +4,7 @@ export default function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src="https://reactjs.org/static/logo.svg" alt="logo" />
+        <img src="https://reactjs.org/static/logo.svg" alt="React logo" />
         <h1>React</h1>
       </header>
       <section className="App-section">
