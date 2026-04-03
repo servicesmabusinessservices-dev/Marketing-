@@ -381,11 +381,13 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             )}
 
             <div className="form-group">
-              <label className="form-label">Pick from Contacts</label>
+              <label className="form-label" htmlFor="contact-search">Pick from Contacts</label>
               <div className="bulk-contact-search-row">
                 <input
+                  id="contact-search"
+                  name="contactSearch"
                   className="form-input bulk-contact-search-input"
-                  type="text"
+                  type="search"
                   value={contactSearch}
                   onChange={handleContactSearchChange}
                   placeholder="Search by name, email or company..."
@@ -501,18 +503,20 @@ const BulkEmail = ({ onClose, mode = 'modal' }) => {
             )}
 
             <div className="form-group">
-              <label className="form-label">Subject Line</label>
-              <input className="form-input" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter email subject" />
+              <label className="form-label" htmlFor="email-subject">Subject Line</label>
+              <input id="email-subject" name="subject" className="form-input" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter email subject" />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Email Body</label>
-              <textarea className="form-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Enter email content" rows="8" />
+              <label className="form-label" htmlFor="email-body">Email Body</label>
+              <textarea id="email-body" name="body" className="form-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Enter email content" rows="8" />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Delay Between Sends (seconds)</label>
+              <label className="form-label" htmlFor="delay-seconds">Delay Between Sends (seconds)</label>
               <input
+                id="delay-seconds"
+                name="delaySeconds"
                 className="form-input"
                 type="number"
                 value={delaySeconds}

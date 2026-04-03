@@ -1,12 +1,22 @@
+import { Helmet } from 'react-helmet-async';
 import FullWidthPage from '../../components/layout/FullWidthPage';
 import '../../styles/legal.css';
 
 const TermsOfService = () => (
-  <FullWidthPage
-    title="Terms of Service"
-    subtitle="The rules that govern using Gmail Manager."
-    className="legal-page"
-  >
+  <>
+    <Helmet>
+      <title>Terms of Service - Gmail Manager</title>
+      <meta name="description" content="Read the terms of service that govern using Gmail Manager for multi-account email management and automation." />
+      <meta property="og:title" content="Terms of Service - Gmail Manager" />
+      <meta property="og:description" content="Read the terms of service for using Gmail Manager for email management and automation." />
+      <meta property="og:url" content="https://marketing-zeta-flame.vercel.app/terms" />
+      <link rel="canonical" href="https://marketing-zeta-flame.vercel.app/terms" />
+    </Helmet>
+    <FullWidthPage
+      title="Terms of Service"
+      subtitle="The rules that govern using Gmail Manager."
+      className="legal-page"
+    >
     <section>
       <h2>1. Acceptance</h2>
       <p>By creating an account you agree to these Terms and our Privacy Policy.</p>
@@ -73,7 +83,13 @@ const TermsOfService = () => (
       <h2>9. Changes</h2>
       <p>We may update these Terms and will post the effective date on this page.</p>
     </section>
+
+    <section className="legal-meta">
+      <p><strong>Last Updated:</strong> April 2, 2026</p>
+      <p><strong>Effective Date:</strong> April 2, 2026</p>
+    </section>
   </FullWidthPage>
+  </>
 );
 
 export default TermsOfService;

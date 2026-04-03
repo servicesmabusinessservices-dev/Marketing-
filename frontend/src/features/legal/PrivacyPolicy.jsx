@@ -1,12 +1,22 @@
+import { Helmet } from 'react-helmet-async';
 import FullWidthPage from '../../components/layout/FullWidthPage';
 import '../../styles/legal.css';
 
 const PrivacyPolicy = () => (
-  <FullWidthPage
-    title="Privacy Policy"
-    subtitle="How Gmail Manager collects, uses, and protects your data."
-    className="legal-page"
-  >
+  <>
+    <Helmet>
+      <title>Privacy Policy - Gmail Manager</title>
+      <meta name="description" content="Learn how Gmail Manager collects, uses, and protects your data. Transparent privacy practices for multi-account Gmail management." />
+      <meta property="og:title" content="Privacy Policy - Gmail Manager" />
+      <meta property="og:description" content="Learn how Gmail Manager collects, uses, and protects your data with transparent privacy practices." />
+      <meta property="og:url" content="https://marketing-zeta-flame.vercel.app/privacy" />
+      <link rel="canonical" href="https://marketing-zeta-flame.vercel.app/privacy" />
+    </Helmet>
+    <FullWidthPage
+      title="Privacy Policy"
+      subtitle="How Gmail Manager collects, uses, and protects your data."
+      className="legal-page"
+    >
     <section>
       <h2>1. Who We Are</h2>
       <p>
@@ -71,7 +81,13 @@ const PrivacyPolicy = () => (
       <h2>8. Contact</h2>
       <p>Questions? Email services@mabusinessservices.com. We respond within two business days.</p>
     </section>
+
+    <section className="legal-meta">
+      <p><strong>Last Updated:</strong> April 2, 2026</p>
+      <p><strong>Effective Date:</strong> April 2, 2026</p>
+    </section>
   </FullWidthPage>
+  </>
 );
 
 export default PrivacyPolicy;
