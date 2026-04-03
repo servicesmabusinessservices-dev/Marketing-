@@ -136,7 +136,10 @@ const TasksTab = React.memo(({ tasks, taskForm, setTaskForm, addingTask, onAddTa
   <div className="card">
     <div className="card-body">
       <form onSubmit={onAddTask} className="cp-task-form">
+        <label htmlFor="task-title-input" className="sr-only">Task title</label>
         <input
+          id="task-title-input"
+          name="taskTitle"
           className="form-input"
           placeholder="Task title"
           value={taskForm.title}
@@ -152,7 +155,10 @@ const TasksTab = React.memo(({ tasks, taskForm, setTaskForm, addingTask, onAddTa
             <option>Medium</option>
             <option>High</option>
           </select>
+          <label htmlFor="task-due-date-input" className="sr-only">Due date</label>
           <input
+            id="task-due-date-input"
+            name="taskDueDate"
             type="date"
             className="form-input cp-task-date"
             value={taskForm.dueDate}
@@ -477,7 +483,10 @@ const ContactProfile = () => {
                   <option key={stage} value={stage}>{stage}</option>
                 ))}
               </select>
+              <label htmlFor="stage-reason" className="sr-only">Reason for stage change</label>
               <input
+                id="stage-reason"
+                name="stageReason"
                 className="form-input"
                 placeholder="Reason (optional)"
                 value={stageReason}

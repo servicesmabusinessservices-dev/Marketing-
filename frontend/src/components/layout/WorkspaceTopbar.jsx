@@ -68,7 +68,7 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
   const themeLabel = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
-    <header className="topbar">
+    <header className="topbar" role="banner">
       <button
         ref={menuButtonRef}
         type="button"

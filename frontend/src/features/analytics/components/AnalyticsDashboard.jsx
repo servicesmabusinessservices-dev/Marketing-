@@ -159,8 +159,11 @@ const AnalyticsDashboard = () => {
               </button>
             ))}
           </div>
+          <label htmlFor="owner-email-filter" className="sr-only">Filter by owner email</label>
           <input
-            type="text"
+            id="owner-email-filter"
+            name="ownerEmail"
+            type="email"
             className="analytics-owner-input"
             aria-label="Filter analytics by owner email"
             value={ownerEmail}

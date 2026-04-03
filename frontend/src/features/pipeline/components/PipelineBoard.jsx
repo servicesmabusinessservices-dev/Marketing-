@@ -215,6 +215,8 @@ const PipelineBoard = () => {
         <div className="search-box pipeline-search-box">
           <Icon name="search" size={13} color="var(--text-3)" />
           <input
+            id="pipeline-search"
+            name="search"
             type="search"
             aria-label="Search pipeline contacts"
             placeholder="Search contacts"
@@ -343,10 +345,13 @@ const PipelineBoard = () => {
                   ))}
                 </select>
 
-                <label className="form-label form-label-offset">Owner</label>
+                <label className="form-label form-label-offset" htmlFor="owner-email">Owner</label>
                 <div className="inline-actions">
                   <input
+                    id="owner-email"
+                    name="ownerEmail"
                     className="form-input"
+                    type="email"
                     value={ownerDraft}
                     onChange={(event) => setOwnerDraft(event.target.value)}
                     placeholder="Owner email"
@@ -355,8 +360,10 @@ const PipelineBoard = () => {
                 </div>
               </div>
 
-              <div className="pipeline-section-title">Notes</div>
+              <label className="pipeline-section-title" htmlFor="new-note">Notes</label>
               <textarea
+                id="new-note"
+                name="note"
                 className="form-input"
                 placeholder="Add a note"
                 rows={3}
@@ -378,8 +385,10 @@ const PipelineBoard = () => {
                 )}
               </div>
 
-              <div className="pipeline-section-title pipeline-section-title-gap">Tasks</div>
+              <label className="pipeline-section-title pipeline-section-title-gap" htmlFor="task-title">Tasks</label>
               <input
+                id="task-title"
+                name="taskTitle"
                 className="form-input"
                 value={newTask.title}
                 onChange={(event) => setNewTask((prev) => ({ ...prev, title: event.target.value }))}
@@ -395,13 +404,19 @@ const PipelineBoard = () => {
                 <option value="High">High</option>
               </select>
               <input
+                id="task-due-date"
+                name="taskDueDate"
                 className="form-input pipeline-input-gap"
                 type="datetime-local"
                 value={newTask.dueAtUtc}
                 onChange={(event) => setNewTask((prev) => ({ ...prev, dueAtUtc: event.target.value }))}
+                aria-label="Task due date"
               />
               <input
+                id="task-owner-email"
+                name="taskOwnerEmail"
                 className="form-input pipeline-input-gap"
+                type="email"
                 value={newTask.ownerEmail}
                 onChange={(event) => setNewTask((prev) => ({ ...prev, ownerEmail: event.target.value }))}
                 placeholder="Task owner email"
