@@ -4,6 +4,7 @@ import { useFeedback } from '../../../context/FeedbackContext';
 import Icon from '../../../components/ui/Icon';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import EmptyState from '../../../components/ui/EmptyState';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import DataTable from '../../../components/ui/DataTable';
 import { exportToCSV } from '../../../utils/exportData';
 import { useCampaigns, useLists, useTemplates } from '../../../hooks/useApi';
@@ -25,6 +26,7 @@ const CampaignsTab = () => {
   });
   const [sendingCampaignId, setSendingCampaignId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const handleCreateCampaign = async (event) => {
     event.preventDefault();
@@ -39,35 +41,49 @@ const CampaignsTab = () => {
     }
   };
 
-  const handleSendCampaign = async (campaign) => {
+  const handleSendCampaign = (campaign) => {
     const id = campaign.campaignId || campaign.CampaignId;
-    if (!window.confirm('Send this campaign now?')) return;
-    setSendingCampaignId(id);
-    try {
-      await gmailService.sendCampaign(id);
-      showFeedback('Campaign sent!', 'success');
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-    } catch (error) {
-      showFeedback(error.response?.data?.error || 'Failed to send campaign.', 'error');
-    } finally {
-      setSendingCampaignId(null);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Send Campaign',
+      message: 'Send this campaign now? This action cannot be undone.',
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        setSendingCampaignId(id);
+        try {
+          await gmailService.sendCampaign(id);
+          showFeedback('Campaign sent!', 'success');
+          queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+        } catch (error) {
+          showFeedback(error.response?.data?.error || 'Failed to send campaign.', 'error');
+        } finally {
+          setSendingCampaignId(null);
+        }
+      }
+    });
   };
 
-  const handleDeleteCampaign = async (campaign) => {
+  const handleDeleteCampaign = (campaign) => {
     const id = campaign.campaignId || campaign.CampaignId;
     const name = campaign.name || campaign.Name;
-    if (!window.confirm(`Delete campaign "${name}"?`)) return;
-    setDeletingId(id);
-    try {
-      await gmailService.deleteCampaign(id);
-      showFeedback('Campaign deleted.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-    } catch (error) {
-      showFeedback(error.response?.data?.error || 'Failed to delete campaign.', 'error');
-    } finally {
-      setDeletingId(null);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Delete Campaign',
+      message: `Delete campaign "${name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        setDeletingId(id);
+        try {
+          await gmailService.deleteCampaign(id);
+          showFeedback('Campaign deleted.', 'success');
+          queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+        } catch (error) {
+          showFeedback(error.response?.data?.error || 'Failed to delete campaign.', 'error');
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   };
 
   const campaignRows = useMemo(() => campaigns.map((c) => {
@@ -164,7 +180,12 @@ const CampaignsTab = () => {
         )}
 
         {campaigns.length === 0 ? (
-          <EmptyState icon="campaign" title="No campaign drafts yet" subtitle="Create one above." size="sm" />
+          <EmptyState 
+            icon="campaign" 
+            title="No campaigns yet" 
+            subtitle="Create your first campaign above to start sending targeted emails to your lists." 
+            size="sm" 
+          />
         ) : (
           <DataTable
             columns={campaignColumns}
@@ -176,6 +197,15 @@ const CampaignsTab = () => {
           />
         )}
       </div>
+      
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        tone="warning"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
     </section>
   );
 };

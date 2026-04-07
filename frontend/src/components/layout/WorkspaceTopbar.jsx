@@ -74,11 +74,11 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
         type="button"
         className="topbar-hamburger"
         onClick={onMenuToggle}
-        aria-label="Toggle navigation"
+        aria-label="Toggle navigation menu"
         aria-expanded={mobileMenuOpen}
         aria-controls="workspace-sidebar"
       >
-        <Icon name="menu" size={18} decorative />
+        <Icon name="menu" size={18} aria-label="Menu icon" />
       </button>
       <nav className="topbar-breadcrumb" aria-label="Breadcrumb">
         <span>{meta.crumb}</span>
@@ -93,7 +93,7 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
           aria-label="Open command palette (Ctrl+K)"
           style={{ cursor: 'pointer' }}
         >
-          <Icon name="search" size={13} color="var(--text-3)" decorative />
+          <Icon name="search" size={13} color="var(--text-3)" aria-label="Search icon" />
           <span style={{ color: 'var(--text-4)', fontSize: 'var(--text-sm)' }}>Search... ⌘K</span>
         </button>
         <NotificationPanel />
@@ -105,7 +105,7 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
             aria-label="Create new bulk email campaign"
             title="Create new bulk email campaign"
           >
-            <Icon name="bulk" size={13} decorative />
+            <Icon name="bulk" size={13} aria-label="Email icon" />
             <span className="topbar-btn-text">New Campaign</span>
           </button>
         )}
@@ -117,12 +117,12 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
             aria-label="Open contacts workspace"
             title="Open contacts workspace"
           >
-            <Icon name="plus" size={13} decorative />
+            <Icon name="plus" size={13} aria-label="Add icon" />
             <span className="topbar-btn-text">Quick Add</span>
           </button>
         )}
         <button type="button" className="topbar-btn icon-only" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel}>
-          <Icon name={isDark ? 'sun' : 'moon'} size={15} decorative />
+          <Icon name={isDark ? 'sun' : 'moon'} size={15} aria-label={isDark ? 'Sun icon' : 'Moon icon'} />
         </button>
       </div>
     </header>

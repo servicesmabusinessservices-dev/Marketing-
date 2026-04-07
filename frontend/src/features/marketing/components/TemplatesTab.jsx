@@ -5,6 +5,7 @@ import { useFeedback } from '../../../context/FeedbackContext';
 import Icon from '../../../components/ui/Icon';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import EmptyState from '../../../components/ui/EmptyState';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { useTemplates } from '../../../hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -23,6 +24,7 @@ const TemplatesTab = () => {
   });
   const [previewResult, setPreviewResult] = useState('');
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const handlePreviewTemplate = () => {
     let preview = templateForm.bodyHtml;
@@ -47,20 +49,27 @@ const TemplatesTab = () => {
     }
   };
 
-  const handleDeleteTemplate = async (template) => {
+  const handleDeleteTemplate = (template) => {
     const id = template.templateId || template.TemplateId;
     const name = template.name || template.Name;
-    if (!window.confirm(`Delete template "${name}"?`)) return;
-    setDeletingId(id);
-    try {
-      await gmailService.deleteTemplate(id);
-      showFeedback('Template deleted.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
-    } catch (error) {
-      showFeedback(error.response?.data?.error || 'Failed to delete template.', 'error');
-    } finally {
-      setDeletingId(null);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Delete Template',
+      message: `Delete template "${name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        setDeletingId(id);
+        try {
+          await gmailService.deleteTemplate(id);
+          showFeedback('Template deleted.', 'success');
+          queryClient.invalidateQueries({ queryKey: ['templates'] });
+        } catch (error) {
+          showFeedback(error.response?.data?.error || 'Failed to delete template.', 'error');
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   };
 
   if (templatesQuery.isLoading) return <LoadingSpinner label="Loading templates..." />;
@@ -113,7 +122,12 @@ const TemplatesTab = () => {
         {previewResult && <pre className="preview-box">{previewResult}</pre>}
 
         {templates.length === 0 ? (
-          <EmptyState icon="template" title="No templates yet" subtitle="Create one above." size="sm" />
+          <EmptyState 
+            icon="template" 
+            title="No email templates yet" 
+            subtitle="Create your first template above to reuse email content across campaigns." 
+            size="sm" 
+          />
         ) : (
           <div className="data-list marketing-list-gap">
             {templates.map((template) => {
@@ -144,6 +158,15 @@ const TemplatesTab = () => {
           </div>
         )}
       </div>
+      
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        tone="warning"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
     </section>
   );
 };

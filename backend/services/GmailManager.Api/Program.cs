@@ -142,6 +142,23 @@ try
                 ValidAudience = builder.Configuration["Jwt:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
             };
+            
+            // SECURITY: Read JWT from httpOnly cookie (preferred) or Authorization header (fallback)
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    // First, try to read from httpOnly cookie
+                    if (context.Request.Cookies.TryGetValue("auth_token", out var token))
+                    {
+                        context.Token = token;
+                    }
+                    // Fallback to Authorization header for backwards compatibility
+                    // This allows gradual migration and supports non-browser clients
+                    
+                    return Task.CompletedTask;
+                }
+            };
         });
 
     // ── Rate Limiting ─────────────────────────────────────────────────────────

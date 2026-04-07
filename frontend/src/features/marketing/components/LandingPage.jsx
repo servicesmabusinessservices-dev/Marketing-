@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { gmailService } from '../../../services/gmailService';
 import './LandingPage.css';
 
 const heroPoints = [
@@ -10,10 +11,18 @@ const heroPoints = [
 const LandingPage = () => {
   const navigate = useNavigate();
   
-  const handleClearSession = () => {
-    localStorage.clear();
-    navigate('/connect');
+  const handleClearSession = async () => {
+    try {
+      await gmailService.logout();
+      navigate('/connect');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still navigate even if logout fails
+      navigate('/connect');
+    }
   };
+  
+  const userEmail = localStorage.getItem('user_email');
 
   return (
     <main
@@ -51,9 +60,9 @@ const LandingPage = () => {
               </Link>
             </div>
             
-            {localStorage.getItem('jwt_token') && (
+            {userEmail && (
               <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                Already logged in? 
+                Already logged in as {userEmail}? 
                 <button 
                   onClick={handleClearSession}
                   style={{ 
@@ -66,7 +75,7 @@ const LandingPage = () => {
                     fontSize: 'inherit'
                   }}
                 >
-                  Clear session & re-login
+                  Logout & re-login
                 </button>
               </p>
             )}

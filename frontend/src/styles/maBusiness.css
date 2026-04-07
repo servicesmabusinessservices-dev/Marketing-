@@ -3056,9 +3056,49 @@ tr:hover td { background: var(--glass); color: var(--text-1); }
 .marketing-tab-bar {
   display: flex;
   gap: var(--space-2xs);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   border-bottom: 1px solid var(--border);
   margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+/* Hide scrollbar but keep functionality */
+.marketing-tab-bar::-webkit-scrollbar {
+  height: 2px;
+}
+
+.marketing-tab-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.marketing-tab-bar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.marketing-tab-bar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* On mobile, add gradient fade to indicate scroll */
+@media (max-width: 768px) {
+  .marketing-tab-bar {
+    position: relative;
+  }
+  
+  .marketing-tab-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, transparent, var(--bg));
+    pointer-events: none;
+  }
 }
 
 .marketing-tab-btn {

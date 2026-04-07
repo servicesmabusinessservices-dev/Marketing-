@@ -5,22 +5,16 @@ import { isDevelopmentBypassSession } from '../utils/session';
 /**
  * Centralized axios instance.
  *
- * Request interceptor  — attaches the JWT from localStorage on every call.
- * Response interceptor — on 401, clears the session and redirects to login
- *                        so every component gets automatic auth handling for free.
+ * SECURITY: Uses httpOnly cookies for JWT (not localStorage)
+ * - withCredentials: true sends cookies automatically
+ * - No manual Authorization header needed
+ * 
+ * Response interceptor — on 401, redirects to login
  */
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-});
-
-// ── Attach JWT ──────────────────────────────────────────────────────────────
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('jwt_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true, // SECURITY: Send httpOnly cookies with every request
 });
 
 // ── Global 401 handler + ApiResponse unwrap ─────────────────────────────────
@@ -33,10 +27,12 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401 && window.location.pathname !== '/' && !isDevelopmentBypassSession()) {
+    // SECURITY FIX: Redirect to /connect (not /) on 401 for better UX
+    if (error.response?.status === 401 && window.location.pathname !== '/connect' && !isDevelopmentBypassSession()) {
+      // Clear any legacy localStorage tokens
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_email');
-      window.location.replace('/');
+      window.location.replace('/connect');
     }
     return Promise.reject(error);
   }

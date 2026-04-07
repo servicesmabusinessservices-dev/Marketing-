@@ -4,6 +4,7 @@ import { useFeedback } from '../../../context/FeedbackContext';
 import Icon from '../../../components/ui/Icon';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import EmptyState from '../../../components/ui/EmptyState';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { useLists } from '../../../hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -16,6 +17,7 @@ const ListsTab = () => {
 
   const [listForm, setListForm] = useState({ name: '', description: '' });
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const handleCreateList = async (event) => {
     event.preventDefault();
@@ -30,20 +32,27 @@ const ListsTab = () => {
     }
   };
 
-  const handleDeleteList = async (list) => {
+  const handleDeleteList = (list) => {
     const id = list.listId || list.ListId;
     const name = list.name || list.Name;
-    if (!window.confirm(`Delete list "${name}" and remove all its members?`)) return;
-    setDeletingId(id);
-    try {
-      await gmailService.deleteList(id);
-      showFeedback('List deleted.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['lists'] });
-    } catch (error) {
-      showFeedback(error.response?.data?.error || 'Failed to delete list.', 'error');
-    } finally {
-      setDeletingId(null);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Delete List',
+      message: `Delete list "${name}" and remove all its members? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, open: false });
+        setDeletingId(id);
+        try {
+          await gmailService.deleteList(id);
+          showFeedback('List deleted.', 'success');
+          queryClient.invalidateQueries({ queryKey: ['lists'] });
+        } catch (error) {
+          showFeedback(error.response?.data?.error || 'Failed to delete list.', 'error');
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   };
 
   if (listsQuery.isLoading) return <LoadingSpinner label="Loading lists..." />;
@@ -71,7 +80,12 @@ const ListsTab = () => {
         </form>
 
         {lists.length === 0 ? (
-          <EmptyState icon="list" title="No lists yet" subtitle="Create one above." size="sm" />
+          <EmptyState 
+            icon="list" 
+            title="No contact lists yet" 
+            subtitle="Create your first list to organize contacts for targeted campaigns." 
+            size="sm" 
+          />
         ) : (
           <div className="data-list marketing-list-gap">
             {lists.map((list) => {
@@ -98,6 +112,15 @@ const ListsTab = () => {
           </div>
         )}
       </div>
+      
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        tone="warning"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
     </section>
   );
 };
