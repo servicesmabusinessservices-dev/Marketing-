@@ -21,6 +21,23 @@ export const gmailService = {
       throw new Error(backendMessage);
     }
   },
+  
+  /**
+   * SECURITY: Logout by clearing httpOnly cookie on server
+   */
+  logout: async () => {
+    try {
+      await apiClient.post('/auth/logout');
+      // Clear local session data
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('jwt_token'); // Legacy cleanup
+    } catch (error) {
+      // Still clear local data even if server call fails
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('jwt_token');
+      throw error;
+    }
+  },
 
   getEmails: async ({
     pageToken = null,

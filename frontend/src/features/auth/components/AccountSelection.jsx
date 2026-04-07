@@ -44,17 +44,23 @@ const AccountSelection = () => {
   const [isDevLogin, setIsDevLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(getMotionPreference);
+  const [isWakingServer, setIsWakingServer] = useState(false);
+  const [serverWakeTime, setServerWakeTime] = useState(0);
 
   const isOnLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   useEffect(() => {
-    const token = searchParams.get('token');
     const email = searchParams.get('email');
     const message = searchParams.get('message');
     
-    if (token && email) {
-      localStorage.setItem('jwt_token', token);
+    // SECURITY: JWT is now in httpOnly cookie, not URL parameter
+    if (email) {
+      // Store email for display purposes
       localStorage.setItem('user_email', email);
+      
+      // Clean URL of any query parameters
+      window.history.replaceState({}, document.title, '/auth-success');
+      
       navigate('/dashboard');
       return;
     }
@@ -88,17 +94,34 @@ const AccountSelection = () => {
   const handleLogin = async () => {
     setLoginError('');
     setIsLoggingIn(true);
+    setIsWakingServer(false);
+    setServerWakeTime(0);
+
+    // Cold-start detection: Show "waking up" message after 3 seconds
+    const coldStartTimer = setTimeout(() => {
+      setIsWakingServer(true);
+      setServerWakeTime(3);
+      
+      // Update timer every second
+      const interval = setInterval(() => {
+        setServerWakeTime(prev => prev + 1);
+      }, 1000);
+      
+      // Clean up interval after 60 seconds max
+      setTimeout(() => clearInterval(interval), 60000);
+    }, 3000);
 
     try {
       const result = await gmailService.login();
+      clearTimeout(coldStartTimer);
 
-      // DISABLED: Development bypass auto-login to allow viewing /connect page
-      // if (result?.mode === 'development-bypass' && result?.token && result?.email) {
-      //   localStorage.setItem('jwt_token', result.token);
-      //   localStorage.setItem('user_email', result.email);
-      //   navigate('/dashboard');
-      //   return;
-      // }
+      // SECURITY: Development bypass no longer returns token in response
+      // JWT is set in httpOnly cookie by the server
+      if (result?.mode === 'development-bypass' && result?.email) {
+        localStorage.setItem('user_email', result.email);
+        navigate('/dashboard');
+        return;
+      }
 
       if (result?.authUrl) {
         window.location.assign(result.authUrl);
@@ -112,10 +135,13 @@ const AccountSelection = () => {
 
       throw new Error('Login did not return a valid authentication flow.');
     } catch (error) {
+      clearTimeout(coldStartTimer);
       const raw = error?.message || 'Login failed. Please try again.';
       setLoginError(raw);
     } finally {
       setIsLoggingIn(false);
+      setIsWakingServer(false);
+      setServerWakeTime(0);
     }
   };
 
@@ -197,12 +223,18 @@ const AccountSelection = () => {
               aria-busy={isLoggingIn}
             >
               {isLoggingIn
-                ? <><span className="btn-spinner" aria-hidden="true" />Connecting...</>
+                ? <><span className="btn-spinner" aria-hidden="true" />{isWakingServer ? `Waking up server (${serverWakeTime}s)...` : 'Connecting...'}</>
                 : <>
                     <span className="google-btn-mark" aria-hidden="true">G</span>
                     <span className="google-btn-text">Continue with Google</span>
                   </>}
             </button>
+            
+            {isWakingServer && (
+              <div className="auth-info" role="status" aria-live="polite">
+                ⏱️ Starting server (free tier cold-start, ~30-60s)...
+              </div>
+            )}
 
             {loginError && (
               <div className="auth-error" role="alert" aria-live="polite">

@@ -36,17 +36,15 @@ export function useSSE(path) {
       return;
     }
 
-    const token = localStorage.getItem('jwt_token');
-    const separator = path.includes('?') ? '&' : '?';
-
-    const url = `${API_BASE_URL}${path}${
-      token ? `${separator}access_token=${encodeURIComponent(token)}` : ''
-    }`;
+    // SECURITY: EventSource sends cookies automatically with credentials
+    // No need to pass token in URL anymore
+    const url = `${API_BASE_URL}${path}`;
 
     setStatus('connecting');
     setError(null);
 
-    const es = new EventSource(url);
+    // EventSource automatically includes cookies if same-origin
+    const es = new EventSource(url, { withCredentials: true });
     esRef.current = es;
 
     es.onopen = () => {

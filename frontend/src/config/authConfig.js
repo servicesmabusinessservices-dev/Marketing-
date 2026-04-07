@@ -7,10 +7,14 @@ if (!import.meta.env.VITE_API_URL && import.meta.env.PROD) {
   console.warn('VITE_API_URL is not set — using https://marketing-api-38a1.onrender.com/api/v1');
 }
 
+/**
+ * DEPRECATED: JWT is now in httpOnly cookie, sent automatically with requests.
+ * This function is kept for backwards compatibility but should not be used.
+ * Use apiClient from services/apiClient.js instead.
+ */
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem('jwt_token');
+  console.warn('getAuthHeaders is deprecated - authentication now uses httpOnly cookies');
   return {
-    Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   };
 };
