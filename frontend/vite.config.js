@@ -23,7 +23,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           excel: ['exceljs'],
-          charts: ['recharts', 'framer-motion', 'gsap', '@gsap/react']
+          charts: ['recharts', 'framer-motion']
         }
       }
     }
