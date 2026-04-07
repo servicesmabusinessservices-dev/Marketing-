@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import Icon from '../../../components/ui/Icon';
 import BulkEmail from './BulkEmail';
 import { useInboxData, parseSenderName, parseSenderEmail } from '../../../hooks/useInboxData';
@@ -55,9 +56,6 @@ const getTagLabel = (c) => {
 };
 
 const hasHtmlContent = (v) => /<\/?[a-z][\s\S]*>/i.test(v || '');
-const SCRIPTABLE_PROTOCOL_PATTERN = /^\s*(?:javascript|vbscript):/i;
-const UNSAFE_DATA_URL_PATTERN = /^\s*data:(?!image\/|video\/|audio\/)/i;
-const STRIPPED_URL_ATTRIBUTES = new Set(['href', 'src', 'srcset', 'xlink:href', 'data', 'poster', 'action', 'formaction']);
 
 const escapeAttributeValue = (value) => String(value || '')
   .replace(/&/g, '&amp;')
@@ -65,21 +63,11 @@ const escapeAttributeValue = (value) => String(value || '')
   .replace(/</g, '&lt;')
   .replace(/>/g, '&gt;');
 
-const hasUnsafeUrlValue = (attributeName, rawValue) => {
-  if (!rawValue) {
-    return false;
-  }
-
-  if (attributeName === 'srcset') {
-    return rawValue
-      .split(',')
-      .map((candidate) => candidate.trim().split(/\s+/)[0])
-      .some((candidateUrl) => SCRIPTABLE_PROTOCOL_PATTERN.test(candidateUrl) || UNSAFE_DATA_URL_PATTERN.test(candidateUrl));
-  }
-
-  return SCRIPTABLE_PROTOCOL_PATTERN.test(rawValue) || UNSAFE_DATA_URL_PATTERN.test(rawValue);
-};
-
+/**
+ * SECURITY FIX: Use industry-standard DOMPurify for HTML sanitization
+ * Replaces custom regex-based sanitizer to prevent XSS attacks
+ * DOMPurify handles edge cases like HTML entity encoding, data: URIs, CSS expressions, etc.
+ */
 const normalizeEmailHtml = (value) => {
   if (!value?.trim()) {
     return {
@@ -90,61 +78,47 @@ const normalizeEmailHtml = (value) => {
     };
   }
 
+  // Configure DOMPurify for safe email rendering
+  const cleanHtml = DOMPurify.sanitize(value, {
+    USE_PROFILES: { html: true },
+    ALLOWED_TAGS: [
+      'p', 'br', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'strong', 'em', 'u', 's', 'a', 'img', 'ul', 'ol', 'li',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td', 'blockquote',
+      'pre', 'code', 'hr', 'b', 'i'
+    ],
+    ALLOWED_ATTR: [
+      'href', 'src', 'alt', 'title', 'class', 'id', 'style',
+      'width', 'height', 'cellpadding', 'cellspacing', 'border',
+      'align', 'valign', 'target', 'loading', 'decoding'
+    ],
+    FORBID_TAGS: ['script', 'object', 'embed', 'frame', 'frameset', 'iframe', 'form', 'input', 'button', 'select'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'srcdoc'],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+    SAFE_FOR_TEMPLATES: true,
+  });
+
   const parser = new DOMParser();
-  const hasDocumentShell = /<(html|head|body)\b/i.test(value);
+  const hasDocumentShell = /<(html|head|body)\b/i.test(cleanHtml);
   const parsedDoc = parser.parseFromString(
-    hasDocumentShell ? value : `<!doctype html><html><head></head><body>${value}</body></html>`,
+    hasDocumentShell ? cleanHtml : `<!doctype html><html><head></head><body>${cleanHtml}</body></html>`,
     'text/html'
   );
 
-  parsedDoc.querySelectorAll('script, object, embed, frame, frameset, iframe, base, link, meta[http-equiv="refresh"]').forEach((node) => node.remove());
-
-  parsedDoc.querySelectorAll('form').forEach((form) => {
-    const replacement = parsedDoc.createElement('div');
-    replacement.innerHTML = form.innerHTML;
-    form.replaceWith(replacement);
-  });
-
-  parsedDoc.querySelectorAll('input, button, textarea, select, option').forEach((node) => node.remove());
-
-  parsedDoc.querySelectorAll('svg foreignObject').forEach((node) => node.remove());
-
-  parsedDoc.querySelectorAll('*').forEach((node) => {
-    Array.from(node.attributes).forEach((attribute) => {
-      const attributeName = attribute.name.toLowerCase();
-      const attributeValue = (attribute.value || '').trim();
-
-      if (attributeName.startsWith('on') || attributeName === 'srcdoc') {
-        node.removeAttribute(attribute.name);
-        return;
-      }
-
-      if (STRIPPED_URL_ATTRIBUTES.has(attributeName) && hasUnsafeUrlValue(attributeName, attributeValue)) {
-        node.removeAttribute(attribute.name);
-      }
-    });
-  });
-
+  // Post-sanitization enhancements
   parsedDoc.querySelectorAll('a[href]').forEach((anchor) => {
     anchor.setAttribute('target', '_self');
     anchor.removeAttribute('download');
-
-    const href = (anchor.getAttribute('href') || '').trim();
-    if (!href || hasUnsafeUrlValue('href', href)) {
-      anchor.removeAttribute('href');
-      anchor.removeAttribute('target');
-    }
   });
 
   parsedDoc.querySelectorAll('img').forEach((image) => {
     if (!image.hasAttribute('alt')) {
       image.setAttribute('alt', '');
     }
-
     if (!image.hasAttribute('loading')) {
       image.setAttribute('loading', 'lazy');
     }
-
     if (!image.hasAttribute('decoding')) {
       image.setAttribute('decoding', 'async');
     }

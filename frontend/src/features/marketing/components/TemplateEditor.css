@@ -1,3 +1,68 @@
+.template-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.template-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.template-editor-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.template-editor-controls .form-input {
+  max-width: 200px;
+}
+
+.template-editor-canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.template-editor-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .template-editor-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .template-editor-controls {
+    justify-content: stretch;
+  }
+
+  .template-editor-controls .form-input {
+    max-width: none;
+    flex: 1;
+  }
+}
+
+/* Legacy compatibility - keep old designer styles if still referenced */
 .template-designer {
   display: flex;
   flex-direction: column;
@@ -48,6 +113,7 @@
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--border);
   font-size: var(--text-xs);
+
   font-weight: var(--font-semibold);
   color: var(--text-muted);
   letter-spacing: 0.08em;

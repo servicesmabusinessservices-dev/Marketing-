@@ -20,7 +20,7 @@
   --indigo: #2f68ae;
   --text-1: #ffffff;
   --text-2: #b2c2d8;
-  --text-3: #8094b0;
+  --text-3: #94a8c2; /* WCAG AA: Improved from #8094b0 for better contrast (4.5:1 on --navy) */
 
   /* ── Borders ─────────────────────────────────────── */
   --border: rgba(255, 255, 255, 0.07);
