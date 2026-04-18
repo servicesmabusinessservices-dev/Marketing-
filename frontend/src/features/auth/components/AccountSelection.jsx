@@ -51,12 +51,19 @@ const AccountSelection = () => {
 
   useEffect(() => {
     const email = searchParams.get('email');
+    const token = searchParams.get('token');
     const message = searchParams.get('message');
     
-    // SECURITY: JWT is now in httpOnly cookie, not URL parameter
+    // Handle successful authentication
     if (email) {
       // Store email for display purposes
       localStorage.setItem('user_email', email);
+      
+      // Store JWT token if provided (GmailManager.Api sends it in URL)
+      // Note: GmailManager.Auth uses httpOnly cookies instead
+      if (token) {
+        localStorage.setItem('jwt_token', token);
+      }
       
       // Clean URL of any query parameters
       window.history.replaceState({}, document.title, '/auth-success');
@@ -115,10 +122,12 @@ const AccountSelection = () => {
       const result = await gmailService.login();
       clearTimeout(coldStartTimer);
 
-      // SECURITY: Development bypass no longer returns token in response
-      // JWT is set in httpOnly cookie by the server
+      // Development bypass mode: handle token if provided in response body
       if (result?.mode === 'development-bypass' && result?.email) {
         localStorage.setItem('user_email', result.email);
+        if (result?.token) {
+          localStorage.setItem('jwt_token', result.token);
+        }
         navigate('/dashboard');
         return;
       }
