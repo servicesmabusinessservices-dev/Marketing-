@@ -23,14 +23,14 @@ export const gmailService = {
   },
   
   /**
-   * SECURITY: Logout by clearing httpOnly cookie on server
+   * Logout - clears both localStorage tokens and httpOnly cookies on server
    */
   logout: async () => {
     try {
       await apiClient.post('/auth/logout');
       // Clear local session data
       localStorage.removeItem('user_email');
-      localStorage.removeItem('jwt_token'); // Legacy cleanup
+      localStorage.removeItem('jwt_token');
     } catch (error) {
       // Still clear local data even if server call fails
       localStorage.removeItem('user_email');
