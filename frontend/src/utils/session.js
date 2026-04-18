@@ -1,11 +1,14 @@
-const SESSION_KEYS = ['user_email'];
+const SESSION_KEYS = ['user_email', 'jwt_token'];
 
 export const isDevelopmentBypassSession = () => localStorage.getItem('user_email') === 'dev@localhost';
 
 /**
- * SECURITY: JWT is now in httpOnly cookie, not localStorage.
+ * Session management - supports both authentication methods:
+ * 1. GmailManager.Api (production): JWT in localStorage + Authorization header
+ * 2. GmailManager.Auth (new): JWT in httpOnly cookie
+ * 
  * Check session by user_email presence (set after successful auth).
- * For definitive auth status, make an API call - cookies will be sent automatically.
+ * For definitive auth status, make an API call - tokens will be sent automatically.
  */
 export const hasSession = () => Boolean(localStorage.getItem('user_email'));
 
@@ -13,8 +16,6 @@ export const clearSession = () => {
   SESSION_KEYS.forEach((key) => {
     localStorage.removeItem(key);
   });
-  // Clear legacy JWT if it exists
-  localStorage.removeItem('jwt_token');
 };
 
 export const handleUnauthorized = (navigate, showFeedback) => {
