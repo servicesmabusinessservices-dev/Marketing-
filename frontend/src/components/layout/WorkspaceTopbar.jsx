@@ -94,7 +94,8 @@ const WorkspaceTopbar = ({ isDark, toggleTheme, onMenuToggle, mobileMenuOpen = f
           style={{ cursor: 'pointer' }}
         >
           <Icon name="search" size={13} color="var(--text-3)" aria-label="Search icon" />
-          <span style={{ color: 'var(--text-4)', fontSize: 'var(--text-sm)' }}>Search... ⌘K</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: 'var(--fs-xs)', fontWeight: 500 }}>Search anything...</span>
+          <div className="search-shortcut" style={{ marginLeft: 'auto', background: 'var(--glass-2)', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: 'var(--text-3)' }}>⌘K</div>
         </button>
         <NotificationPanel />
         {showInboxAction && (

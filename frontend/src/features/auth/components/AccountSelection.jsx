@@ -51,27 +51,16 @@ const AccountSelection = () => {
 
   useEffect(() => {
     const email = searchParams.get('email');
-    const token = searchParams.get('token');
     const message = searchParams.get('message');
-    
     // Handle successful authentication
     if (email) {
       // Store email for display purposes
       localStorage.setItem('user_email', email);
-      
-      // Store JWT token if provided (GmailManager.Api sends it in URL)
-      // Note: GmailManager.Auth uses httpOnly cookies instead
-      if (token) {
-        localStorage.setItem('jwt_token', token);
-      }
-      
       // Clean URL of any query parameters
       window.history.replaceState({}, document.title, '/auth-success');
-      
       navigate('/dashboard');
       return;
     }
-
     if (message) {
       setLoginError(message);
     }
@@ -122,12 +111,9 @@ const AccountSelection = () => {
       const result = await gmailService.login();
       clearTimeout(coldStartTimer);
 
-      // Development bypass mode: handle token if provided in response body
+      // Development bypass mode: handle email only
       if (result?.mode === 'development-bypass' && result?.email) {
         localStorage.setItem('user_email', result.email);
-        if (result?.token) {
-          localStorage.setItem('jwt_token', result.token);
-        }
         navigate('/dashboard');
         return;
       }

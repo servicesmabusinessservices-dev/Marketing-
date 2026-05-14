@@ -12,9 +12,17 @@
   gap: var(--space-4);
   padding: var(--space-6);
   min-height: 120px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  transition: all var(--transition);
+}
+
+.kpi-card:hover {
+  background: rgba(15, 23, 42, 0.6);
+  transform: translateY(-2px);
 }
 
 .kpi-icon-wrap {
@@ -23,7 +31,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
+  border-radius: 9999px; /* Pill icons */
   flex-shrink: 0;
 }
 
@@ -108,12 +116,15 @@
 /* ── Chart Card ────────────────────────────────── */
 
 .chart-card {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
   min-height: 340px;
   display: flex;
   flex-direction: column;
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  overflow: hidden;
 }
 
 .chart-card-header {
@@ -121,7 +132,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .chart-card-header-left {
@@ -193,12 +204,14 @@
 /* ── Insight Card ──────────────────────────────── */
 
 .insight-card {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-left: 3px solid var(--indigo);
-  border-radius: var(--radius);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber); /* Brand gold edge */
+  border-radius: var(--radius-card);
   padding: var(--space-6);
   margin-bottom: var(--space-8);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
 }
 
 .insight-header {
@@ -396,9 +409,10 @@
 }
 
 .analytics-header-right .filter-chip.active {
-  background: var(--indigo);
-  border-color: var(--indigo);
-  color: #ffffff;
+  background: var(--gradient-gold);
+  border-color: transparent;
+  color: var(--navy);
+  font-weight: 800;
 }
 
 .analytics-header-right .analytics-owner-input {
@@ -502,7 +516,7 @@
   align-items: center;
   gap: var(--space-1);
   font-size: var(--fs-xs);
-  color: var(--indigo);
+  color: var(--amber);
   cursor: pointer;
   border: none;
   background: transparent;

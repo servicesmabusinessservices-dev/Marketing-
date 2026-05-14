@@ -131,10 +131,12 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, side
     >
       <div className="sidebar-logo">
         <div className="logo-mark">
-          <div className="logo-icon">MA</div>
+          <div className="logo-icon">
+            <Icon name="code" size={18} color="white" />
+          </div>
           <div>
             <div className="logo-text">MA Business</div>
-            <div className="logo-sub">CRM Workspace</div>
+            <div className="logo-sub">Services Workspace</div>
           </div>
         </div>
         <button
@@ -144,7 +146,7 @@ const WorkspaceSidebar = ({ onLogout, userEmail, mobileOpen, onMobileClose, side
           aria-label={sidebarIsCollapsed ? 'Expand sidebar navigation' : 'Collapse sidebar navigation'}
           title={sidebarIsCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {sidebarIsCollapsed ? '›' : '‹'}
+          <Icon name={sidebarIsCollapsed ? 'chevron_right' : 'chevron_left'} size={14} />
         </button>
       </div>
 

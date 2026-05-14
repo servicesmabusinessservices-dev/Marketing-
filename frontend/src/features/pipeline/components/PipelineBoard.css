@@ -43,11 +43,16 @@
 .pipeline-input-group input,
 .pipeline-input-group select,
 .pipeline-input-group textarea {
-  background: var(--control-bg);
+  background: rgba(15, 23, 42, 0.6);
   color: var(--text-primary);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
-  padding: var(--btn-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px; /* Pill inputs */
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-sans);
+}
+
+.pipeline-input-group textarea {
+  border-radius: 20px; /* Softer radius for textareas */
 }
 
 .pipeline-input-group textarea {
@@ -56,12 +61,13 @@
 }
 
 .pipeline-btn {
-  background: var(--control-bg);
+  background: var(--glass);
   color: var(--text-primary);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
-  padding: var(--btn-md);
+  border: 1px solid var(--border);
+  border-radius: 9999px; /* Pill buttons */
+  padding: var(--space-sm) var(--space-lg);
   cursor: pointer;
+  transition: all var(--transition);
 }
 
 .pipeline-btn:hover {
@@ -70,9 +76,11 @@
 }
 
 .pipeline-btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: var(--text-primary);
+  background: var(--gradient-gold);
+  color: var(--navy);
   border-color: transparent;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.2);
 }
 
 .pipeline-loading,
@@ -93,16 +101,16 @@
 }
 
 .pipeline-column {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
-  padding: var(--space-sm);
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
   min-height: 420px;
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
 }
 
 .pipeline-column-header {
@@ -143,15 +151,15 @@
 }
 
 .pipeline-sidebar {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
-  padding: var(--space-md);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: var(--space-xl);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
 }
 
 .pipeline-sidebar h3,

@@ -187,7 +187,7 @@ const EmailDetail = () => {
               className="email-body-frame"
               title="email-body"
               loading="lazy"
-              sandbox="allow-popups allow-popups-to-escape-sandbox"
+              sandbox=""
               srcDoc={getEmailHtmlDocument(email.body)}
             />
           </div>

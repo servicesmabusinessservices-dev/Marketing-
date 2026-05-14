@@ -3,6 +3,7 @@ using GmailManager.Shared.Abstractions;
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Entities;
 using Google.Apis.Auth.OAuth2.Responses;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -13,19 +14,22 @@ public class SqlRedisUserTokenStore : IUserTokenStore
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(55);
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly IDistributedCache _distributedCache;
+    private readonly IDataProtector _protector;
 
-    public SqlRedisUserTokenStore(IDbContextFactory<AppDbContext> dbContextFactory, IDistributedCache distributedCache)
+    public SqlRedisUserTokenStore(IDbContextFactory<AppDbContext> dbContextFactory, IDistributedCache distributedCache, IDataProtectionProvider dataProtectionProvider)
     {
         _dbContextFactory = dbContextFactory;
         _distributedCache = distributedCache;
+        _protector = dataProtectionProvider.CreateProtector("GmailManager.TokenProtection");
     }
 
     public async Task SaveAsync(string email, TokenResponse tokenResponse, CancellationToken cancellationToken = default)
     {
         var cacheKey = BuildTokenCacheKey(email);
         var tokenJson = JsonSerializer.Serialize(tokenResponse);
+        var encryptedJson = _protector.Protect(tokenJson);
 
-        await _distributedCache.SetStringAsync(cacheKey, tokenJson, new DistributedCacheEntryOptions
+        await _distributedCache.SetStringAsync(cacheKey, encryptedJson, new DistributedCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = CacheDuration
         }, cancellationToken);
@@ -37,13 +41,13 @@ public class SqlRedisUserTokenStore : IUserTokenStore
             db.UserTokens.Add(new UserTokenEntity
             {
                 Email = email,
-                TokenJson = tokenJson,
+                TokenJson = encryptedJson,
                 UpdatedAtUtc = DateTime.UtcNow
             });
         }
         else
         {
-            existing.TokenJson = tokenJson;
+            existing.TokenJson = encryptedJson;
             existing.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -56,7 +60,12 @@ public class SqlRedisUserTokenStore : IUserTokenStore
         var cachedJson = await _distributedCache.GetStringAsync(cacheKey, cancellationToken);
         if (!string.IsNullOrWhiteSpace(cachedJson))
         {
-            return JsonSerializer.Deserialize<TokenResponse>(cachedJson);
+            try 
+            {
+                var decrypted = _protector.Unprotect(cachedJson);
+                return JsonSerializer.Deserialize<TokenResponse>(decrypted);
+            } 
+            catch { return null; } // Handle old unencrypted tokens or corrupted data
         }
 
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -71,7 +80,12 @@ public class SqlRedisUserTokenStore : IUserTokenStore
             AbsoluteExpirationRelativeToNow = CacheDuration
         }, cancellationToken);
 
-        return JsonSerializer.Deserialize<TokenResponse>(tokenEntity.TokenJson);
+        try 
+        {
+            var decryptedDb = _protector.Unprotect(tokenEntity.TokenJson);
+            return JsonSerializer.Deserialize<TokenResponse>(decryptedDb);
+        }
+        catch { return null; } // Handle old unencrypted tokens or corrupted data
     }
 
     private static string BuildTokenCacheKey(string email) => $"tokens_{email}";
