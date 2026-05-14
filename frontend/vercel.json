@@ -12,7 +12,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|public/|.*\\..*).*)",
+      "source": "/((?!assets/|public/|_vercel/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
