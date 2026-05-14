@@ -111,8 +111,8 @@ public class AuthController : ApiControllerBase
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = !_env.IsDevelopment(),
-                SameSite = SameSiteMode.Lax,
+                Secure = true, // Required for SameSite=None
+                SameSite = SameSiteMode.None, // Required for cross-domain auth
                 Path = "/",
                 Expires = DateTimeOffset.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
                 IsEssential = true
@@ -148,8 +148,8 @@ public class AuthController : ApiControllerBase
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_env.IsDevelopment(),
-            SameSite = SameSiteMode.Lax,
+            Secure = true, // Required for SameSite=None
+            SameSite = SameSiteMode.None, // Required for cross-domain auth
             Path = "/",
             Expires = DateTimeOffset.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
             IsEssential = true

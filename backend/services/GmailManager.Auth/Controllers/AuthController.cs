@@ -156,8 +156,8 @@ public class AuthController : ApiControllerBase
         Response.Cookies.Delete("auth_token", new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_env.IsDevelopment(),
-            SameSite = SameSiteMode.Lax,
+            Secure = true, // Required for SameSite=None
+            SameSite = SameSiteMode.None,
             Path = "/"
         });
         return Ok(new { message = "Logged out successfully" });
@@ -211,8 +211,8 @@ public class AuthController : ApiControllerBase
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true, // Prevents JavaScript access (XSS protection)
-            Secure = !_env.IsDevelopment(), // HTTPS only in production
-            SameSite = SameSiteMode.Lax, // CSRF protection
+            Secure = true, // Required for SameSite=None
+            SameSite = SameSiteMode.None, // Required for cross-domain auth
             Path = "/",
             Expires = DateTimeOffset.UtcNow.AddHours(8), // Match JWT expiration
             IsEssential = true

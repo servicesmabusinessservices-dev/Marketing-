@@ -1,9 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/ui/Icon';
+import { hasSession } from '../../../utils/session';
+import { gmailService } from '../../../services/gmailService';
 import './LandingPage.css';
 
 const FloatingNav = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(hasSession());
+  }, []);
+
+  const handleAction = async (e) => {
+    if (isLoggedIn) return; // Link will handle navigation
+    e.preventDefault();
+    setIsLoggingIn(true);
+    try {
+      const result = await gmailService.login();
+      if (result?.authUrl) {
+        window.location.assign(result.authUrl);
+      }
+    } catch (err) {
+      console.error('Direct login failed:', err);
+      window.location.href = '/connect?error=true';
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   return (
     <nav className="floating-nav">
       <div className="nav-pill">
@@ -15,7 +41,13 @@ const FloatingNav = () => {
           <a href="#features" className="nav-link">Features</a>
           <a href="#security" className="nav-link">Security</a>
           <a href="#about" className="nav-link">About</a>
-          <a href="/connect" className="nav-link nav-link--primary">Get Started</a>
+          <a 
+            href={isLoggedIn ? "/dashboard" : "/connect"} 
+            className={`nav-link nav-link--primary ${isLoggingIn ? 'loading' : ''}`}
+            onClick={handleAction}
+          >
+            {isLoggingIn ? "Connecting..." : (isLoggedIn ? "Go to Dashboard" : "Get Started")}
+          </a>
         </div>
       </div>
     </nav>
@@ -24,6 +56,31 @@ const FloatingNav = () => {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(hasSession());
+  }, []);
+
+  const handleCTA = async () => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    } else {
+      setIsLoggingIn(true);
+      try {
+        const result = await gmailService.login();
+        if (result?.authUrl) {
+          window.location.assign(result.authUrl);
+        }
+      } catch (err) {
+        console.error('Direct login failed:', err);
+        navigate('/connect');
+      } finally {
+        setIsLoggingIn(false);
+      }
+    }
+  };
 
   const features = [
     {
@@ -87,7 +144,13 @@ const LandingPage = () => {
               The only workspace designed for power users who need to manage, automate, and scale their Gmail operations with verified OAuth security.
             </p>
             <div className="landing-cta-group">
-              <button onClick={() => navigate('/connect')} className="landing-cta landing-cta--primary">Start Managing Now</button>
+              <button 
+                onClick={handleCTA} 
+                className={`landing-cta landing-cta--primary ${isLoggingIn ? 'loading' : ''}`}
+                disabled={isLoggingIn}
+              >
+                {isLoggingIn ? "Connecting..." : (isLoggedIn ? "Go to Dashboard" : "Start Managing Now")}
+              </button>
               <a href="#features" className="landing-cta landing-cta--secondary">Explore Features</a>
             </div>
           </div>
@@ -180,7 +243,13 @@ const LandingPage = () => {
           <div className="contact-card">
             <h2 className="section-title">Ready to take control of your inboxes?</h2>
             <p className="section-subtitle">Join thousands of users scaling their email operations today.</p>
-            <button className="landing-cta landing-cta--primary" onClick={() => navigate('/connect')}>Connect Your First Account</button>
+            <button 
+              className={`landing-cta landing-cta--primary ${isLoggingIn ? 'loading' : ''}`} 
+              onClick={handleCTA}
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? "Connecting..." : (isLoggedIn ? "Access Your Dashboard" : "Connect Your First Account")}
+            </button>
           </div>
         </section>
 
