@@ -3,12 +3,12 @@ import AnimatedCard from './AnimatedCard';
 import Icon from './Icon';
 
 const ACCENT_MAP = {
-  primary: { bg: 'rgba(79, 70, 229, 0.12)', text: 'var(--indigo)' },
-  amber:   { bg: 'rgba(245, 158, 11, 0.12)', text: 'var(--amber)' },
+  primary: { bg: 'rgba(234, 179, 8, 0.12)',  text: 'var(--amber)' },
+  amber:   { bg: 'rgba(234, 179, 8, 0.12)',  text: 'var(--amber)' },
   emerald: { bg: 'rgba(16, 185, 129, 0.12)', text: 'var(--emerald)' },
   blue:    { bg: 'rgba(56, 189, 248, 0.12)', text: 'var(--blue)' },
   rose:    { bg: 'rgba(244, 63, 94, 0.12)',  text: 'var(--rose)' },
-  purple:  { bg: 'rgba(99, 102, 241, 0.12)', text: 'var(--purple)' },
+  purple:  { bg: 'rgba(139, 92, 246, 0.12)', text: 'var(--purple)' },
 };
 
 /**

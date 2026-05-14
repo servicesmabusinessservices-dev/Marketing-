@@ -3,12 +3,12 @@ import { API_BASE_URL } from '../config/authConfig';
 
 export const gmailService = {
   devLogin: () => {
-    window.location.href = `${API_BASE_URL}/auth/dev-login`;
+    window.location.href = `${API_BASE_URL}/auth/dev-login?returnUrl=${encodeURIComponent(window.location.origin)}`;
   },
 
   login: async () => {
     try {
-      const response = await apiClient.get('/auth/login');
+      const response = await apiClient.get(`/auth/login?returnUrl=${encodeURIComponent(window.location.origin)}`);
       return response.data;
     } catch (error) {
       if (!error.response) {
@@ -30,11 +30,11 @@ export const gmailService = {
       await apiClient.post('/auth/logout');
       // Clear local session data
       localStorage.removeItem('user_email');
-      localStorage.removeItem('jwt_token');
+      // No JWT token in localStorage to remove
     } catch (error) {
       // Still clear local data even if server call fails
       localStorage.removeItem('user_email');
-      localStorage.removeItem('jwt_token');
+      // No JWT token in localStorage to remove
       throw error;
     }
   },

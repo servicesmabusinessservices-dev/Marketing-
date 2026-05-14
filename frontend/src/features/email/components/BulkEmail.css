@@ -28,16 +28,17 @@
 }
 
 .bulk-email-modal {
-  background: var(--panel-bg);
+  background: rgba(15, 23, 42, 0.85); /* Matte look */
   color: var(--text-primary);
-  border-radius: 16px;
+  border-radius: 24px;
   width: 90%;
   max-width: 680px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-soft);
-  border: 1px solid var(--panel-border);
-  animation: slideUp 0.4s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-header {
@@ -62,7 +63,7 @@
   font-size: var(--fs-md);
   width: var(--control-height-sm);
   height: var(--control-height-sm);
-  border-radius: var(--radius);
+  border-radius: 9999px; /* Pill close button */
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -98,16 +99,27 @@
   font-size: var(--fs-sm);
 }
 
-.form-group input,
+.form-group input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: 9999px; /* Pill inputs */
+  background: rgba(15, 23, 42, 0.4);
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  transition: all var(--transition);
+}
+
 .form-group textarea {
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius);
-  background: var(--control-bg);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: 20px; /* Softer radius */
+  background: rgba(15, 23, 42, 0.4);
   color: var(--text-primary);
   font-size: var(--fs-sm);
   resize: vertical;
+  transition: all var(--transition);
 }
 
 .form-group input::placeholder,
@@ -132,8 +144,8 @@
 .schedule-btn,
 .cancel-btn {
   padding: var(--btn-md);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-radius: 9999px; /* Pill buttons */
   font-size: var(--fs-sm);
   font-weight: var(--font-semibold);
   cursor: pointer;
@@ -141,8 +153,10 @@
 }
 
 .schedule-btn {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: var(--text-primary);
+  background: var(--gradient-gold);
+  color: var(--navy);
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.2);
 }
 
 .schedule-btn:hover:not(:disabled) {
@@ -218,9 +232,9 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius);
-  background: var(--control-bg);
-  border: 1px solid var(--control-border);
+  border-radius: 9999px; /* Pill status items */
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border);
   transition: all var(--duration-slow) ease;
 }
 

@@ -17,18 +17,7 @@ const apiClient = axios.create({
   withCredentials: true, // Send httpOnly cookies with every request
 });
 
-// ── Request interceptor: Add JWT from localStorage if available ──────────────
-apiClient.interceptors.request.use(
-  (config) => {
-    // Check if JWT token exists in localStorage (used by GmailManager.Api)
-    const token = localStorage.getItem('jwt_token');
-    if (token && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+
 
 // ── Global 401 handler + ApiResponse unwrap ─────────────────────────────────
 apiClient.interceptors.response.use(
@@ -48,7 +37,7 @@ apiClient.interceptors.response.use(
       // Only redirect if we're in a protected area
       if (!isPublicRoute) {
         // Clear authentication data
-        localStorage.removeItem('jwt_token');
+        // No JWT token in localStorage to remove
         localStorage.removeItem('user_email');
         
         // Redirect to connect page with a message

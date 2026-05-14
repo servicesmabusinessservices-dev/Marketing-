@@ -36,15 +36,15 @@
 }
 
 .marketing-card {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: var(--space-xl);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
 }
 
 .marketing-card h2 {
@@ -60,11 +60,12 @@
 }
 
 .marketing-card-header select {
-  background: var(--control-bg);
+  background: rgba(15, 23, 42, 0.6);
   color: var(--text-primary);
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
-  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px; /* Pill select */
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-sans);
 }
 
 .marketing-form {
@@ -76,11 +77,16 @@
 .marketing-form input,
 .marketing-form select,
 .marketing-form textarea {
-  background: var(--control-bg);
+  background: rgba(15, 23, 42, 0.4);
   color: var(--text-primary);
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
-  padding: var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px; /* Pill inputs */
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-sans);
+}
+
+.marketing-form textarea {
+  border-radius: 20px;
 }
 
 .marketing-form textarea {
@@ -89,12 +95,13 @@
 }
 
 .marketing-btn {
-  background: var(--control-bg);
+  background: var(--glass);
   color: var(--text-primary);
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
-  padding: 9px var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 9999px; /* Pill buttons */
+  padding: var(--space-sm) var(--space-lg);
   cursor: pointer;
+  transition: all var(--transition);
 }
 
 .marketing-btn:hover {
@@ -103,9 +110,11 @@
 }
 
 .marketing-btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: #fff;
+  background: var(--gradient-gold);
+  color: var(--navy);
   border-color: transparent;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.2);
 }
 
 .marketing-inline-actions {
@@ -125,9 +134,10 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px; /* Pill list items */
+  background: rgba(15, 23, 42, 0.4);
 }
 
 .marketing-list-item span {

@@ -5,19 +5,19 @@
 /* ── :root  (dark-first defaults) ────────────────────── */
 :root {
   /* ── Palette ─────────────────────────────────────── */
-  --navy: #0f172a;
-  --navy-2: #1e293b;
-  --navy-3: #162032;
-  --navy-4: #1d2d47;
-  --navy-5: #334155;
-  --amber: #f59e0b;
-  --amber-2: #fbbf24;
-  --amber-light: #fef3c7;
+  --navy: #020617; /* Darker, more premium navy */
+  --navy-2: #0f172a;
+  --navy-3: #1e293b;
+  --navy-4: #334155;
+  --navy-5: #475569;
+  --amber: #eab308; /* Site brand gold */
+  --amber-2: #ca8a04;
+  --amber-light: #fef9c3;
   --emerald: #10b981;
   --rose: #f43f5e;
-  --blue: #38bdf8;
-  --purple: #2f4590;
-  --indigo: #2f68ae;
+  --blue: #2563eb; /* Corporate blue */
+  --purple: #1e40af; /* Deep blue */
+  --indigo: #3b82f6; /* Bright blue */
   --text-1: #ffffff;
   --text-2: #b2c2d8;
   --text-3: #94a8c2; /* WCAG AA: Improved from #8094b0 for better contrast (4.5:1 on --navy) */
@@ -30,11 +30,11 @@
   --color-border-strong: rgba(255, 255, 255, 0.22);
 
   /* ── Glass / Surface ─────────────────────────────── */
-  --glass: rgba(255, 255, 255, 0.04);
-  --glass-2: rgba(255, 255, 255, 0.075);
+  --glass: rgba(15, 23, 42, 0.4); /* Darker and more transparent */
+  --glass-2: rgba(255, 255, 255, 0.05);
   --surface-1: rgba(255, 255, 255, 0.03);
-  --surface-2: rgba(255, 255, 255, 0.05);
-  --surface-3: rgba(255, 255, 255, 0.08);
+  --surface-2: rgba(15, 23, 42, 0.25);
+  --surface-3: rgba(15, 23, 42, 0.6);
 
   /* ── Semantic Surfaces ───────────────────────────── */
   --color-surface-1: var(--navy);
@@ -43,16 +43,17 @@
   --color-surface-4: var(--navy-4);
 
   /* ── Shadows ─────────────────────────────────────── */
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 10px 50px rgba(0, 0, 0, 0.65);
-  --shadow-soft: 0 12px 34px rgba(2, 8, 23, 0.22);
+  --shadow: 0 4px 12px rgba(2, 6, 23, 0.5); /* Crisper shadows */
+  --shadow-lg: 0 10px 30px rgba(2, 6, 23, 0.7);
+  --shadow-soft: 0 8px 24px rgba(2, 6, 23, 0.4);
 
   /* ── Gradients ───────────────────────────────────── */
-  --gradient-cta: linear-gradient(135deg, #2f68ae 0%, #2f4590 100%);
-  --gradient-cta-hover: linear-gradient(135deg, #1e4f8a 0%, #243785 100%);
-  --gradient-amber: linear-gradient(135deg, #f59e0b, #fbbf24);
-  --gradient-text: linear-gradient(135deg, #ffffff 0%, #bfdbfe 50%, #93c5fd 100%);
-  --gradient-hero: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
+  --gradient-cta: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --gradient-cta-hover: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  --gradient-amber: linear-gradient(135deg, #eab308 0%, #d97706 100%);
+  --gradient-text: linear-gradient(135deg, #ffffff 0%, #bfdbfe 100%);
+  --gradient-hero: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  --gradient-gold: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); /* Muted matte gold */
 
   /* ── Glows ───────────────────────────────────────── */
   --glow-indigo: 0 0 30px rgba(47, 104, 174, 0.4);
@@ -80,11 +81,11 @@
   --background-card: var(--navy-2);
   --background-secondary: var(--navy-3);
   --border-color: var(--border);
-  --primary-color: var(--indigo);
-  --accent-primary: #2f68ae;
-  --accent-secondary: #2f4590;
-  --color-brand-primary: #4F46E5;
-  --focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.24);
+  --primary-color: var(--blue);
+  --accent-primary: #2563eb;
+  --accent-secondary: #eab308;
+  --color-brand-primary: #2563eb;
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.24);
 
   /* ── Typography — 5-size canonical scale ─────────── */
   --text-xs: clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);
@@ -120,7 +121,7 @@
   --line-loose: 1.9;
 
   /* ── Font Families ───────────────────────────────── */
-  --font-sans: 'DM Sans', sans-serif;
+  --font-sans: 'Inter', sans-serif;
   --font-display: 'Syne', sans-serif;
   --font-mono: 'DM Mono', monospace;
 
@@ -129,7 +130,7 @@
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
-  --font-extrabold: 800;
+  --font-extrabold: 900; /* Increased to match site's heavy headings */
 
   /* ── Spacing — 4 px base grid ────────────────────── */
   --space-1: 4px;
@@ -227,7 +228,7 @@
   /* ── Blur Effects ────────────────────────────────── */
   --blur-sm: blur(4px);
   --blur-md: blur(8px);
-  --blur-lg: blur(12px);
+  --blur-lg: blur(16px); /* Increased to match site's high-blur nav */
   --blur-xl: blur(24px);
 
   /* ── Motion & Animation ──────────────────────────── */
@@ -247,10 +248,12 @@
   --content-max: 1440px;
 
   /* ── Border Radius ───────────────────────────────── */
-  --radius-2xs: 4px;
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
+  --radius-2xs: 2px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 12px;
+  --radius-card: 24px; /* Professional card radius */
+  --radius-pill: 9999px; /* Canonial pill radius */
 
   /* ── Transition Presets ──────────────────────────── */
   --transition: 0.2s ease;
@@ -374,11 +377,11 @@
   --amber-light: #fef3c7;
   --emerald: #10b981;
   --rose: #f43f5e;
-  --blue: #38bdf8;
-  --purple: #6366f1;
-  --indigo: #4F46E5;
-  --indigo-hover: #4338CA;
-  --indigo-light: rgba(79, 70, 229, 0.12);
+  --blue: #3b82f6;
+  --purple: #2563eb;
+  --indigo: #1d4ed8;
+  --indigo-hover: #1e40af;
+  --indigo-light: rgba(37, 99, 235, 0.12);
   --text-1: #ffffff;
   --text-2: #b2c2d8;
   --text-3: #8094b0;

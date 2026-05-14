@@ -904,6 +904,9 @@ const EmailList = () => {
               </div>
 
               <div className="inbox-actions">
+                <button type="button" className="topbar-btn primary-btn" onClick={() => alert('New Email Compose coming soon!')}>
+                  <Icon name="mail" size={13} decorative /> Compose
+                </button>
                 <button type="button" className="topbar-btn" onClick={() => setShowBulkEmail(true)}>
                   Quick Bulk
                 </button>

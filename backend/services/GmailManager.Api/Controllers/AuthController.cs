@@ -33,7 +33,7 @@ public class AuthController : ApiControllerBase
     }
 
     [HttpGet("login")]
-    public IActionResult Login()
+    public IActionResult Login([FromQuery] string? returnUrl = null)
     {
         var clientId = _config["GoogleAuth:ClientId"];
         var clientSecret = _config["GoogleAuth:ClientSecret"];
@@ -66,13 +66,14 @@ public class AuthController : ApiControllerBase
         var resolvedRedirectUri = redirectUri!;
         var scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/userinfo.email";
         
-        var authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={resolvedClientId}&redirect_uri={Uri.EscapeDataString(resolvedRedirectUri)}&response_type=code&scope={Uri.EscapeDataString(scope)}&access_type=offline&prompt=consent";
+        var state = returnUrl ?? (_config["FrontendUrl"] ?? "http://localhost:3000");
+        var authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={resolvedClientId}&redirect_uri={Uri.EscapeDataString(resolvedRedirectUri)}&response_type=code&scope={Uri.EscapeDataString(scope)}&access_type=offline&prompt=consent&state={Uri.EscapeDataString(state)}";
         
         return OkResponse(new { authUrl });
     }
 
     [HttpGet("google-callback")]
-    public async Task<IActionResult> GoogleCallback([FromQuery] string code)
+    public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string? state = null)
     {
         try
         {
@@ -106,13 +107,24 @@ public class AuthController : ApiControllerBase
             await _userTokenStore.SaveAsync(userEmail, tokenResponse);
             
             var jwt = GenerateJwt(userEmail);
-            
-            var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
-            return Redirect($"{frontendUrl}/auth-success?token={jwt}&email={userEmail}");
+            // Set JWT in httpOnly cookie for security
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !_env.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                Path = "/",
+                Expires = DateTimeOffset.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
+                IsEssential = true
+            };
+            Response.Cookies.Append("auth_token", jwt, cookieOptions);
+            var frontendUrl = state ?? _config["FrontendUrl"] ?? "http://localhost:3000";
+            // Redirect WITHOUT token in URL
+            return Redirect($"{frontendUrl}/auth-success?email={userEmail}");
         }
         catch (Exception ex)
         {
-            var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
+            var frontendUrl = state ?? _config["FrontendUrl"] ?? "http://localhost:3000";
             return Redirect($"{frontendUrl}/auth-error?message={Uri.EscapeDataString(ex.Message)}");
         }
     }
@@ -122,7 +134,7 @@ public class AuthController : ApiControllerBase
     /// Returns 404 in any non-Development environment.
     /// </summary>
     [HttpGet("dev-login")]
-    public IActionResult DevLogin()
+    public IActionResult DevLogin([FromQuery] string? returnUrl = null)
     {
         if (!_env.IsDevelopment())
             return NotFound();
@@ -132,8 +144,20 @@ public class AuthController : ApiControllerBase
             return BadRequestResponse("Dev login is disabled when Google OAuth credentials are configured. Use the normal login flow.");
 
         var jwt = GenerateJwt("dev@localhost");
-        var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
-        return Redirect($"{frontendUrl}/auth-success?token={Uri.EscapeDataString(jwt)}&email=dev%40localhost");
+        // Set JWT in httpOnly cookie for security
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !_env.IsDevelopment(),
+            SameSite = SameSiteMode.Lax,
+            Path = "/",
+            Expires = DateTimeOffset.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
+            IsEssential = true
+        };
+        Response.Cookies.Append("auth_token", jwt, cookieOptions);
+        var frontendUrl = returnUrl ?? _config["FrontendUrl"] ?? "http://localhost:3000";
+        // Redirect WITHOUT token in URL
+        return Redirect($"{frontendUrl}/auth-success?email=dev%40localhost");
     }
 
     private static bool IsMissingOrPlaceholder(string? value)
