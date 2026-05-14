@@ -34,7 +34,11 @@ builder.Services.AddApiVersioning(options =>
 }).AddApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                     ?? new[] { "http://localhost:3000" };
+                     ?? Array.Empty<string>();
+allowedOrigins = allowedOrigins
+    .Concat(new[] { "http://localhost:3000", "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com", "https://marketing-servicesmabusinessservices-2847s-projects.vercel.app" })
+    .Distinct()
+    .ToArray();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
