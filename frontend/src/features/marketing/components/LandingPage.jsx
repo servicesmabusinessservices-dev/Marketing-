@@ -184,36 +184,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="landing-footer">
-          <div className="footer-grid">
-            <div className="footer-brand">
-              <div className="footer-logo">
-                <Icon name="code" size={24} />
-                <span>Gmail Manager</span>
-              </div>
-              <p className="footer-tagline">Professional multi-account management & automation.</p>
-            </div>
-            <div className="footer-links">
-              <div className="footer-col">
-                <h4>Product</h4>
-                <a href="#features">Features</a>
-                <a href="#security">Security</a>
-                <a href="#pricing">Pricing</a>
-              </div>
-              <div className="footer-col">
-                <h4>Support</h4>
-                <a href="#docs">Documentation</a>
-                <a href="#contact">Contact Us</a>
-                <a href="/privacy">Privacy Policy</a>
-              </div>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>© 2025 Gmail Manager. All rights reserved.</p>
-          </div>
-        </footer>
-
       </div>
     </main>
   );
