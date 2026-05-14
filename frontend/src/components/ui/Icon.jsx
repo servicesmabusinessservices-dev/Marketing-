@@ -234,6 +234,12 @@ const Icon = ({ name, size = 16, color = 'currentColor', title, ariaLabel, decor
         <line x1="12" y1="15" x2="12" y2="3" />
       </>
     ),
+    code: (
+      <>
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+      </>
+    ),
   };
 
   const icon = icons[name];

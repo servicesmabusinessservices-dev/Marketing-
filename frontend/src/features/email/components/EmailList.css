@@ -202,15 +202,16 @@ button.crm-hint:focus-visible {
 }
 
 .load-more-btn {
-  border: 1px solid var(--control-border);
-  background: var(--control-bg);
-  color: var(--text-secondary);
-  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text-primary);
+  border-radius: 9999px; /* Pill look */
   min-height: 36px;
-  padding: var(--btn-md);
+  padding: 0 var(--space-lg);
   font-size: var(--fs-sm);
   font-weight: var(--font-semibold);
   cursor: pointer;
+  transition: all var(--transition);
 }
 
 .load-more-btn:hover:not(:disabled) {
@@ -238,8 +239,14 @@ button.crm-hint:focus-visible {
 }
 
 .email-item.unread {
-  background: var(--accent-soft);
-  border-left: 3px solid var(--accent-primary);
+  background: rgba(234, 179, 8, 0.05);
+  border-left: 3px solid var(--amber);
+}
+
+.email-item.active {
+  background: rgba(234, 179, 8, 0.12);
+  border-left: 3px solid var(--amber);
+  box-shadow: inset 4px 0 0 var(--amber);
 }
 
 .email-checkbox {
@@ -272,12 +279,17 @@ button.crm-hint:focus-visible {
 .email-tag-select {
   min-width: 132px;
   border: 1px solid var(--control-border);
-  background: var(--control-bg);
+  background: var(--glass);
   color: var(--text-secondary);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-md);
   font-size: var(--fs-xs);
   font-weight: var(--font-semibold);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
 }
 
 .email-tag-select:focus {

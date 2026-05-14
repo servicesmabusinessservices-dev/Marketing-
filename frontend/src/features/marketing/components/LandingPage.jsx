@@ -1,232 +1,219 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { gmailService } from '../../../services/gmailService';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import Icon from '../../../components/ui/Icon';
 import './LandingPage.css';
 
-const heroPoints = [
-  "Verified Gmail OAuth scopes (readonly, modify, send) with zero body storage.",
-  "Multi-account inbox control with shared labels and guardrails.",
-  "Bulk unsubscribe and outreach actions with audit trails.",
-];
+const FloatingNav = () => {
+  return (
+    <nav className="floating-nav">
+      <div className="nav-pill">
+        <div className="nav-logo">
+          <Icon name="code" size={18} color="white" />
+          <span>Gmail Manager</span>
+        </div>
+        <div className="nav-links">
+          <a href="#features" className="nav-link">Features</a>
+          <a href="#security" className="nav-link">Security</a>
+          <a href="#about" className="nav-link">About</a>
+          <a href="/connect" className="nav-link nav-link--primary">Get Started</a>
+        </div>
+      </div>
+    </nav>
+  );
+};
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  
-  const handleClearSession = async () => {
-    try {
-      await gmailService.logout();
-      navigate('/connect');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still navigate even if logout fails
-      navigate('/connect');
+
+  const features = [
+    {
+      title: 'Unified Inbox',
+      description: 'See every message from all your connected Gmail accounts in one high-speed, matte-styled workspace.',
+      icon: 'inbox'
+    },
+    {
+      title: 'Smart Automation',
+      description: 'Automate triage and classification using advanced rules. Focus on what matters while we handle the noise.',
+      icon: 'zap'
+    },
+    {
+      title: 'Bulk Outreach',
+      description: 'Launch compliant email campaigns across multiple accounts with real product proof and safety-first logic.',
+      icon: 'send'
     }
-  };
-  
-  const userEmail = localStorage.getItem('user_email');
+  ];
+
+  const benefits = [
+    {
+      title: 'Privacy First',
+      category: 'Security',
+      image: '/ui/security.png',
+      link: '#security'
+    },
+    {
+      title: 'Zero Latency',
+      category: 'Performance',
+      image: '/ui/performance.png',
+      link: '#performance'
+    },
+    {
+      title: 'Multi-Account',
+      category: 'Control',
+      image: '/ui/multi.png',
+      link: '#features'
+    },
+    {
+      title: 'Real Proof',
+      category: 'Trust',
+      image: '/ui/proof.png',
+      link: '#about'
+    }
+  ];
 
   return (
-    <main
-      id="main-content"
-      className="landing-page"
-    >
+    <main id="main-content" className="landing-page">
+      <FloatingNav />
+      
       <div className="landing-container">
         
         {/* Hero Section */}
-        <section className="landing-hero">
+        <section id="hero" className="landing-hero">
           <div className="landing-hero-content">
-            <p className="landing-kicker">MA Business Services</p>
-            
+            <p className="landing-kicker">Professional Email Management</p>
             <h1 className="landing-heading">
-              Gmail Manager: Multi-account control with compliant OAuth and real product proof.
+              Gmail Manager: Multi-account control with <span className="landing-heading-highlight">Real Product Proof</span>
             </h1>
-            
             <p className="landing-subheading">
-              Connect inboxes securely, automate triage, and launch outreach from one workspace.
-              Built for teams that need privacy-first email automation.
+              The only workspace designed for power users who need to manage, automate, and scale their Gmail operations with verified OAuth security.
             </p>
-            
             <div className="landing-cta-group">
-              <Link
-                to="/connect"
-                className="landing-cta landing-cta--primary"
-              >
-                Connect Gmail
-              </Link>
-              <Link
-                to="/security"
-                className="landing-cta landing-cta--secondary"
-              >
-                View security
-              </Link>
-            </div>
-            
-            {userEmail && (
-              <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                Already logged in as {userEmail}? 
-                <button 
-                  onClick={handleClearSession}
-                  style={{ 
-                    marginLeft: '0.5rem', 
-                    color: 'var(--accent-primary)', 
-                    textDecoration: 'underline',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 'inherit'
-                  }}
-                >
-                  Logout & re-login
-                </button>
-              </p>
-            )}
-            
-            <div className="landing-features-list">
-              {heroPoints.map((point) => (
-                <div key={point} className="landing-feature-item">
-                  <span className="landing-feature-dot" aria-hidden="true" />
-                  <span>{point}</span>
-                </div>
-              ))}
+              <button onClick={() => navigate('/connect')} className="landing-cta landing-cta--primary">Start Managing Now</button>
+              <a href="#features" className="landing-cta landing-cta--secondary">Explore Features</a>
             </div>
           </div>
-          
-          {/* Product Preview */}
-          <div className="landing-preview-card">
-            <div className="landing-preview-label">Preview</div>
-            <div className="landing-preview-content">
-              <div className="landing-preview-header">
-                <span>Inbox Control</span>
-                <span className="landing-preview-badge">Protected</span>
-              </div>
-              
-              <div className="landing-preview-items">
-                <div className="landing-preview-row">
-                  <span>Account status</span>
-                  <span className="landing-preview-value landing-preview-value--success">Connected</span>
-                </div>
-                <div className="landing-preview-row">
-                  <span>Scopes</span>
-                  <span className="landing-preview-value">readonly · modify · send</span>
-                </div>
-                <div className="landing-preview-row">
-                  <span>Storage</span>
-                  <span className="landing-preview-value">No email bodies persisted</span>
-                </div>
-              </div>
-              
-              <div className="landing-preview-footer">
-                OAuth verification ready · 24h deletion SLA
+          <div className="landing-hero-visual">
+            <div className="visual-card">
+              <Icon name="mail" size={64} color="var(--amber)" />
+              <div className="visual-card-content">
+                <div className="skeleton-line" />
+                <div className="skeleton-line short" />
               </div>
             </div>
           </div>
         </section>
 
-        {/* About / Company Identity Section */}
-        <section className="landing-about">
-          <div className="landing-about-avatar">
-            <div className="landing-about-logo">MA</div>
-            <div>
-              <h2 className="landing-about-title">Who We Are</h2>
-              <p className="landing-about-subtitle">MA Business Services - Professional Business Solutions</p>
-            </div>
-          </div>
-          
-          <div className="landing-about-content">
-            <div className="landing-about-story">
-              <p className="landing-about-intro">
-                <strong>MA Business Services</strong> is a professional business solutions provider specializing in email management, 
-                CRM systems, and marketing automation. We help businesses streamline their operations with secure, 
-                privacy-first tools that enhance productivity without compromising data security.
-              </p>
-              <p className="landing-about-description">
-                Our Gmail Manager platform was created with full transparency: we use verified Gmail OAuth scopes, 
-                never persist email body content, and provide 24-hour deletion SLAs for all metadata. Every action 
-                is audited, every scope is documented, and every user maintains full control. Learn more at{" "}
-                <a href="https://mabusinessservices.com" target="_blank" rel="noopener noreferrer" className="landing-link">
-                  mabusinessservices.com
-                </a>
-              </p>
-            </div>
-
-            <div className="landing-about-commitments">
-              <div className="landing-commitment">
-                <span className="landing-commitment-icon" aria-hidden="true">🔒</span>
-                <div>
-                  <div className="landing-commitment-title">Privacy Commitment</div>
-                  <div className="landing-commitment-text">
-                    We never store your email content. Only metadata (sender, subject, labels) 
-                    is temporarily cached and deleted within 24 hours.
-                  </div>
-                </div>
-              </div>
-              
-              <div className="landing-commitment">
-                <span className="landing-commitment-icon" aria-hidden="true">📧</span>
-                <div>
-                  <div className="landing-commitment-title">Get in Touch</div>
-                  <div className="landing-commitment-text">
-                    Questions, feedback, or security concerns?{" "}
-                    <a 
-                      href="mailto:services@mabusinessservices.com" 
-                      className="landing-link"
-                    >
-                      services@mabusinessservices.com
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              <div className="landing-commitment">
-                <span className="landing-commitment-icon" aria-hidden="true">🛡️</span>
-                <div>
-                  <div className="landing-commitment-title">Security Disclosure</div>
-                  <div className="landing-commitment-text">
-                    Found a vulnerability? We take security seriously. Report issues to{" "}
-                    <a 
-                      href="mailto:services@mabusinessservices.com" 
-                      className="landing-link"
-                    >
-                      services@mabusinessservices.com
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Trust Signals */}
+        <section className="landing-trust">
+          <p className="landing-trust-label">Verified Security & Compliance</p>
+          <div className="landing-trust-logos">
+            <span className="trust-logo">Google OAuth Verified</span>
+            <span className="trust-logo">GDPR Compliant</span>
+            <span className="trust-logo">Enterprise Grade</span>
+            <span className="trust-logo">256-bit Encrypted</span>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="landing-features-section">
-          <h2 className="landing-section-title">What's inside</h2>
-          <div className="landing-features-grid">
-            {[
-              {
-                title: "Legal-ready",
-                desc: "Privacy Policy, Terms of Service, and Security pages with full transparency.",
-                href: "/privacy",
-              },
-              {
-                title: "Privacy-first",
-                desc: "Zero email body storage with 24-hour metadata deletion SLA.",
-                href: "/security",
-              },
-              {
-                title: "One real feature",
-                desc: "Bulk unsubscribe action wired to Gmail API with audit trail.",
-                href: "/connect",
-              },
-            ].map((card) => (
-              <Link
-                key={card.title}
-                to={card.href}
-                className="landing-feature-card"
-              >
-                <div className="landing-card-title">{card.title}</div>
-                <div className="landing-card-desc">{card.desc}</div>
-              </Link>
+        <section id="features" className="landing-services">
+          <div className="section-header">
+            <h2 className="section-title">Core Capabilities</h2>
+            <p className="section-subtitle">Powerful tools to tame your inbox chaos and scale your outreach.</p>
+          </div>
+          <div className="services-grid">
+            {features.map((feature, idx) => (
+              <div key={idx} className="service-card">
+                <div className="service-icon">
+                  <Icon name={feature.icon} size={32} />
+                </div>
+                <h3 className="service-title">{feature.title}</h3>
+                <p className="service-desc">{feature.description}</p>
+                <a href="#features" className="service-link">Deep dive →</a>
+              </div>
             ))}
           </div>
         </section>
+
+        {/* Benefits/Showcase Section */}
+        <section id="showcase" className="landing-portfolio">
+          <div className="section-header">
+            <h2 className="section-title">Why Gmail Manager?</h2>
+            <p className="section-subtitle">Experience the next generation of multi-account control.</p>
+          </div>
+          <div className="portfolio-grid">
+            {benefits.map((benefit, idx) => (
+              <div key={idx} className="portfolio-card">
+                <div className="portfolio-image-placeholder">
+                  <Icon name={benefit.category.toLowerCase() === 'security' ? 'shield' : 'code'} size={48} opacity={0.1} />
+                </div>
+                <div className="portfolio-info">
+                  <span className="portfolio-cat">{benefit.category}</span>
+                  <h3 className="portfolio-name">{benefit.title}</h3>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* About Section */}
+        <section id="about" className="landing-about">
+          <div className="landing-about-avatar">
+            <div className="landing-about-logo">
+              <Icon name="code" size={48} color="white" />
+            </div>
+            <div>
+              <h2 className="landing-about-title">Our Mission</h2>
+              <p className="landing-about-subtitle">Privacy-First Email Automation</p>
+            </div>
+          </div>
+          <div className="landing-about-content">
+            <p>
+              Gmail Manager was born out of the need for a truly professional, multi-account email environment. We believe that privacy and efficiency should go hand-in-hand. Our platform uses verified Google OAuth flows and localized data protection to ensure your data never leaves your control.
+            </p>
+            <p>
+              Whether you are a solo entrepreneur or managing a large scale outreach team, our mission is to provide you with the most stable, secure, and beautiful workspace for your email operations.
+            </p>
+          </div>
+        </section>
+
+        {/* Call to Action Section */}
+        <section id="contact" className="landing-contact">
+          <div className="contact-card">
+            <h2 className="section-title">Ready to take control of your inboxes?</h2>
+            <p className="section-subtitle">Join thousands of users scaling their email operations today.</p>
+            <button className="landing-cta landing-cta--primary" onClick={() => navigate('/connect')}>Connect Your First Account</button>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="landing-footer">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <div className="footer-logo">
+                <Icon name="code" size={24} />
+                <span>Gmail Manager</span>
+              </div>
+              <p className="footer-tagline">Professional multi-account management & automation.</p>
+            </div>
+            <div className="footer-links">
+              <div className="footer-col">
+                <h4>Product</h4>
+                <a href="#features">Features</a>
+                <a href="#security">Security</a>
+                <a href="#pricing">Pricing</a>
+              </div>
+              <div className="footer-col">
+                <h4>Support</h4>
+                <a href="#docs">Documentation</a>
+                <a href="#contact">Contact Us</a>
+                <a href="/privacy">Privacy Policy</a>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>© 2025 Gmail Manager. All rights reserved.</p>
+          </div>
+        </footer>
+
       </div>
     </main>
   );

@@ -7,7 +7,7 @@
   gap: var(--space-xs);
   padding: var(--btn-md);
   min-height: var(--control-height);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill); /* Canonical pill shape */
   border: 1px solid var(--border);
   background: var(--glass);
   color: var(--text-primary);
@@ -61,11 +61,11 @@
 /* ── Primary ──────────────────────────────────────────────────────────────── */
 
 .btn--primary {
-  background: var(--gradient-cta);
+  background: var(--gradient-gold);
   border-color: transparent;
-  font-weight: var(--font-semibold);
-  box-shadow: var(--glow-indigo);
-  color: #fff;
+  font-weight: var(--font-bold);
+  box-shadow: var(--glow-amber);
+  color: var(--navy); /* Dark text for high contrast on gold */
 }
 
 .btn--primary:hover {

@@ -7,6 +7,7 @@ using GmailManager.Shared.Infrastructure;
 using GmailManager.Shared.Repositories;
 using GmailManager.Shared.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -103,11 +104,11 @@ try
                 // Development fallback only
                 if (builder.Environment.IsDevelopment())
                 {
-                    policy.WithOrigins("http://localhost:3000")
+                    policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5173")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
-                    Log.Information("CORS: Using development fallback to localhost:3000");
+                    Log.Information("CORS: Using development fallback to localhost:3000/3001/3002/5173");
                 }
                 else
                 {
@@ -217,6 +218,7 @@ try
 
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddMemoryCache();
+    builder.Services.AddDataProtection();
 
     builder.Services.AddDbContextFactory<AppDbContext>(options =>
     {
@@ -320,6 +322,12 @@ try
         {
             await dbContext.Database.EnsureCreatedAsync();
         }
+
+        // Seed development data if in development mode
+        if (app.Environment.IsDevelopment())
+        {
+            await GmailManager.Api.Data.DevelopmentDataSeeder.SeedAsync(dbContext);
+        }
     }
 
     // ── Middleware pipeline ───────────────────────────────────────────────────
@@ -339,13 +347,17 @@ try
         };
     });
 
-    // Swagger (enabled in all environments for easy access)
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+
+    // Swagger: Only enable in development
+    if (app.Environment.IsDevelopment())
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GmailManager API v1");
-        c.RoutePrefix = "swagger";
-    });
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "GmailManager API v1");
+            c.RoutePrefix = "swagger";
+        });
+    }
 
     app.UseDefaultFiles();
     app.UseStaticFiles();
@@ -479,7 +491,7 @@ static string[] BuildAllowedOrigins(string[]? configuredOrigins, string? envOrig
     if (merged.Length > 0)
         return merged;
 
-    return isDevelopment ? new[] { "http://localhost:3000" } : Array.Empty<string>();
+    return isDevelopment ? new[] { "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5173" } : Array.Empty<string>();
 }
 
 static string NormalizeOrigin(string origin)
