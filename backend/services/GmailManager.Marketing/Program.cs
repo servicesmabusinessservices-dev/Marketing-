@@ -139,6 +139,7 @@ static string[] BuildAllowedOrigins(string[]? configuredOrigins, string? envOrig
 
     var merged = (configuredOrigins ?? Array.Empty<string>())
         .Concat(envOrigins)
+        .Concat(new[] { "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com" })
         .Select(NormalizeOrigin)
         .Where(static o => !string.IsNullOrWhiteSpace(o))
         .Distinct(StringComparer.OrdinalIgnoreCase)
