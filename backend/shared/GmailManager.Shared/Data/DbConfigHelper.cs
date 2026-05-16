@@ -103,7 +103,7 @@ public static class DbConfigHelper
         }
     }
 
-    public static async Task RunMigrationsAsync<TContext>(WebApplication app) where TContext : DbContext
+    public static async Task RunMigrationsAsync<TContext>(IHost app) where TContext : DbContext
     {
         using var scope = app.Services.CreateScope();
         var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TContext>>();
@@ -120,12 +120,14 @@ public static class DbConfigHelper
             else
             {
                 await dbContext.Database.EnsureCreatedAsync();
+            }
         }
         else
         {
             await dbContext.Database.EnsureCreatedAsync();
         }
     }
+
 
     public static string[] BuildAllowedOrigins(IConfiguration configuration, string? envOriginsCsv, bool isDevelopment)
 
