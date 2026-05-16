@@ -320,20 +320,30 @@ public class EmailController : ApiControllerBase
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         var grouped = await _classificationRepo.GetClassificationSummaryAsync(dbContext, userEmail);
 
-        var service = await GetGmailService();
-        var totalRequest = service.Users.Messages.List("me");
-        totalRequest.MaxResults = 1;
-        var totalResponse = await totalRequest.ExecuteAsync();
+        var totalCount = 0L;
+        var unreadCount = 0L;
 
-        var unreadRequest = service.Users.Messages.List("me");
-        unreadRequest.MaxResults = 1;
-        unreadRequest.Q = "is:unread";
-        var unreadResponse = await unreadRequest.ExecuteAsync();
+        try
+        {
+            var service = await GetGmailService();
+            var totalResponse = await service.Users.Messages.List("me").ExecuteAsync();
+            totalCount = totalResponse.ResultSizeEstimate ?? 0;
+
+            var unreadRequest = service.Users.Messages.List("me");
+            unreadRequest.Q = "is:unread";
+            var unreadResponse = await unreadRequest.ExecuteAsync();
+            unreadCount = unreadResponse.ResultSizeEstimate ?? 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not fetch Gmail summary for {UserEmail}", userEmail);
+            // Non-critical error, continue with 0 counts but include DB classifications
+        }
 
         return OkResponse(new
         {
-            totalCount = totalResponse.ResultSizeEstimate,
-            unreadCount = unreadResponse.ResultSizeEstimate,
+            totalCount,
+            unreadCount,
             classificationSummary = grouped.Select(x => new { classification = x.Classification, count = x.Count })
         });
     }
