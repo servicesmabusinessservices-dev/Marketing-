@@ -1125,7 +1125,7 @@ public class MarketingService : IMarketingService
         if (IsPositiveSignal(normalizedType)
             && string.Equals(contact.LeadStage, "Qualified", StringComparison.OrdinalIgnoreCase))
         {
-            SetLeadStage(db, userEmail, contact, "Won", "Auto-promoted from engagement", normalizedType, evt.EventId);
+            await SetLeadStageAsync(db, userEmail, contact, "Won", "Auto-promoted from engagement", normalizedType, evt.EventId);
         }
 
         await db.SaveChangesAsync();
@@ -1160,7 +1160,7 @@ public class MarketingService : IMarketingService
                     metadata: new Dictionary<string, string> { ["url"] = target });
 
                 if (string.Equals(contact.LeadStage, "Qualified", StringComparison.OrdinalIgnoreCase))
-                    SetLeadStage(db, normalizedUser, contact, "Won", "Auto-promoted from click", "clicked", evt.EventId);
+                    await SetLeadStageAsync(db, normalizedUser, contact, "Won", "Auto-promoted from click", "clicked", evt.EventId);
 
                 await db.SaveChangesAsync();
             }
