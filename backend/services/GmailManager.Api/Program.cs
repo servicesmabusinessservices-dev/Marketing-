@@ -63,10 +63,11 @@ try
     });
 
     // ── CORS ──────────────────────────────────────────────────────────────────
-    var allowedOrigins = BuildAllowedOrigins(
-        builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>(),
+    var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
+        builder.Configuration,
         Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
         builder.Environment.IsDevelopment());
+
 
     if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
     {
@@ -209,7 +210,7 @@ try
     });
 
     // ── MySQL ─────────────────────────────────────────────────────────────────
-    var databaseConfig = ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
+    var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
 
     if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
     {
@@ -301,34 +302,21 @@ try
             tags: new[] { "cache", "ready" });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+
     var app = builder.Build();
 
     // ── Run EF migrations on startup ──────────────────────────────────────────
-    using (var scope = app.Services.CreateScope())
+    await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
+
+    // Seed development data if in development mode
+    if (app.Environment.IsDevelopment())
     {
+        using var scope = app.Services.CreateScope();
         var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         await using var dbContext = await dbFactory.CreateDbContextAsync();
-
-        if (dbContext.Database.IsRelational())
-        {
-            var hasMigrations = dbContext.Database.GetMigrations().Any();
-            if (hasMigrations)
-                await dbContext.Database.MigrateAsync();
-            else
-                await dbContext.Database.EnsureCreatedAsync();
-        }
-        else
-        {
-            await dbContext.Database.EnsureCreatedAsync();
-        }
-
-        // Seed development data if in development mode
-        if (app.Environment.IsDevelopment())
-        {
-            await GmailManager.Api.Data.DevelopmentDataSeeder.SeedAsync(dbContext);
-        }
+        await GmailManager.Api.Data.DevelopmentDataSeeder.SeedAsync(dbContext);
     }
+
 
     // ── Middleware pipeline ───────────────────────────────────────────────────
     // Run CORS early so error responses still include CORS headers.
@@ -393,113 +381,3 @@ finally
     Log.CloseAndFlush();
 }
 
-// ── Helper: resolve and validate MySQL connection string ──────────────────────
-static string ResolveMySqlConnectionString(IConfiguration configuration)
-{
-    static string? FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-        return null;
-    }
-
-    static string NormalizeConnectionString(string raw)
-    {
-        if (!raw.StartsWith("mysql://", StringComparison.OrdinalIgnoreCase))
-            return raw;
-
-        var uri = new Uri(raw);
-        var userInfo = uri.UserInfo.Split(':');
-        var user = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
-        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-        var host = uri.Host;
-        var port = uri.Port > 0 ? uri.Port : 3306;
-        var database = uri.AbsolutePath.TrimStart('/');
-        return $"Server={host};Port={port};Database={database};User={user};Password={password};SslMode=Required;";
-    }
-
-    var directConnection = FirstNonEmpty(
-        configuration["MYSQL_CONNECTION_STRING"],
-        Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING"));
-
-    var raw = !string.IsNullOrWhiteSpace(directConnection)
-        ? directConnection
-        : configuration.GetConnectionString("MySql");
-
-    if (string.IsNullOrWhiteSpace(raw))
-        throw new InvalidOperationException("ConnectionStrings:MySql is required.");
-
-    raw = NormalizeConnectionString(raw);
-
-    var csb = new MySqlConnectionStringBuilder(raw);
-
-    var passwordOverride = FirstNonEmpty(
-        configuration["MYSQL_PASSWORD"],
-        Environment.GetEnvironmentVariable("MYSQL_PASSWORD"));
-
-    if (!string.IsNullOrWhiteSpace(passwordOverride)
-        && (string.IsNullOrWhiteSpace(csb.Password)
-            || string.Equals(csb.Password, "CHANGE_ME", StringComparison.OrdinalIgnoreCase)))
-    {
-        csb.Password = passwordOverride;
-    }
-
-    if (string.IsNullOrWhiteSpace(csb.Password)
-        || string.Equals(csb.Password, "CHANGE_ME", StringComparison.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException(
-            "MySQL password is not configured. Set MYSQL_PASSWORD via environment variable or user-secrets.");
-    }
-
-    return csb.ConnectionString;
-}
-
-static (bool UseInMemory, string? ConnectionString, ServerVersion? ServerVersion, string? Warning) ResolveDatabaseConfiguration(
-    IConfiguration configuration,
-    IHostEnvironment environment)
-{
-    try
-    {
-        var connectionString = ResolveMySqlConnectionString(configuration);
-        var serverVersion = ServerVersion.AutoDetect(connectionString);
-        return (false, connectionString, serverVersion, null);
-    }
-    catch (Exception ex) when (environment.IsDevelopment())
-    {
-        return (
-            true,
-            null,
-            null,
-            $"Falling back to in-memory database for local development because MySQL is unavailable: {ex.Message}");
-    }
-}
-
-static string[] BuildAllowedOrigins(string[]? configuredOrigins, string? envOriginsCsv, bool isDevelopment)
-{
-    var envOrigins = string.IsNullOrWhiteSpace(envOriginsCsv)
-        ? Array.Empty<string>()
-        : envOriginsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    var merged = (configuredOrigins ?? Array.Empty<string>())
-        .Concat(envOrigins)
-        .Concat(new[] { "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com" })
-        .Select(NormalizeOrigin)
-        .Where(static o => !string.IsNullOrWhiteSpace(o))
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .ToArray();
-
-    if (merged.Length > 0)
-        return merged;
-
-    return isDevelopment ? new[] { "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5173" } : Array.Empty<string>();
-}
-
-static string NormalizeOrigin(string origin)
-{
-    var trimmed = origin.Trim();
-    if (trimmed == "*")
-        return trimmed;
-
-    return trimmed.TrimEnd('/');
-}

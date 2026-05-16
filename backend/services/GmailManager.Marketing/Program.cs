@@ -34,16 +34,18 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 }).AddApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
 
-var allowedOrigins = BuildAllowedOrigins(
-    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>(),
-    Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
-    builder.Environment.IsDevelopment());
+    // ── CORS ──────────────────────────────────────────────────────────────────
+    var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
+        builder.Configuration,
+        Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
+        builder.Environment.IsDevelopment());
 
-if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
-{
-    throw new InvalidOperationException(
-        "CORS AllowedOrigins must be configured in production. Set Cors:AllowedOrigins in appsettings or CORS_ALLOWED_ORIGINS environment variable.");
-}
+    if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException(
+            "CORS AllowedOrigins must be configured in production. Set Cors:AllowedOrigins in appsettings or CORS_ALLOWED_ORIGINS environment variable.");
+    }
+
 
 if (allowedOrigins.Length == 0)
 {
@@ -96,33 +98,60 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-{
-    if (builder.Environment.IsDevelopment())
+    // ── MySQL ─────────────────────────────────────────────────────────────────
+    var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
+
+    if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
     {
-        options.UseInMemoryDatabase("GmailManagerLocalDev");
-        return;
+        Log.Warning("{DatabaseWarning}", databaseConfig.Warning);
     }
-    var connStr = builder.Configuration.GetConnectionString("MySql")
-                  ?? Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING")
-                  ?? throw new InvalidOperationException("MySQL connection string is required.");
-    var serverVersion = ServerVersion.AutoDetect(connStr);
-    options.UseMySql(connStr, serverVersion);
-});
 
-var redisConnection = builder.Configuration.GetConnectionString("Redis")
-                      ?? Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
-if (!string.IsNullOrWhiteSpace(redisConnection))
-    builder.Services.AddStackExchangeRedisCache(o => { o.Configuration = redisConnection; o.InstanceName = "gmailmanager:"; });
-else
-    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    {
+        if (databaseConfig.UseInMemory)
+        {
+            options.UseInMemoryDatabase("GmailManagerLocalDev");
+            return;
+        }
 
-builder.Services.AddScoped<IMarketingService, MarketingService>();
-builder.Services.AddHostedService<MarketingAutomationWorker>();
+        options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
+        {
+            mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null);
+            mySqlOptions.CommandTimeout(30);
+        });
+    });
 
-var app = builder.Build();
+    // ── Redis or in-memory distributed cache ──────────────────────────────────
+    var redisConnection = builder.Configuration.GetConnectionString("Redis")
+                          ?? Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
 
-// Run CORS early so error responses still include CORS headers.
+    if (!string.IsNullOrWhiteSpace(redisConnection))
+    {
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnection;
+            options.InstanceName = "gmailmanager:";
+        });
+    }
+    else
+    {
+        builder.Services.AddDistributedMemoryCache();
+    }
+
+    builder.Services.AddScoped<IMarketingService, MarketingService>();
+    builder.Services.AddHostedService<MarketingAutomationWorker>();
+
+
+    var app = builder.Build();
+
+    // ── Run EF migrations on startup ──────────────────────────────────────────
+    await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
+
+    // Run CORS early so error responses still include CORS headers.
+
 app.UseCors("AllowReact");
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
@@ -131,31 +160,4 @@ app.MapControllers();
 
 await app.RunAsync();
 
-static string[] BuildAllowedOrigins(string[]? configuredOrigins, string? envOriginsCsv, bool isDevelopment)
-{
-    var envOrigins = string.IsNullOrWhiteSpace(envOriginsCsv)
-        ? Array.Empty<string>()
-        : envOriginsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    var merged = (configuredOrigins ?? Array.Empty<string>())
-        .Concat(envOrigins)
-        .Concat(new[] { "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com" })
-        .Select(NormalizeOrigin)
-        .Where(static o => !string.IsNullOrWhiteSpace(o))
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .ToArray();
-
-    if (merged.Length > 0)
-        return merged;
-
-    return isDevelopment ? new[] { "http://localhost:3000" } : Array.Empty<string>();
-}
-
-static string NormalizeOrigin(string origin)
-{
-    var trimmed = origin.Trim();
-    if (trimmed == "*")
-        return trimmed;
-
-    return trimmed.TrimEnd('/');
-}

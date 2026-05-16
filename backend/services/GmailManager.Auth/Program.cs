@@ -33,12 +33,11 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 }).AddApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                     ?? Array.Empty<string>();
-allowedOrigins = allowedOrigins
-    .Concat(new[] { "http://localhost:3000", "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com", "https://marketing-servicesmabusinessservices-2847s-projects.vercel.app" })
-    .Distinct()
-    .ToArray();
+var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
+    builder.Configuration,
+    Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
+    builder.Environment.IsDevelopment());
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
@@ -67,18 +66,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
+
+if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
+{
+    Log.Warning("{DatabaseWarning}", databaseConfig.Warning);
+}
+
 builder.Services.AddDbContextFactory<AuthDbContext>(options =>
 {
-    if (builder.Environment.IsDevelopment())
+    if (databaseConfig.UseInMemory)
     {
         options.UseInMemoryDatabase("GmailManagerLocalDev");
         return;
     }
-    var connStr = builder.Configuration.GetConnectionString("MySql")
-                  ?? Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING")
-                  ?? throw new InvalidOperationException("MySQL connection string is required.");
-    var serverVersion = ServerVersion.AutoDetect(connStr);
-    options.UseMySql(connStr, serverVersion);
+
+    options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
+    {
+        mySqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+        mySqlOptions.CommandTimeout(30);
+    });
 });
 
 var redisConnection = builder.Configuration.GetConnectionString("Redis")
@@ -92,7 +102,11 @@ builder.Services.AddSingleton<IUserTokenStore, SqlRedisUserTokenStore>();
 
 var app = builder.Build();
 
+// ── Run EF migrations on startup ──────────────────────────────────────────
+await DbConfigHelper.RunMigrationsAsync<AuthDbContext>(app);
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseCors("AllowReact");
 app.UseAuthentication();
 app.UseAuthorization();

@@ -31,9 +31,13 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 }).AddApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
 
-var configOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-var allowedOrigins = configOrigins.Concat(new[] { "http://localhost:3000", "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com" }).Distinct().ToArray();
+var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
+    builder.Configuration,
+    Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
+    builder.Environment.IsDevelopment());
+
 builder.Services.AddCors(options =>
+
 {
     options.AddPolicy("AllowReact", policy =>
     {
@@ -61,23 +65,39 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-{
-    if (builder.Environment.IsDevelopment())
+    // ── MySQL ─────────────────────────────────────────────────────────────────
+    var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
+
+    if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
     {
-        options.UseInMemoryDatabase("GmailManagerLocalDev");
-        return;
+        Log.Warning("{DatabaseWarning}", databaseConfig.Warning);
     }
-    var connStr = builder.Configuration.GetConnectionString("MySql")
-                  ?? Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING")
-                  ?? throw new InvalidOperationException("MySQL connection string is required.");
-    var serverVersion = ServerVersion.AutoDetect(connStr);
-    options.UseMySql(connStr, serverVersion);
-});
 
-var app = builder.Build();
+    builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    {
+        if (databaseConfig.UseInMemory)
+        {
+            options.UseInMemoryDatabase("GmailManagerLocalDev");
+            return;
+        }
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
+        options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
+        {
+            mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null);
+            mySqlOptions.CommandTimeout(30);
+        });
+    });
+
+    var app = builder.Build();
+
+    // ── Run EF migrations on startup ──────────────────────────────────────────
+    await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
+
+    app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseCors("AllowReact");
 app.UseAuthentication();
 app.UseAuthorization();
