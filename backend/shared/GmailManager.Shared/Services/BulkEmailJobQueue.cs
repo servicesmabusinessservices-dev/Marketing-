@@ -1,7 +1,7 @@
 using System.Threading.Channels;
 using GmailManager.Shared.Abstractions;
 
-namespace GmailManager.Email.Services;
+namespace GmailManager.Shared.Services;
 
 public class BulkEmailJobQueue : IBulkEmailJobQueue
 {

@@ -1,6 +1,7 @@
 using GmailManager.Shared.Abstractions;
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Infrastructure;
+using GmailManager.Shared.Services;
 using GmailManager.Marketing.Services;
 using GmailManager.Marketing.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,6 +28,9 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -34,23 +38,11 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 }).AddApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
 
-    // ── CORS ──────────────────────────────────────────────────────────────────
-    var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
-        builder.Configuration,
-        Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
-        builder.Environment.IsDevelopment());
-
-    if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
-    {
-        throw new InvalidOperationException(
-            "CORS AllowedOrigins must be configured in production. Set Cors:AllowedOrigins in appsettings or CORS_ALLOWED_ORIGINS environment variable.");
-    }
-
-
-if (allowedOrigins.Length == 0)
-{
-    Log.Warning("No CORS origins configured in Development mode — using default localhost:3000");
-}
+// ── CORS ──────────────────────────────────────────────────────────────────
+var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
+    builder.Configuration,
+    Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"),
+    builder.Environment.IsDevelopment());
 
 builder.Services.AddCors(options =>
 {
@@ -64,16 +56,10 @@ builder.Services.AddCors(options =>
         else if (containsWildcard)
         {
             policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-            Log.Warning("CORS wildcard (*) detected. This should only be used in development.");
         }
         else if (builder.Environment.IsDevelopment())
         {
-            policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-            Log.Information("CORS: Using development fallback to localhost:3000");
-        }
-        else
-        {
-            throw new InvalidOperationException("CORS origins must be explicitly configured in production");
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
         }
     });
 });
@@ -96,61 +82,68 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies["auth_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
-    // ── MySQL ─────────────────────────────────────────────────────────────────
-    var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
+// ── MySQL ─────────────────────────────────────────────────────────────────
+var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
 
-    if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+{
+    if (databaseConfig.UseInMemory)
     {
-        Log.Warning("{DatabaseWarning}", databaseConfig.Warning);
+        options.UseInMemoryDatabase("GmailManagerLocalDev");
+        return;
     }
 
-    builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
     {
-        if (databaseConfig.UseInMemory)
-        {
-            options.UseInMemoryDatabase("GmailManagerLocalDev");
-            return;
-        }
-
-        options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
-        {
-            mySqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null);
-            mySqlOptions.CommandTimeout(30);
-        });
+        mySqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+        mySqlOptions.CommandTimeout(30);
     });
+});
 
-    // ── Redis or in-memory distributed cache ──────────────────────────────────
-    var redisConnection = builder.Configuration.GetConnectionString("Redis")
-                          ?? Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+// ── Redis ──────────────────────────────────────────────────────────────────
+var redisConnection = builder.Configuration.GetConnectionString("Redis")
+                      ?? Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
 
-    if (!string.IsNullOrWhiteSpace(redisConnection))
+if (!string.IsNullOrWhiteSpace(redisConnection))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
     {
-        builder.Services.AddStackExchangeRedisCache(options =>
-        {
-            options.Configuration = redisConnection;
-            options.InstanceName = "gmailmanager:";
-        });
-    }
-    else
-    {
-        builder.Services.AddDistributedMemoryCache();
-    }
+        options.Configuration = redisConnection;
+        options.InstanceName = "gmailmanager:";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
 
-    builder.Services.AddScoped<IMarketingService, MarketingService>();
-    builder.Services.AddHostedService<MarketingAutomationWorker>();
+// ── Shared Services ───────────────────────────────────────────────────────
+builder.Services.AddSingleton<IBulkEmailJobQueue, BulkEmailJobQueue>();
+builder.Services.AddScoped<IBulkEmailJobStore, SqlRedisBulkEmailJobStore>();
+builder.Services.AddScoped<IUserTokenStore, SqlRedisUserTokenStore>();
 
+// ── Marketing Services ────────────────────────────────────────────────────
+builder.Services.AddScoped<IMarketingService, MarketingService>();
+builder.Services.AddHostedService<MarketingAutomationWorker>();
 
-    var app = builder.Build();
+var app = builder.Build();
 
-    // ── Run EF migrations on startup ──────────────────────────────────────────
-    await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
-
-    // Run CORS early so error responses still include CORS headers.
+await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
 
 app.UseCors("AllowReact");
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -159,5 +152,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 await app.RunAsync();
-
-

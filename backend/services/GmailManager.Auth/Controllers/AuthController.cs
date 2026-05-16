@@ -201,8 +201,6 @@ public class AuthController : ApiControllerBase
         
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
-}
-    
     /// <summary>
     /// Sets the JWT in an httpOnly cookie for security
     /// </summary>
@@ -220,3 +218,4 @@ public class AuthController : ApiControllerBase
         
         Response.Cookies.Append("auth_token", jwt, cookieOptions);
     }
+}

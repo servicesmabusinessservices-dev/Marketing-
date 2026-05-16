@@ -6,7 +6,7 @@ using GmailManager.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace GmailManager.Email.Services;
+namespace GmailManager.Shared.Services;
 
 public class SqlRedisBulkEmailJobStore : IBulkEmailJobStore
 {

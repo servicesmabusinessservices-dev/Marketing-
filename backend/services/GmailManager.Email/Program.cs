@@ -1,6 +1,7 @@
 using GmailManager.Shared.Abstractions;
 using GmailManager.Shared.Data;
 using GmailManager.Shared.Infrastructure;
+using GmailManager.Shared.Services;
 using GmailManager.Email.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,9 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -39,11 +43,22 @@ var allowedOrigins = DbConfigHelper.BuildAllowedOrigins(
     builder.Environment.IsDevelopment());
 
 builder.Services.AddCors(options =>
-
 {
     options.AddPolicy("AllowReact", policy =>
     {
-        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        var containsWildcard = allowedOrigins.Any(o => o == "*");
+        if (allowedOrigins.Length > 0 && !containsWildcard)
+        {
+            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        }
+        else if (containsWildcard)
+        {
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        }
+        else if (builder.Environment.IsDevelopment())
+        {
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        }
     });
 });
 
@@ -65,69 +80,71 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies["auth_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddMemoryCache();
+// ── MySQL ─────────────────────────────────────────────────────────────────
+var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
 
-    // ── MySQL ─────────────────────────────────────────────────────────────────
-    var databaseConfig = DbConfigHelper.ResolveDatabaseConfiguration(builder.Configuration, builder.Environment);
-
-    if (!string.IsNullOrWhiteSpace(databaseConfig.Warning))
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+{
+    if (databaseConfig.UseInMemory)
     {
-        Log.Warning("{DatabaseWarning}", databaseConfig.Warning);
+        options.UseInMemoryDatabase("GmailManagerLocalDev");
+        return;
     }
 
-    builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
     {
-        if (databaseConfig.UseInMemory)
-        {
-            options.UseInMemoryDatabase("GmailManagerLocalDev");
-            return;
-        }
-
-        options.UseMySql(databaseConfig.ConnectionString!, databaseConfig.ServerVersion!, mySqlOptions =>
-        {
-            mySqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null);
-            mySqlOptions.CommandTimeout(30);
-        });
+        mySqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+        mySqlOptions.CommandTimeout(30);
     });
+});
 
-    // ── Redis or in-memory distributed cache ──────────────────────────────────
-    var redisConnection = builder.Configuration.GetConnectionString("Redis")
-                          ?? Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+// ── Redis ──────────────────────────────────────────────────────────────────
+var redisConnection = builder.Configuration.GetConnectionString("Redis")
+                      ?? Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
 
-    if (!string.IsNullOrWhiteSpace(redisConnection))
+if (!string.IsNullOrWhiteSpace(redisConnection))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
     {
-        builder.Services.AddStackExchangeRedisCache(options =>
-        {
-            options.Configuration = redisConnection;
-            options.InstanceName = "gmailmanager:";
-        });
-    }
-    else
-    {
-        builder.Services.AddDistributedMemoryCache();
-    }
+        options.Configuration = redisConnection;
+        options.InstanceName = "gmailmanager:";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
 
-    builder.Services.AddSingleton<IUserTokenStore, SqlRedisUserTokenStore>();
-    builder.Services.AddSingleton<IDevelopmentDemoEmailStore, DevelopmentDemoEmailStore>();
-    builder.Services.AddSingleton<IBulkEmailJobQueue, BulkEmailJobQueue>();
-    builder.Services.AddSingleton<IBulkEmailJobStore, SqlRedisBulkEmailJobStore>();
-    builder.Services.AddHostedService<BulkEmailWorker>();
+// ── Shared Services ───────────────────────────────────────────────────────
+builder.Services.AddSingleton<IBulkEmailJobQueue, BulkEmailJobQueue>();
+builder.Services.AddScoped<IBulkEmailJobStore, SqlRedisBulkEmailJobStore>();
+builder.Services.AddScoped<IUserTokenStore, SqlRedisUserTokenStore>();
 
+// ── Email Services ────────────────────────────────────────────────────────
+builder.Services.AddSingleton<IDevelopmentDemoEmailStore, DevelopmentDemoEmailStore>();
+builder.Services.AddHostedService<BulkEmailWorker>();
 
-    var app = builder.Build();
+var app = builder.Build();
 
-    // ── Run EF migrations on startup ──────────────────────────────────────────
-    await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
-
-    app.UseMiddleware<GlobalExceptionMiddleware>();
+await DbConfigHelper.RunMigrationsAsync<AppDbContext>(app);
 
 app.UseCors("AllowReact");
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

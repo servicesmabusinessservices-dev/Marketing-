@@ -6,6 +6,7 @@ using GmailManager.Shared.Data;
 using GmailManager.Shared.Infrastructure;
 using GmailManager.Shared.Repositories;
 using GmailManager.Shared.Repositories.Interfaces;
+using GmailManager.Shared.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
