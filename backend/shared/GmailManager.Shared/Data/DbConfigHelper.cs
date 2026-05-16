@@ -85,8 +85,19 @@ public static class DbConfigHelper
         try
         {
             var connectionString = ResolveMySqlConnectionString(configuration);
-            var serverVersion = ServerVersion.AutoDetect(connectionString);
-            return (false, connectionString, serverVersion, null);
+            // Try auto-detect first
+            try 
+            {
+                var serverVersion = ServerVersion.AutoDetect(connectionString);
+                return (false, connectionString, serverVersion, null);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "MySQL AutoDetect failed. Falling back to default version.");
+                // Fallback to a common MySQL version (8.0.x) to allow startup
+                var fallbackVersion = new MySqlServerVersion(new Version(8, 0, 32));
+                return (false, connectionString, fallbackVersion, "AutoDetect failed; using fallback version.");
+            }
         }
         catch (Exception ex)
         {
