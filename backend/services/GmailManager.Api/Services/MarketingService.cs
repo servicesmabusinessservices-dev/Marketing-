@@ -203,7 +203,7 @@ public class MarketingService : IMarketingService
         return evt;
     }
 
-    private bool SetLeadStage(AppDbContext db, string userEmail, ContactEntity contact,
+    private async Task<bool> SetLeadStageAsync(AppDbContext db, string userEmail, ContactEntity contact,
         string toLeadStage, string reason, string? eventType = null, string? eventId = null)
     {
         var normalized = NormalizeLeadStage(toLeadStage);
@@ -218,7 +218,7 @@ public class MarketingService : IMarketingService
         contact.LeadStage = normalized;
         contact.UpdatedAtUtc = DateTime.UtcNow;
 
-        _contactRepo.AddLeadStageHistoryAsync(db, new LeadStageHistoryEntity
+        await _contactRepo.AddLeadStageHistoryAsync(db, new LeadStageHistoryEntity
         {
             UserEmail = userEmail,
             ContactId = contact.ContactId,
@@ -228,7 +228,7 @@ public class MarketingService : IMarketingService
             EventType = eventType,
             EventId = eventId,
             CreatedAtUtc = DateTime.UtcNow
-        }).GetAwaiter().GetResult();
+        });
         return true;
     }
 
@@ -318,7 +318,7 @@ public class MarketingService : IMarketingService
                 UpdatedAtUtc = DateTime.UtcNow
             };
             await _contactRepo.AddAsync(db, contact);
-            SetLeadStage(db, userEmail, contact, normalizedLeadStage, "Contact created");
+            await SetLeadStageAsync(db, userEmail, contact, normalizedLeadStage, "Contact created");
         }
         else
         {
@@ -336,7 +336,7 @@ public class MarketingService : IMarketingService
             if (!string.IsNullOrWhiteSpace(request.OwnerEmail)) contact.OwnerEmail = normalizedOwner;
             contact.UpdatedAtUtc = DateTime.UtcNow;
             if (!string.IsNullOrWhiteSpace(request.LeadStage))
-                SetLeadStage(db, userEmail, contact, normalizedLeadStage, "Contact updated");
+                await SetLeadStageAsync(db, userEmail, contact, normalizedLeadStage, "Contact updated");
         }
 
         if (!string.IsNullOrWhiteSpace(contact.LeadStage)
@@ -364,7 +364,7 @@ public class MarketingService : IMarketingService
         var contact = await _contactRepo.GetByIdAsync(db, userEmail, contactId);
         if (contact == null) return ServiceResult.NotFound("Contact not found");
 
-        var changed = SetLeadStage(db, userEmail, contact, normalizedLeadStage, request.Reason);
+        var changed = await SetLeadStageAsync(db, userEmail, contact, normalizedLeadStage, request.Reason);
 
         if (changed && (string.Equals(contact.LeadStage, "New", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(contact.LeadStage, "Qualified", StringComparison.OrdinalIgnoreCase)))
@@ -413,7 +413,7 @@ public class MarketingService : IMarketingService
             UserEmail = userEmail, ContactId = contactId,
             Body = request.Body.Trim(), CreatedAtUtc = DateTime.UtcNow, UpdatedAtUtc = DateTime.UtcNow
         };
-        _contactRepo.AddNoteAsync(db, note).GetAwaiter().GetResult();
+        await _contactRepo.AddNoteAsync(db, note);
         await db.SaveChangesAsync();
         return ServiceResult.Ok(new { noteId = note.NoteId });
     }
@@ -449,7 +449,7 @@ public class MarketingService : IMarketingService
             DueAtUtc = request.DueAtUtc, Status = "Open",
             CreatedAtUtc = DateTime.UtcNow, UpdatedAtUtc = DateTime.UtcNow
         };
-        _contactRepo.AddTaskAsync(db, task).GetAwaiter().GetResult();
+        await _contactRepo.AddTaskAsync(db, task);
         await db.SaveChangesAsync();
         return ServiceResult.Ok(new { taskId = task.TaskId });
     }
@@ -1342,7 +1342,8 @@ public class MarketingService : IMarketingService
             newToQualified = stageFunnel["New"] == 0 ? 0d : Math.Round((double)stageFunnel["Qualified"] / stageFunnel["New"] * 100d, 2),
             qualifiedToProposal = stageFunnel["Qualified"] == 0 ? 0d : Math.Round((double)stageFunnel["Proposal"] / stageFunnel["Qualified"] * 100d, 2),
             proposalToWon = stageFunnel["Proposal"] == 0 ? 0d : Math.Round((double)stageFunnel["Won"] / stageFunnel["Proposal"] * 100d, 2),
-            proposalToLost = stageFunnel["Proposal"] == 0 ? 0d : Math.Round((double)stageFunnel["Lost"] / stageFunnel["Proposal"] * 100d, 2)
+            proposalToLost = stageFunnel["Proposal"] == 0 ? 0d : Math.Round((double)stageFunnel["Lost"] / stageFunnel["Proposal"] * 100d, 2),
+            overallWinRate = contacts.Count == 0 ? 0d : Math.Round((double)stageFunnel["Won"] / contacts.Count * 100d, 2)
         };
 
         var tasks = await _contactRepo.GetTasksByContactIdsAsync(db, userEmail, contactIds);
