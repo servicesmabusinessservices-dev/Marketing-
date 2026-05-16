@@ -174,18 +174,18 @@ try
             return RateLimitPartition.GetSlidingWindowLimiter(ip, _ =>
                 new SlidingWindowRateLimiterOptions
                 {
-                    PermitLimit = rateLimitSection.GetValue("GlobalPermitLimit", 200),
+                    PermitLimit = rateLimitSection.GetValue("GlobalPermitLimit", 1000),
                     Window = TimeSpan.FromSeconds(rateLimitSection.GetValue("GlobalWindowSeconds", 60)),
                     SegmentsPerWindow = 6,
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                    QueueLimit = 5
+                    QueueLimit = 20
                 });
         });
 
-        // Tight policy for auth endpoints
+        // Policy for auth endpoints
         limiterOptions.AddSlidingWindowLimiter("auth", opts =>
         {
-            opts.PermitLimit = rateLimitSection.GetValue("AuthPermitLimit", 10);
+            opts.PermitLimit = rateLimitSection.GetValue("AuthPermitLimit", 50);
             opts.Window = TimeSpan.FromSeconds(rateLimitSection.GetValue("AuthWindowSeconds", 60));
             opts.SegmentsPerWindow = 6;
         });
@@ -193,7 +193,7 @@ try
         // Policy for email-send endpoints
         limiterOptions.AddSlidingWindowLimiter("email-send", opts =>
         {
-            opts.PermitLimit = rateLimitSection.GetValue("EmailSendPermitLimit", 20);
+            opts.PermitLimit = rateLimitSection.GetValue("EmailSendPermitLimit", 100);
             opts.Window = TimeSpan.FromSeconds(rateLimitSection.GetValue("EmailSendWindowSeconds", 60));
             opts.SegmentsPerWindow = 6;
         });

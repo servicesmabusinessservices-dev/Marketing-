@@ -31,8 +31,8 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 }).AddApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                     ?? new[] { "http://localhost:3000" };
+var configOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+var allowedOrigins = configOrigins.Concat(new[] { "http://localhost:3000", "https://marketing.mabusinessservices.com", "https://www.marketing.mabusinessservices.com" }).Distinct().ToArray();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
