@@ -107,20 +107,11 @@ public class AuthController : ApiControllerBase
             await _userTokenStore.SaveAsync(userEmail, tokenResponse);
             
             var jwt = GenerateJwt(userEmail);
-            // Set JWT in httpOnly cookie for security
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true, // Required for SameSite=None
-                SameSite = SameSiteMode.None, // Required for cross-domain auth
-                Path = "/",
-                Expires = DateTimeOffset.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
-                IsEssential = true
-            };
-            Response.Cookies.Append("auth_token", jwt, cookieOptions);
+            // Cross-domain: pass token in URL so the frontend can store it in localStorage.
+            // httpOnly cookies are blocked as third-party cookies by modern browsers when
+            // the frontend and backend are on different domains (mabusinessservices.com vs onrender.com).
             var frontendUrl = state ?? _config["FrontendUrl"] ?? "http://localhost:3000";
-            // Redirect WITHOUT token in URL
-            return Redirect($"{frontendUrl}/auth-success?email={userEmail}");
+            return Redirect($"{frontendUrl}/auth-success?token={Uri.EscapeDataString(jwt)}&email={Uri.EscapeDataString(userEmail)}");
         }
         catch (Exception ex)
         {
@@ -144,20 +135,9 @@ public class AuthController : ApiControllerBase
             return BadRequestResponse("Dev login is disabled when Google OAuth credentials are configured. Use the normal login flow.");
 
         var jwt = GenerateJwt("dev@localhost");
-        // Set JWT in httpOnly cookie for security
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true, // Required for SameSite=None
-            SameSite = SameSiteMode.None, // Required for cross-domain auth
-            Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddHours(_config.GetValue("Jwt:ExpiryHours", 1.0)),
-            IsEssential = true
-        };
-        Response.Cookies.Append("auth_token", jwt, cookieOptions);
+        // Cross-domain: pass token in URL so the frontend stores it in localStorage.
         var frontendUrl = returnUrl ?? _config["FrontendUrl"] ?? "http://localhost:3000";
-        // Redirect WITHOUT token in URL
-        return Redirect($"{frontendUrl}/auth-success?email=dev%40localhost");
+        return Redirect($"{frontendUrl}/auth-success?token={Uri.EscapeDataString(jwt)}&email=dev%40localhost");
     }
 
     private static bool IsMissingOrPlaceholder(string? value)

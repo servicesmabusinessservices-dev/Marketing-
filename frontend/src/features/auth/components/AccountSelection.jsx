@@ -51,11 +51,18 @@ const AccountSelection = () => {
 
   useEffect(() => {
     const email = searchParams.get('email');
+    const token = searchParams.get('token');
     const message = searchParams.get('message');
     // Handle successful authentication
     if (email) {
       // Store email for display purposes
       localStorage.setItem('user_email', email);
+      // Store JWT token for Authorization: Bearer header on API calls
+      // (Cross-domain cookies are blocked by modern browsers as third-party cookies,
+      //  so we store the JWT in localStorage and send it via Authorization header instead)
+      if (token) {
+        localStorage.setItem('auth_token', token);
+      }
       // Clean URL of any query parameters
       window.history.replaceState({}, document.title, '/auth-success');
       navigate('/dashboard');
